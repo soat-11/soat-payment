@@ -43,6 +43,8 @@ export abstract class AbstractLoggerService<TLogLevel = string> {
   abstract setContext(context: string): void;
   abstract getLogLevel(): Record<LogLevel, TLogLevel>;
 
+  abstract getTraceIdFromContext(): string | undefined;
+
   protected handleLog(
     level: LogLevel,
     message: string,
