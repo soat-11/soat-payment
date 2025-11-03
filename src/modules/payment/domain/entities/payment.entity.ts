@@ -12,6 +12,11 @@ import { PaymentExpiredAtDomainServiceImpl } from '../service/payment-expired-at
 import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { PaymentCreatedEvent } from '../events/payment-created.event';
 import { PaymentPaidEvent } from '../events/payment-paid.event';
+import {
+  PaymentProvider,
+  PaymentProviderProps,
+} from '../value-objects/payment-provider.vo';
+import { PaymentProviders } from '../enum/payment-provider.enum';
 
 export type PaymentProps = {
   amount: number;
@@ -22,7 +27,7 @@ export type PaymentProps = {
 export class PaymentEntity extends AggregateRoot<PaymentEntity> {
   public paymentDetail?: PaymentDetailEntity;
   public status: PaymentStatusVO;
-
+  public paymentProvider?: PaymentProvider;
   public expiresAt: Date;
 
   private constructor(
@@ -44,6 +49,7 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
 
     const payment = new PaymentEntity(UniqueEntityID.create(), amount, type);
     payment.addDomainEvent(new PaymentCreatedEvent(payment));
+
     return payment;
   }
 
@@ -76,9 +82,18 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
     return this;
   }
 
+  addPaymentProvider(provider: PaymentProviderProps): this {
+    this.paymentProvider = PaymentProvider.create(provider);
+    return this;
+  }
+
   paid(): void {
     if (this.status.value === PaymentStatus.PAID) {
       throw new DomainBusinessException('Pagamento já está como PAGO');
+    }
+
+    if (this.paymentProvider == null) {
+      throw new DomainBusinessException('Provedor de pagamento não informado');
     }
 
     const now = new Date();

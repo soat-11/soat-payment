@@ -5,6 +5,7 @@ import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { PaymentPaidEvent } from '@payment/domain/events/payment-paid.event';
 import { PaymentCreatedEvent } from '@payment/domain/events/payment-created.event';
+import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
 
 describe('PaymentEntity', () => {
   describe('Success', () => {
@@ -32,9 +33,20 @@ describe('PaymentEntity', () => {
         type: PaymentType.PIX,
       });
 
+      payment.addPaymentProvider({
+        externalPaymentId: 'external-id-123',
+        provider: PaymentProviders.MERCADO_PAGO,
+      });
+
       payment.paid();
 
       expect(payment.status.value).toBe(PaymentStatus.PAID);
+      expect(payment.paymentProvider?.value.externalPaymentId).toBe(
+        'external-id-123',
+      );
+      expect(payment.paymentProvider?.value.provider).toBe(
+        PaymentProviders.MERCADO_PAGO,
+      );
     });
 
     it('should create a payment from persistence', () => {
@@ -56,7 +68,6 @@ describe('PaymentEntity', () => {
         type: PaymentType.PIX,
       });
 
-      payment.paid();
       expect(payment.domainEvents[0]).toBeInstanceOf(PaymentCreatedEvent);
     });
 
@@ -66,8 +77,16 @@ describe('PaymentEntity', () => {
         type: PaymentType.PIX,
       });
 
+      payment.addPaymentProvider({
+        externalPaymentId: 'external-id-456',
+        provider: PaymentProviders.MERCADO_PAGO,
+      });
+
       payment.paid();
       expect(payment.domainEvents[1]).toBeInstanceOf(PaymentPaidEvent);
+      expect(payment.paymentProvider?.value.externalPaymentId).toBe(
+        'external-id-456',
+      );
     });
   });
 
@@ -87,6 +106,11 @@ describe('PaymentEntity', () => {
         type: PaymentType.PIX,
       });
 
+      payment.addPaymentProvider({
+        externalPaymentId: 'external-id-123',
+        provider: PaymentProviders.MERCADO_PAGO,
+      });
+
       payment.paid();
 
       expect(() => payment.paid()).toThrow(DomainBusinessException);
@@ -103,6 +127,15 @@ describe('PaymentEntity', () => {
       jest.setSystemTime(new Date('2024-01-01T14:00:00Z'));
       expect(() => payment.paid()).toThrow(DomainBusinessException);
       jest.useRealTimers();
+    });
+
+    it('should throw an error when payment provider is invalid', () => {
+      const payment = PaymentEntity.create({
+        amount: 100,
+        type: PaymentType.PIX,
+      });
+
+      expect(() => payment.paid()).toThrow(DomainBusinessException);
     });
   });
 });
