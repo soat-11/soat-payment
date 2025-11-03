@@ -16,7 +16,6 @@ import {
   PaymentProvider,
   PaymentProviderProps,
 } from '../value-objects/payment-provider.vo';
-import { PaymentProviders } from '../enum/payment-provider.enum';
 
 export type PaymentProps = {
   amount: number;
@@ -75,7 +74,6 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
 
     this.paymentDetail = PaymentDetailEntity.createPixDetail(this.id, {
       expiresAt: detail.value.expiresAt,
-      pixKey: detail.value.pixKey,
       qrCode: detail.value.qrCode,
     });
 

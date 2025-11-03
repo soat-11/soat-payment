@@ -26,4 +26,8 @@ export class PaymentDetailEntity extends DefaultEntity {
 
     return paymentDetailEntity;
   }
+
+  getQrCode(): string {
+    return this.info.value.qrCode;
+  }
 }
