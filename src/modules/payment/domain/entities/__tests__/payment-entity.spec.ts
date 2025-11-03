@@ -2,6 +2,9 @@ import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 import { PaymentEntity } from '../payment.entity';
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
 import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
+import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
+import { PaymentPaidEvent } from '@payment/domain/events/payment-paid.event';
+import { PaymentCreatedEvent } from '@payment/domain/events/payment-created.event';
 
 describe('PaymentEntity', () => {
   describe('Success', () => {
@@ -32,6 +35,39 @@ describe('PaymentEntity', () => {
       payment.paid();
 
       expect(payment.status.value).toBe(PaymentStatus.PAID);
+    });
+
+    it('should create a payment from persistence', () => {
+      const payment = PaymentEntity.fromPersistence(UniqueEntityID.create(), {
+        amount: 150,
+        type: PaymentType.PIX,
+        status: PaymentStatus.PAID,
+
+        expiresAt: new Date(Date.now() + 3600 * 1000),
+      });
+
+      expect(payment).toBeInstanceOf(PaymentEntity);
+      expect(payment.status.value).toBe(PaymentStatus.PAID);
+    });
+
+    it('Should create a payment created event', () => {
+      const payment = PaymentEntity.create({
+        amount: 200,
+        type: PaymentType.PIX,
+      });
+
+      payment.paid();
+      expect(payment.domainEvents[0]).toBeInstanceOf(PaymentCreatedEvent);
+    });
+
+    it('Should create a payment paid event', () => {
+      const payment = PaymentEntity.create({
+        amount: 200,
+        type: PaymentType.PIX,
+      });
+
+      payment.paid();
+      expect(payment.domainEvents[1]).toBeInstanceOf(PaymentPaidEvent);
     });
   });
 

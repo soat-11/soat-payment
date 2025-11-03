@@ -1,4 +1,6 @@
-export abstract class DomainEvent<T> {
+import { DefaultEntity } from '@core/domain/default-entity';
+
+export abstract class DomainEvent<T extends DefaultEntity> {
   readonly eventDate: Date;
   readonly data: T;
   readonly dateTimeOccurred: Date;

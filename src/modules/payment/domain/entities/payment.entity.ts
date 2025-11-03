@@ -10,6 +10,8 @@ import { PaymentTypeVO } from '../value-objects/payment-type.vo';
 import { PaymentAmountVO } from '../value-objects/payment-amount.vo';
 import { PaymentExpiredAtDomainServiceImpl } from '../service/payment-expired-at.service';
 import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
+import { PaymentCreatedEvent } from '../events/payment-created.event';
+import { PaymentPaidEvent } from '../events/payment-paid.event';
 
 export type PaymentProps = {
   amount: number;
@@ -41,6 +43,7 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
     const amount = PaymentAmountVO.create(props.amount);
 
     const payment = new PaymentEntity(UniqueEntityID.create(), amount, type);
+    payment.addDomainEvent(new PaymentCreatedEvent(payment));
     return payment;
   }
 
@@ -86,5 +89,6 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
     }
 
     this.status = PaymentStatusVO.create(PaymentStatus.PAID);
+    this.addDomainEvent(new PaymentPaidEvent(this));
   }
 }

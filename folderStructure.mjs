@@ -256,6 +256,10 @@ export const folderStructureConfig = createFolderStructure({
           children: [{ name: '*.service.ts' }, { ruleId: 'test_folder' }],
         },
         {
+          name: 'events',
+          children: [{ name: '*.event.ts' }, { ruleId: 'test_folder' }],
+        },
+        {
           name: 'repositories',
           children: [
             { name: '{kebab-case}.repository.ts' },
