@@ -1,7 +1,9 @@
 import { DomainEvent } from '../events/domain-event';
-import { UniqueEntityID } from './value-objects/unique-entity-id.vo';
+import { DefaultEntity } from './default-entity';
 
-export abstract class AggregateRoot<T extends { id: UniqueEntityID }> {
+export abstract class AggregateRoot<
+  T extends DefaultEntity,
+> extends DefaultEntity {
   private _domainEvents: DomainEvent<T>[] = [];
 
   get domainEvents(): readonly DomainEvent<T>[] {

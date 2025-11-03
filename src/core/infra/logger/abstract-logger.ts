@@ -74,6 +74,7 @@ export abstract class AbstractLoggerService<TLogLevel = string> {
 
   protected getCallerContext(exception?: unknown): LogContext {
     const stack =
+      // eslint-disable-next-line no-restricted-syntax
       exception instanceof Error ? exception.stack : new Error().stack;
 
     const caller = stack?.split('\n')[6]?.trim()?.split(' ').at(1) ?? 'unknown';

@@ -113,6 +113,14 @@ export default [
           ],
         },
       ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "NewExpression[callee.name='Error']",
+          message:
+            'Uso de new Error proibido. Use exceção de domínio. Use DomainException ou uma exceção personalizada.',
+        },
+      ],
     },
   },
 ];

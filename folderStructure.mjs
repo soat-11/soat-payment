@@ -65,6 +65,7 @@ export const folderStructureConfig = createFolderStructure({
         { name: 'domain', ruleId: 'core_domain_folder' },
         { name: 'events', ruleId: 'core_events_folder' },
         { name: 'infra', ruleId: 'core_infra_folder' },
+
         { name: 'core.module.ts' },
         { ruleId: 'test_folder' },
       ],
@@ -74,6 +75,7 @@ export const folderStructureConfig = createFolderStructure({
       name: 'domain',
       enforceExistence: [
         'aggregate-root.ts',
+        'default-entity.ts',
         'result.ts',
         'value-objects',
         'exceptions',
@@ -89,7 +91,11 @@ export const folderStructureConfig = createFolderStructure({
         { name: 'result.ts' },
         { name: 'value-objects', ruleId: 'core_domain_value_objects_folder' },
         { name: 'mapper', ruleId: 'core_mapper_folder' },
-
+        { name: 'default-entity.ts' },
+        {
+          name: 'service',
+          children: [{ name: '*.service.ts' }, { ruleId: 'test_folder' }],
+        },
         { ruleId: 'test_folder' },
       ],
     },
@@ -243,7 +249,12 @@ export const folderStructureConfig = createFolderStructure({
         { name: 'entities', ruleId: 'module_entities_folder' },
         { name: 'value-objects', ruleId: 'module_value_objects_folder' },
         { name: 'exceptions', ruleId: 'module_exceptions_folder' },
+        { name: 'enum', children: [{ name: '*.enum.ts' }] },
         { name: 'domain-events', ruleId: 'core_events_folder' },
+        {
+          name: 'service',
+          children: [{ name: '*.service.ts' }, { ruleId: 'test_folder' }],
+        },
         {
           name: 'repositories',
           children: [

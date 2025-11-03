@@ -19,16 +19,38 @@ export class PinoLoggerService extends AbstractLoggerService<pino.Level> {
     const level = process.env.LOG_LEVEL || 'info';
     const options: LoggerOptions = {
       level,
-      transport:
-        process.env.NODE_ENV === 'development'
-          ? {
-              target: 'pino-pretty',
-              options: { colorize: true, translateTime: true },
-            }
-          : undefined,
+      transport: this.handleTransport().transport,
     };
+
     this.logger = loggerInstance || pino(options);
   }
+
+  private handleTransport(): Pick<LoggerOptions, 'transport'> {
+    if (process.env.NODE_ENV === 'development') {
+      return {
+        transport: {
+          target: 'pino-pretty',
+          options: { colorize: true, translateTime: true },
+        },
+      };
+    }
+
+    return {
+      transport: undefined,
+    };
+
+    // return {
+    //   transport: {
+    //     target: 'pino-loki',
+    //     options: {
+    //       batching: true,
+    //       interval: 5,
+    //       host: 'http://localhost:3100',
+    //     },
+    //   },
+    // };
+  }
+
   fatal(message: string, ...optionalParams: any[]) {
     const { extra, context, trace } = this.parseParams(optionalParams);
     this.handleLog('error', message, extra, context, trace);
@@ -84,6 +106,7 @@ export class PinoLoggerService extends AbstractLoggerService<pino.Level> {
     context?: string,
     trace?: string,
   ): void {
+    // eslint-disable-next-line no-restricted-syntax
     const teste = this.getDefaultFields(trace ? new Error(trace) : undefined);
     const traceId = this.getTraceIdFromContext();
     const base: BaseLogMeta & { traceId?: string } = {
