@@ -6,6 +6,10 @@ import { PaymentStatusVO } from '@payment/domain/value-objects/payment-status.vo
 import { PaymentDetailEntity } from './payment-detail.entity';
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
 import { PixDetail } from '../value-objects/pix-detail.vo';
+import { PaymentTypeVO } from '../value-objects/payment-type.vo';
+import { PaymentAmountVO } from '../value-objects/payment-amount.vo';
+import { PaymentExpiredAtDomainServiceImpl } from '../service/payment-expired-at.service';
+import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 
 export type PaymentProps = {
   amount: number;
@@ -15,41 +19,46 @@ export type PaymentProps = {
 
 export class PaymentEntity extends AggregateRoot<PaymentEntity> {
   public paymentDetail?: PaymentDetailEntity;
+  public status: PaymentStatusVO;
 
-  public readonly expiresAt: Date;
+  public expiresAt: Date;
 
   private constructor(
     readonly id: UniqueEntityID,
-    public readonly amount: number,
-    public readonly status: PaymentStatus,
-    public readonly type: PaymentType,
+    public amount: PaymentAmountVO,
+    public type: PaymentTypeVO,
   ) {
     super(id);
-    Object.freeze(this);
+    this.status = PaymentStatusVO.create(PaymentStatus.PENDING);
+    this.expiresAt = new PaymentExpiredAtDomainServiceImpl(
+      new SystemDateImpl(new Date()),
+    ).execute().date;
+    // Object.freeze(this);
   }
 
-  static create(props: PaymentProps): PaymentEntity {
-    const status = PaymentStatusVO.create(props.status);
-    const payment = new PaymentEntity(
-      UniqueEntityID.create(),
-      props.amount,
-      status.value,
-      props.type,
-    );
+  static create(props: Omit<PaymentProps, 'status'>): PaymentEntity {
+    const type = PaymentTypeVO.create(props.type);
+    const amount = PaymentAmountVO.create(props.amount);
 
+    const payment = new PaymentEntity(UniqueEntityID.create(), amount, type);
     return payment;
   }
 
   static fromPersistence(
     id: UniqueEntityID,
-    props: PaymentProps,
+    props: PaymentProps & { expiresAt: Date },
   ): PaymentEntity {
-    return new PaymentEntity(id, props.amount, props.status, props.type);
+    const type = PaymentTypeVO.create(props.type);
+    const amount = PaymentAmountVO.create(props.amount);
+    const payment = new PaymentEntity(id, amount, type);
+    payment.status = PaymentStatusVO.create(props.status);
+    payment.expiresAt = props.expiresAt;
+    return payment;
   }
 
   addPaymentDetail(detail: PixDetail): this {
     // Strategy pattern vai ser implementado futuramente para suportar outros tipos de pagamento
-    if (this.type !== PaymentType.PIX) {
+    if (this.type.value !== PaymentType.PIX) {
       throw new DomainBusinessException(
         'Tipo de detalhe de pagamento inválido',
       );
@@ -62,5 +71,20 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
     });
 
     return this;
+  }
+
+  paid(): void {
+    if (this.status.value === PaymentStatus.PAID) {
+      throw new DomainBusinessException('Pagamento já está como PAGO');
+    }
+
+    const now = new Date();
+    if (now > this.expiresAt) {
+      throw new DomainBusinessException(
+        'Não é possível pagar um pagamento expirado',
+      );
+    }
+
+    this.status = PaymentStatusVO.create(PaymentStatus.PAID);
   }
 }

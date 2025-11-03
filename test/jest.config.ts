@@ -11,8 +11,7 @@ const config: Config.InitialOptions = {
   transformIgnorePatterns: ['/node_modules/(?!@faker-js/)'],
   moduleNameMapper: {
     '^@core/(.*)$': '<rootDir>/src/core/$1',
-    '^@user/(.*)$': '<rootDir>/src/modules/user/$1',
-    '^@session/(.*)$': '<rootDir>/src/modules/session/$1',
+    '^@payment/(.*)$': '<rootDir>/src/modules/payment/$1',
     '^@modules/(.*)$': '<rootDir>/src/modules/$1',
     '^src/(.*)$': '<rootDir>/src/$1',
     '^test/(.*)$': '<rootDir>/test/$1',
