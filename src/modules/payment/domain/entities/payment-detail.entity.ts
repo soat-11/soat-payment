@@ -6,7 +6,7 @@ export class PaymentDetailEntity extends DefaultEntity {
   private constructor(
     id: UniqueEntityID,
     public readonly paymentId: UniqueEntityID,
-    public readonly detail: PixDetail,
+    public readonly info: PixDetail,
   ) {
     super(id);
     Object.freeze(this);
