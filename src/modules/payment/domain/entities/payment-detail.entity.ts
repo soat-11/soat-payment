@@ -27,6 +27,18 @@ export class PaymentDetailEntity extends DefaultEntity {
     return paymentDetailEntity;
   }
 
+  static fromPixDetailPersistence(
+    id: UniqueEntityID,
+    paymentId: UniqueEntityID,
+    detail: PixDetailProps,
+  ): PaymentDetailEntity {
+    const details = PixDetail.create(detail);
+
+    const paymentDetailEntity = new PaymentDetailEntity(id, paymentId, details);
+
+    return paymentDetailEntity;
+  }
+
   getQrCode(): string {
     return this.info.value.qrCode;
   }

@@ -73,7 +73,6 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
     }
 
     this.paymentDetail = PaymentDetailEntity.createPixDetail(this.id, {
-      expiresAt: detail.value.expiresAt,
       qrCode: detail.value.qrCode,
     });
 

@@ -8,6 +8,7 @@ export const folderStructureConfig = createFolderStructure({
       ruleId: 'test_folder',
       children: [
         { name: '{kebab-case}.spec.ts' },
+        { name: '{kebab-case}.int-spec.ts' },
         { name: '{kebab-case}.e2e-spec.ts' },
       ],
     },
@@ -312,6 +313,9 @@ export const folderStructureConfig = createFolderStructure({
         {
           name: 'mapper',
           ruleId: 'module_mapper_folder',
+        },
+        {
+          name: '*',
         },
         { ruleId: 'test_folder' },
       ],

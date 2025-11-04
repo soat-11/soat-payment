@@ -1,32 +1,32 @@
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
-import { DefaultTypeormRepository } from '@core/infra/database/typeorm/default-typeorm.repository';
+
 import { PaymentEntity } from '@payment/domain/entities/payment.entity';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 import { PaymentTypeORMEntity } from '../entities/payment-typeorm.entity';
-import { DomainEventDispatcherImpl } from '@core/events/domain-event-dispatcher-impl';
+
+import { Repository } from 'typeorm';
+import { PaymentMapper } from '../mapper/payment.mapper';
 
 export class PaymentRepositoryImpl implements PaymentRepository {
   constructor(
-    private readonly database: DefaultTypeormRepository<
-      PaymentEntity,
-      PaymentTypeORMEntity
-    >,
+    private readonly database: Repository<PaymentTypeORMEntity>,
+    private readonly paymentMapper: PaymentMapper,
   ) {}
 
   async save(payment: PaymentEntity): Promise<void> {
-    const result = await this.database.create(payment);
-    if (result.isFailure) throw result.error;
-
-    result.value.domainEvents.forEach((event) =>
-      DomainEventDispatcherImpl.getInstance().dispatch(event),
-    );
+    const orm = this.paymentMapper.toORM(payment);
+    if (orm.isFailure) throw orm.error;
+    await this.database.save(orm.value);
 
     return;
   }
 
   async findById(id: UniqueEntityID): Promise<PaymentEntity | null> {
-    const result = await this.database.findById(id);
-    if (result.isFailure) return null;
-    return result.value;
+    const result = await this.database.findOneBy({
+      id: id,
+    });
+
+    if (!result) return null;
+    return this.paymentMapper.toDomain(result).value;
   }
 }
