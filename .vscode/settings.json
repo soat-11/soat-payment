@@ -6,6 +6,7 @@
   "prettier.enable": true,
   "eslint.validate": ["typescript", "typescriptreact"],
   "eslint.useFlatConfig": true,
+  "typescript.preferences.importModuleSpecifier": "non-relative",
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   }
