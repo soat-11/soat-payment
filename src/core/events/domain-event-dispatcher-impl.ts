@@ -1,3 +1,4 @@
+import { DefaultEntity } from '@core/domain/default-entity';
 import { DomainEvent } from '@core/events/domain-event';
 import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
 import { DomainEventHandler } from '@core/events/domain-event-handler';
@@ -5,8 +6,10 @@ import { DomainEventHandler } from '@core/events/domain-event-handler';
 export class DomainEventDispatcherImpl implements DomainEventDispatcher {
   private static instance: DomainEventDispatcherImpl;
 
-  private handlers: Map<string, Array<(event: DomainEvent<unknown>) => void>> =
-    new Map();
+  private handlers: Map<
+    string,
+    Array<(event: DomainEvent<DefaultEntity>) => void>
+  > = new Map();
 
   private constructor() {}
 
@@ -17,7 +20,7 @@ export class DomainEventDispatcherImpl implements DomainEventDispatcher {
     return DomainEventDispatcherImpl.instance;
   }
 
-  register<T>(
+  register<T extends DefaultEntity>(
     eventName: string,
     handler: DomainEventHandler<DomainEvent<T>>,
   ): void {
@@ -26,14 +29,16 @@ export class DomainEventDispatcherImpl implements DomainEventDispatcher {
     this.handlers.set(eventName, handlers);
   }
 
-  dispatch<T>(event: DomainEvent<T>): void {
+  dispatch<T extends DefaultEntity>(event: DomainEvent<T>): void {
     const handlers = this.handlers.get(event.eventName);
     if (!handlers) return;
 
     handlers.forEach((handler) => handler(event));
   }
 
-  getHandler<T>(eventName: string): Array<(event: DomainEvent<T>) => void> {
+  getHandler<T extends DefaultEntity>(
+    eventName: string,
+  ): Array<(event: DomainEvent<T>) => void> {
     const handlers = this.handlers.get(eventName);
     if (!handlers) {
       return [];

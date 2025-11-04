@@ -1,5 +1,9 @@
 import { Result } from '@core/domain/result';
-import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
+
+import { DefaultEntity } from '../default-entity';
+
+import { DefaultORMEntity } from '@core/infra/database/typeorm/default-orm.entity';
+import { AggregateRoot } from '../aggregate-root';
 
 export class MapperException extends Error {
   constructor(message: string) {
@@ -9,10 +13,8 @@ export class MapperException extends Error {
 }
 
 export abstract class AbstractMapper<
-  TORM extends object = {
-    id: UniqueEntityID;
-  },
-  TDomain extends object = { id: UniqueEntityID },
+  TORM extends DefaultORMEntity,
+  TDomain extends AggregateRoot<DefaultEntity>,
 > {
   abstract toDomain(orm: TORM): Result<TDomain>;
   abstract toORM(domain: TDomain): Result<TORM>;

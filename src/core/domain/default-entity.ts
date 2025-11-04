@@ -5,5 +5,5 @@ export abstract class DefaultEntity {
   public readonly updatedAt: Date = new Date();
   public readonly deletedAt: Date | null = null;
 
-  constructor(protected readonly id: UniqueEntityID) {}
+  constructor(public readonly id: UniqueEntityID) {}
 }

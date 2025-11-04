@@ -8,10 +8,8 @@ import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity.js';
-
-type DefaultObject = object & {
-  id: UniqueEntityID;
-};
+import { DefaultORMEntity } from './default-orm.entity';
+import { AggregateRoot } from '@core/domain/aggregate-root';
 
 export class RepositoryException extends Error {
   constructor(message: string) {
@@ -21,8 +19,8 @@ export class RepositoryException extends Error {
 }
 
 export abstract class DefaultTypeormRepository<
-  T extends DefaultObject,
-  TORM extends DefaultObject,
+  T extends AggregateRoot<T>,
+  TORM extends DefaultORMEntity,
 > {
   constructor(
     private readonly repository: Repository<TORM>,
