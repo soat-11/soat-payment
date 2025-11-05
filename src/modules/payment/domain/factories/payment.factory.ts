@@ -13,7 +13,7 @@ export class PaymentFactoryImpl implements PaymentFactory {
   create(props: { amount: number; type: PaymentType }): PaymentEntity {
     const expiresAt = new PaymentExpiredAtDomainServiceImpl(
       this.systemDateService,
-    ).execute().date;
+    ).calculateExpirationDate();
 
     return PaymentEntity.create({
       amount: props.amount,

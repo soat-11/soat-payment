@@ -87,7 +87,7 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
     return this;
   }
 
-  paid(): void {
+  paid(currentDate: Date): void {
     if (this.status.value === PaymentStatus.PAID) {
       throw new DomainBusinessException('Pagamento já está como PAGO');
     }
@@ -96,8 +96,7 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
       throw new DomainBusinessException('Provedor de pagamento não informado');
     }
 
-    const now = new Date();
-    if (now > this.expiresAt) {
+    if (currentDate > this.expiresAt) {
       throw new DomainBusinessException(
         'Não é possível pagar um pagamento expirado',
       );

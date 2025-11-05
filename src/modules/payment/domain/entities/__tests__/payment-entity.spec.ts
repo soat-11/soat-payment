@@ -8,37 +8,36 @@ import { PaymentCreatedEvent } from '@payment/domain/events/payment-created.even
 import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
 
 describe('PaymentEntity', () => {
+  const createPaymentWithExpiresAt = (amount: number) => {
+    return PaymentEntity.create({
+      amount,
+      type: PaymentType.PIX,
+      expiresAt: new Date(Date.now() + 3600 * 1000), // 1 hour from now
+    });
+  };
+
   describe('Success', () => {
     it('should create a payment entity', () => {
-      const payment = PaymentEntity.create({
-        amount: 100,
-        type: PaymentType.PIX,
-      });
+      const payment = createPaymentWithExpiresAt(100);
 
       expect(payment).toBeInstanceOf(PaymentEntity);
     });
 
     it('Should create a payment with pending status by default', () => {
-      const payment = PaymentEntity.create({
-        amount: 100,
-        type: PaymentType.PIX,
-      });
+      const payment = createPaymentWithExpiresAt(100);
 
       expect(payment.status.value).toBe(PaymentStatus.PENDING);
     });
 
     it('Should paid payment', () => {
-      const payment = PaymentEntity.create({
-        amount: 100,
-        type: PaymentType.PIX,
-      });
+      const payment = createPaymentWithExpiresAt(100);
 
       payment.addPaymentProvider({
         externalPaymentId: 'external-id-123',
         provider: PaymentProviders.MERCADO_PAGO,
       });
 
-      payment.paid();
+      payment.paid(new Date()); // Pass current date
 
       expect(payment.status.value).toBe(PaymentStatus.PAID);
       expect(payment.paymentProvider?.value.externalPaymentId).toBe(
@@ -63,26 +62,20 @@ describe('PaymentEntity', () => {
     });
 
     it('Should create a payment created event', () => {
-      const payment = PaymentEntity.create({
-        amount: 200,
-        type: PaymentType.PIX,
-      });
+      const payment = createPaymentWithExpiresAt(200);
 
       expect(payment.domainEvents[0]).toBeInstanceOf(PaymentCreatedEvent);
     });
 
     it('Should create a payment paid event', () => {
-      const payment = PaymentEntity.create({
-        amount: 200,
-        type: PaymentType.PIX,
-      });
+      const payment = createPaymentWithExpiresAt(200);
 
       payment.addPaymentProvider({
         externalPaymentId: 'external-id-456',
         provider: PaymentProviders.MERCADO_PAGO,
       });
 
-      payment.paid();
+      payment.paid(new Date());
       expect(payment.domainEvents[1]).toBeInstanceOf(PaymentPaidEvent);
       expect(payment.paymentProvider?.value.externalPaymentId).toBe(
         'external-id-456',
@@ -96,14 +89,30 @@ describe('PaymentEntity', () => {
         PaymentEntity.create({
           amount: -50,
           type: PaymentType.PIX,
+          expiresAt: new Date(Date.now() + 3600 * 1000),
         }),
       ).toThrow(DomainBusinessException);
     });
 
     it('should not pay an already paid payment', () => {
+      const payment = createPaymentWithExpiresAt(100);
+
+      payment.addPaymentProvider({
+        externalPaymentId: 'external-id-123',
+        provider: PaymentProviders.MERCADO_PAGO,
+      });
+
+      payment.paid(new Date());
+
+      expect(() => payment.paid(new Date())).toThrow(DomainBusinessException);
+    });
+
+    it('should not pay an expired payment', () => {
+      const expiresAt = new Date('2024-01-01T12:00:00Z');
       const payment = PaymentEntity.create({
         amount: 100,
         type: PaymentType.PIX,
+        expiresAt,
       });
 
       payment.addPaymentProvider({
@@ -111,31 +120,14 @@ describe('PaymentEntity', () => {
         provider: PaymentProviders.MERCADO_PAGO,
       });
 
-      payment.paid();
-
-      expect(() => payment.paid()).toThrow(DomainBusinessException);
-    });
-
-    it('should not pay an expired payment', () => {
-      jest.useFakeTimers();
-      jest.setSystemTime(new Date('2024-01-01T12:00:00Z'));
-      const payment = PaymentEntity.create({
-        amount: 100,
-        type: PaymentType.PIX,
-      });
-
-      jest.setSystemTime(new Date('2024-01-01T14:00:00Z'));
-      expect(() => payment.paid()).toThrow(DomainBusinessException);
-      jest.useRealTimers();
+      const futureDate = new Date('2024-01-01T14:00:00Z');
+      expect(() => payment.paid(futureDate)).toThrow(DomainBusinessException);
     });
 
     it('should throw an error when payment provider is invalid', () => {
-      const payment = PaymentEntity.create({
-        amount: 100,
-        type: PaymentType.PIX,
-      });
+      const payment = createPaymentWithExpiresAt(100);
 
-      expect(() => payment.paid()).toThrow(DomainBusinessException);
+      expect(() => payment.paid(new Date())).toThrow(DomainBusinessException);
     });
   });
 });

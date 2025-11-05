@@ -8,7 +8,7 @@ describe('PaymentExpiredAtDomainServiceImpl', () => {
     const domainService = new PaymentExpiredAtDomainServiceImpl(
       new SystemDateImpl(now),
     );
-    expect(domainService.execute().date.toISOString()).toEqual(
+    expect(domainService.calculateExpirationDate().toISOString()).toEqual(
       '2025-04-01T12:10:00.000Z',
     );
   });

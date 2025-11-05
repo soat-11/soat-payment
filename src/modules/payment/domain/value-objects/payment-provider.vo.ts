@@ -16,7 +16,13 @@ export class PaymentProvider extends ValueObject<PaymentProviderProps> {
     const validProviders = Object.values(PaymentProviders);
     if (!validProviders.includes(input.provider)) {
       throw new DomainBusinessException(
-        `Provedor de pagamento inválido: ${input}`,
+        `Provedor de pagamento inválido: ${input.provider}`,
+      );
+    }
+
+    if (!input.externalPaymentId || input.externalPaymentId.trim() === '') {
+      throw new DomainBusinessException(
+        'ID externo do pagamento é obrigatório',
       );
     }
   }
