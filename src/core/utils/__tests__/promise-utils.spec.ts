@@ -1,3 +1,4 @@
+import { DomainExceptionGeneric } from '@core/domain/exceptions/domain.exception';
 import { executeAllOrFail } from '../promise-utils';
 
 describe('PromiseUtils', () => {
@@ -25,7 +26,7 @@ describe('PromiseUtils', () => {
       const fastFailingPromise = new Promise<void>((_, reject) => {
         setTimeout(() => {
           completionOrder.push('fast-fail');
-          reject(new Error('Fast failure'));
+          reject(new DomainExceptionGeneric('Fast failure'));
         }, 10);
       });
 
@@ -39,7 +40,9 @@ describe('PromiseUtils', () => {
 
     it('should throw the first rejection reason when one promise fails', async () => {
       const promise1 = Promise.resolve(1);
-      const promise2 = Promise.reject(new Error('Promise 2 failed'));
+      const promise2 = Promise.reject(
+        new DomainExceptionGeneric('Promise 2 failed'),
+      );
       const promise3 = Promise.resolve(3);
 
       await expect(
@@ -48,8 +51,12 @@ describe('PromiseUtils', () => {
     });
 
     it('should throw the first rejection when multiple promises fail', async () => {
-      const promise1 = Promise.reject(new Error('First failure'));
-      const promise2 = Promise.reject(new Error('Second failure'));
+      const promise1 = Promise.reject(
+        new DomainExceptionGeneric('First failure'),
+      );
+      const promise2 = Promise.reject(
+        new DomainExceptionGeneric('Second failure'),
+      );
       const promise3 = Promise.resolve(3);
 
       await expect(
@@ -75,7 +82,3 @@ describe('PromiseUtils', () => {
     });
   });
 });
-
-
-
-
