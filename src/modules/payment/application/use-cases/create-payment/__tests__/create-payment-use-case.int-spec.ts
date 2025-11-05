@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 
-import { CreatePaymentUseCaseImpl } from '@payment/application/use-cases/create-payment/create-payment.use-case';
+import { CreatePaymentUseCaseImpl } from '@payment/application/use-cases/create-payment/create-payment-impl.use-case';
 import { PaymentRepositoryImpl } from '@payment/infra/persistence/repositories/payment.repository';
 import { PaymentDetailRepositoryImpl } from '@payment/infra/persistence/repositories/payment-detail.repository';
 import { TypeormPaymentUOW } from '@payment/infra/persistence/typeorm-payment.uow';
@@ -11,11 +11,15 @@ import { PixDetailORMEntity } from '@payment/infra/persistence/entities/pix-deta
 import { PixDetailMapper } from '@payment/infra/persistence/mapper/pix-detail.mapper';
 import { PaymentMapper } from '@payment/infra/persistence/mapper/payment.mapper';
 import { DomainPersistenceException } from '@core/domain/exceptions/domain.exception';
+import {
+  CreatePaymentUseCase,
+  CreatePaymentUseCaseInput,
+} from '@payment/application/use-cases/create-payment/create-payment.use-case';
 
 describe('CreatePaymentUseCase - Integration Test', () => {
   let dataSource: DataSource;
   let uow: TypeormPaymentUOW;
-  let useCase: CreatePaymentUseCaseImpl;
+  let useCase: CreatePaymentUseCase;
   let paymentRepository: PaymentRepositoryImpl;
   let paymentDetailRepository: PaymentDetailRepositoryImpl;
 
@@ -60,7 +64,7 @@ describe('CreatePaymentUseCase - Integration Test', () => {
 
   describe('Success', () => {
     it('should create a payment and save to database', async () => {
-      const input = {
+      const input: CreatePaymentUseCaseInput = {
         amount: 100,
         qrCode: 'test-qr-code-123',
       };
@@ -88,7 +92,7 @@ describe('CreatePaymentUseCase - Integration Test', () => {
 
   describe('Rollback', () => {
     it('should rollback transaction on error and not save to database', async () => {
-      const input = {
+      const input: CreatePaymentUseCaseInput = {
         amount: -100,
         qrCode: 'test-qr-code',
       };
@@ -108,7 +112,7 @@ describe('CreatePaymentUseCase - Integration Test', () => {
     });
 
     it('should rollback on validation error during detail entity creation', async () => {
-      const input = {
+      const input: CreatePaymentUseCaseInput = {
         amount: 100,
         qrCode: '',
       };
@@ -128,7 +132,7 @@ describe('CreatePaymentUseCase - Integration Test', () => {
     });
 
     it('Should rollback on detail fails to save', async () => {
-      const input = {
+      const input: CreatePaymentUseCaseInput = {
         amount: -100,
         qrCode: 'test-qr-code',
       };
@@ -150,7 +154,7 @@ describe('CreatePaymentUseCase - Integration Test', () => {
 
   describe('Transaction Isolation', () => {
     it('should maintain transaction isolation between tests', async () => {
-      const input = {
+      const input: CreatePaymentUseCaseInput = {
         amount: 500,
         qrCode: 'isolation-test-qr-code',
       };
