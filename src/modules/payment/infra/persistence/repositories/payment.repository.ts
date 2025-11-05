@@ -6,6 +6,8 @@ import { PaymentTypeORMEntity } from '../entities/payment-typeorm.entity';
 
 import { DataSource, EntityManager, QueryRunner } from 'typeorm';
 import { PaymentMapper } from '../mapper/payment.mapper';
+import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
+import { DomainPersistenceException } from '@core/domain/exceptions/domain.exception';
 
 export class PaymentRepositoryImpl implements PaymentRepository {
   private transactionalManager: EntityManager | null = null;
@@ -13,6 +15,7 @@ export class PaymentRepositoryImpl implements PaymentRepository {
   constructor(
     private readonly dataSource: DataSource,
     private readonly paymentMapper: PaymentMapper,
+    private readonly logger: AbstractLoggerService,
   ) {}
 
   setTransactionalManager(queryRunner: QueryRunner): void {
@@ -28,12 +31,33 @@ export class PaymentRepositoryImpl implements PaymentRepository {
   }
 
   async save(payment: PaymentEntity): Promise<void> {
-    const orm = this.paymentMapper.toORM(payment);
-    if (orm.isFailure) throw orm.error;
-    const manager = this.getManager();
-    await manager.save(PaymentTypeORMEntity, orm.value);
+    try {
+      this.logger.log('Saving payment', { payment });
+      const orm = this.paymentMapper.toORM(payment);
+      if (orm.isFailure) {
+        this.logger.error('Error saving payment', { error: orm.error });
+        throw orm.error;
+      }
+      this.logger.log('Payment mapped to ORM', { orm: orm.value });
+      const manager = this.getManager();
 
-    return;
+      await manager.save(PaymentTypeORMEntity, orm.value);
+      this.logger.log('Payment saved', { payment: orm.value });
+      return;
+    } catch (error) {
+      if (error instanceof Error) {
+        this.logger.error('Error saving payment', {
+          message: error.message,
+          trace: error.stack,
+        });
+        throw new DomainPersistenceException('Erro ao salvar pagamento');
+      }
+      this.logger.error('Error saving payment', {
+        message: 'Unknown error saving payment',
+        trace: 'Unknown error saving payment',
+      });
+      throw new DomainPersistenceException('Erro salvar pagamento');
+    }
   }
 
   async findById(id: UniqueEntityID): Promise<PaymentEntity | null> {

@@ -7,6 +7,7 @@ import {
 } from '@payment/infra/persistence/repositories/payment-detail.repository';
 import { DataSource } from 'typeorm';
 import { PaymentRepositoryImpl } from './repositories/payment.repository';
+import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 
 export class TypeormPaymentUOW
   extends DefaultTypeormUnitOfWork
@@ -16,19 +17,23 @@ export class TypeormPaymentUOW
     dataSource: DataSource,
     readonly paymentRepository: PaymentRepository,
     readonly paymentDetailRepository: PaymentDetailRepository,
+    readonly logger: AbstractLoggerService,
   ) {
-    super(dataSource);
+    super(dataSource, logger);
   }
 
   async start(): Promise<void> {
     await super.start();
     const queryRunner = this.getQueryRunner();
 
-    // Configure repositories to use transactional manager
     if (this.paymentRepository instanceof PaymentRepositoryImpl) {
+      this.logger.log('Setting transactional manager for payment repository');
       this.paymentRepository.setTransactionalManager(queryRunner);
     }
     if (this.paymentDetailRepository instanceof PaymentDetailRepositoryImpl) {
+      this.logger.log(
+        'Setting transactional manager for payment detail repository',
+      );
       this.paymentDetailRepository.setTransactionalManager(queryRunner);
     }
   }
@@ -45,9 +50,13 @@ export class TypeormPaymentUOW
 
   private clearTransactionalManagers(): void {
     if (this.paymentRepository instanceof PaymentRepositoryImpl) {
+      this.logger.log('Clearing transactional manager for payment repository');
       this.paymentRepository.clearTransactionalManager();
     }
     if (this.paymentDetailRepository instanceof PaymentDetailRepositoryImpl) {
+      this.logger.log(
+        'Clearing transactional manager for payment detail repository',
+      );
       this.paymentDetailRepository.clearTransactionalManager();
     }
   }

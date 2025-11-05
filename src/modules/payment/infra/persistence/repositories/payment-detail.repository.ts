@@ -4,6 +4,8 @@ import { PixDetailORMEntity } from '../entities/pix-detail-typeorm.entity';
 
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { PaymentDetailEntity } from '@payment/domain/entities/payment-detail.entity';
+import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
+import { DomainPersistenceException } from '@core/domain/exceptions/domain.exception';
 
 export interface PaymentDetailRepository {
   save(detail: PaymentDetailEntity): Promise<void>;
@@ -18,6 +20,7 @@ export class PaymentDetailRepositoryImpl implements PaymentDetailRepository {
   constructor(
     private readonly dataSource: DataSource,
     private readonly paymentDetailMapper: PixDetailMapper,
+    private readonly logger: AbstractLoggerService,
   ) {}
 
   setTransactionalManager(queryRunner: QueryRunner): void {
@@ -33,9 +36,35 @@ export class PaymentDetailRepositoryImpl implements PaymentDetailRepository {
   }
 
   async save(detail: PaymentDetailEntity): Promise<void> {
-    const orm = this.paymentDetailMapper.toORM(detail);
-    if (orm.isFailure) throw orm.error;
-    await this.getManager().save(PixDetailORMEntity, orm.value);
+    try {
+      const orm = this.paymentDetailMapper.toORM(detail);
+      if (orm.isFailure) {
+        this.logger.error('Error saving payment detail');
+        throw orm.error;
+      }
+      this.logger.log('Payment detail mapped to ORM');
+      const manager = this.getManager();
+      await manager.save(PixDetailORMEntity, orm.value);
+      this.logger.log('Payment detail saved');
+      return;
+    } catch (error) {
+      if (error instanceof Error) {
+        this.logger.error('Error saving payment detail', {
+          message: error.message,
+          trace: error.stack,
+        });
+        throw new DomainPersistenceException(
+          'Erro ao salvar detalhe de pagamento',
+        );
+      }
+      this.logger.error('Error saving payment detail', {
+        message: 'Unknown error saving payment detail',
+        trace: 'Unknown error saving payment detail',
+      });
+      throw new DomainPersistenceException(
+        'Erro ao salvar detalhe de pagamento',
+      );
+    }
   }
 
   async findByPaymentId(

@@ -15,6 +15,7 @@ import {
   CreatePaymentUseCase,
   CreatePaymentUseCaseInput,
 } from '@payment/application/use-cases/create-payment/create-payment.use-case';
+import { PinoLoggerService } from '@core/infra/logger/pino-logger';
 
 describe('CreatePaymentUseCase - Integration Test', () => {
   let dataSource: DataSource;
@@ -46,20 +47,26 @@ describe('CreatePaymentUseCase - Integration Test', () => {
     const paymentMapper = new PaymentMapper();
     const pixDetailMapper = new PixDetailMapper();
 
-    paymentRepository = new PaymentRepositoryImpl(dataSource, paymentMapper);
+    paymentRepository = new PaymentRepositoryImpl(
+      dataSource,
+      paymentMapper,
+      new PinoLoggerService(),
+    );
 
     paymentDetailRepository = new PaymentDetailRepositoryImpl(
       dataSource,
       pixDetailMapper,
+      new PinoLoggerService(),
     );
 
     uow = new TypeormPaymentUOW(
       dataSource,
       paymentRepository,
       paymentDetailRepository,
+      new PinoLoggerService(),
     );
 
-    useCase = new CreatePaymentUseCaseImpl(uow);
+    useCase = new CreatePaymentUseCaseImpl(uow, new PinoLoggerService());
   });
 
   describe('Success', () => {
