@@ -17,8 +17,8 @@ export const folderStructureConfig = createFolderStructure({
       ruleId: 'test_folder',
       children: [
         { name: '{kebab-case}.spec.ts' },
+        { name: '{kebab-case}.unit-spec.ts' },
         { name: '{kebab-case}.e2e-spec.ts' },
-        ,
         { name: 'jest-e2e.json' },
         { name: 'setup.ts' },
         { name: 'jest.config.ts' },
@@ -40,6 +40,7 @@ export const folderStructureConfig = createFolderStructure({
         { name: 'fakes', children: [{ name: '*.fake.ts' }] },
         { name: '{kebab-case}', ruleId: 'nested_test_folder' },
         { name: '{kebab-case}.spec.ts' },
+        { name: '{kebab-case}.int-spec.ts' },
         { name: '{kebab-case}.e2e-spec.ts' },
         ,
       ],
@@ -58,7 +59,10 @@ export const folderStructureConfig = createFolderStructure({
         { name: 'app.module.ts' },
       ],
     },
-
+    utils_folder: {
+      name: 'utils',
+      children: [{ name: '*.ts' }, { ruleId: 'test_folder' }],
+    },
     core_folder: {
       name: 'core',
       enforceExistence: ['domain', 'core.module.ts'],
@@ -66,7 +70,7 @@ export const folderStructureConfig = createFolderStructure({
         { name: 'domain', ruleId: 'core_domain_folder' },
         { name: 'events', ruleId: 'core_events_folder' },
         { name: 'infra', ruleId: 'core_infra_folder' },
-
+        { name: 'utils', ruleId: 'utils_folder' },
         { name: 'core.module.ts' },
         { ruleId: 'test_folder' },
       ],

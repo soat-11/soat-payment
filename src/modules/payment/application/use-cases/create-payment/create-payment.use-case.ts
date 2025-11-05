@@ -1,4 +1,6 @@
+import { DomainPersistenceException } from '@core/domain/exceptions/domain.exception';
 import { DomainEventDispatcherImpl } from '@core/events/domain-event-dispatcher-impl';
+import { executeAllOrFail } from '@core/utils/promise-utils';
 import { PaymentDetailEntity } from '@payment/domain/entities/payment-detail.entity';
 import { PaymentEntity } from '@payment/domain/entities/payment.entity';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
@@ -22,7 +24,7 @@ export class CreatePaymentUseCaseImpl {
 
       payment.addPaymentDetail(paymentDetail.info);
 
-      await Promise.all([
+      await executeAllOrFail([
         this.uow.paymentRepository.save(payment),
         this.uow.paymentDetailRepository.save(paymentDetail),
       ]);
@@ -33,7 +35,11 @@ export class CreatePaymentUseCaseImpl {
       );
     } catch (error) {
       await this.uow.rollback();
-      throw error;
+      if (error instanceof Error) {
+        throw error;
+      }
+
+      throw new DomainPersistenceException('Erro ao salvar pagamento');
     }
   }
 }

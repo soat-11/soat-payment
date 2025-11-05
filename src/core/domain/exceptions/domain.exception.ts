@@ -11,4 +11,5 @@ export class DomainConflictException extends DomainException {}
 export class DomainUnauthorizedException extends DomainException {}
 export class DomainForbiddenException extends DomainException {}
 export class DomainBusinessException extends DomainException {}
+export class DomainPersistenceException extends DomainException {}
 export class DomainExceptionGeneric extends DomainException {}

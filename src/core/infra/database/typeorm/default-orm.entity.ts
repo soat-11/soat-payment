@@ -15,13 +15,13 @@ export abstract class DefaultORMEntity {
 
   @CreateDateColumn({
     name: 'created_at',
-    type: 'timestamptz',
+    type: process.env.NODE_ENV === 'test' ? 'datetime' : 'timestamptz',
   })
   createdAt: Date;
 
   @UpdateDateColumn({
     name: 'updated_at',
-    type: 'timestamptz',
+    type: process.env.NODE_ENV === 'test' ? 'datetime' : 'timestamptz',
   })
   updatedAt: Date;
 }

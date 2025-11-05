@@ -1,10 +1,12 @@
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { DefaultORMEntity } from '@core/infra/database/typeorm/default-orm.entity';
-import { Column } from 'typeorm';
+import { Column, Entity } from 'typeorm';
 
+@Entity('pix_details')
 export class PixDetailORMEntity extends DefaultORMEntity {
   @Column({
-    type: 'string',
+    type: 'varchar',
+    length: 100,
     unique: true,
     primary: true,
     name: 'payment_id',
@@ -16,6 +18,6 @@ export class PixDetailORMEntity extends DefaultORMEntity {
   })
   paymentId!: UniqueEntityID;
 
-  @Column({ type: 'string', name: 'qr_code' })
+  @Column({ type: 'varchar', length: 200, name: 'qr_code' })
   qrCode!: string;
 }
