@@ -6,15 +6,12 @@ import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { PaymentDetailEntity } from '@payment/domain/entities/payment-detail.entity';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { DomainPersistenceException } from '@core/domain/exceptions/domain.exception';
+import { PaymentDetailRepository } from '@payment/domain/repositories/payment-detail.repository';
+import { TransactionalRepository } from '@core/infra/database/typeorm/transactional-repository';
 
-export interface PaymentDetailRepository {
-  save(detail: PaymentDetailEntity): Promise<void>;
-  findByPaymentId(
-    paymentId: UniqueEntityID,
-  ): Promise<PaymentDetailEntity | null>;
-}
-
-export class PaymentDetailRepositoryImpl implements PaymentDetailRepository {
+export class PaymentDetailRepositoryImpl
+  implements PaymentDetailRepository, TransactionalRepository
+{
   private transactionalManager: EntityManager | null = null;
 
   constructor(

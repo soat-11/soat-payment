@@ -16,6 +16,9 @@ import {
   CreatePaymentUseCaseInput,
 } from '@payment/application/use-cases/create-payment/create-payment.use-case';
 import { PinoLoggerService } from '@core/infra/logger/pino-logger';
+import { PaymentFactoryImpl } from '@payment/domain/factories/payment.factory';
+import { DomainEventDispatcherImpl } from '@core/events/domain-event-dispatcher-impl';
+import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 
 describe('CreatePaymentUseCase - Integration Test', () => {
   let dataSource: DataSource;
@@ -66,7 +69,12 @@ describe('CreatePaymentUseCase - Integration Test', () => {
       new PinoLoggerService(),
     );
 
-    useCase = new CreatePaymentUseCaseImpl(uow, new PinoLoggerService());
+    useCase = new CreatePaymentUseCaseImpl(
+      uow,
+      new PaymentFactoryImpl(new SystemDateImpl(new Date())),
+      new DomainEventDispatcherImpl(),
+      new PinoLoggerService(),
+    );
   });
 
   describe('Success', () => {

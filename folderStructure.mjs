@@ -256,6 +256,7 @@ export const folderStructureConfig = createFolderStructure({
         { name: 'exceptions', ruleId: 'module_exceptions_folder' },
         { name: 'enum', children: [{ name: '*.enum.ts' }] },
         { name: 'domain-events', ruleId: 'core_events_folder' },
+
         {
           name: 'service',
           children: [{ name: '*.service.ts' }, { ruleId: 'test_folder' }],
@@ -270,6 +271,10 @@ export const folderStructureConfig = createFolderStructure({
             { name: '{kebab-case}.repository.ts' },
             { ruleId: 'test_folder' },
           ],
+        },
+        {
+          name: 'factories',
+          children: [{ name: '*.factory.ts' }, { ruleId: 'test_folder' }],
         },
         { ruleId: 'test_folder' },
       ],

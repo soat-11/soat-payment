@@ -4,21 +4,10 @@ import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
 import { DomainEventHandler } from '@core/events/domain-event-handler';
 
 export class DomainEventDispatcherImpl implements DomainEventDispatcher {
-  private static instance: DomainEventDispatcherImpl;
-
   private handlers: Map<
     string,
     Array<(event: DomainEvent<DefaultEntity>) => void>
   > = new Map();
-
-  private constructor() {}
-
-  static getInstance(): DomainEventDispatcherImpl {
-    if (!DomainEventDispatcherImpl.instance) {
-      DomainEventDispatcherImpl.instance = new DomainEventDispatcherImpl();
-    }
-    return DomainEventDispatcherImpl.instance;
-  }
 
   register<T extends DefaultEntity>(
     eventName: string,

@@ -1,5 +1,5 @@
 import { DomainPersistenceException } from '@core/domain/exceptions/domain.exception';
-import { DomainEventDispatcherImpl } from '@core/events/domain-event-dispatcher-impl';
+import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { executeAllOrFail } from '@core/utils/promise-utils';
 import {
@@ -9,13 +9,15 @@ import {
 } from '@payment/application/use-cases/create-payment/create-payment.use-case';
 
 import { PaymentDetailEntity } from '@payment/domain/entities/payment-detail.entity';
-import { PaymentEntity } from '@payment/domain/entities/payment.entity';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 import { PaymentUnitOfWork } from '@payment/domain/repositories/payment-uow.repository';
+import { PaymentFactory } from '@payment/domain/factories/payment.factory';
 
 export class CreatePaymentUseCaseImpl implements CreatePaymentUseCase {
   constructor(
     private readonly uow: PaymentUnitOfWork,
+    private readonly paymentFactory: PaymentFactory,
+    private readonly eventDispatcher: DomainEventDispatcher,
     private readonly logger: AbstractLoggerService,
   ) {}
 
@@ -29,7 +31,8 @@ export class CreatePaymentUseCaseImpl implements CreatePaymentUseCase {
 
     try {
       this.logger.log('Creating payment entity');
-      const payment = PaymentEntity.create({
+
+      const payment = this.paymentFactory.create({
         amount: input.amount,
         type: PaymentType.PIX,
       });
@@ -51,7 +54,7 @@ export class CreatePaymentUseCaseImpl implements CreatePaymentUseCase {
       await this.uow.commit();
       this.logger.log('Payment and payment detail committed');
       payment.domainEvents.forEach((event) =>
-        DomainEventDispatcherImpl.getInstance().dispatch(event),
+        this.eventDispatcher.dispatch(event),
       );
       this.logger.log('Domain events dispatched');
     } catch (error) {

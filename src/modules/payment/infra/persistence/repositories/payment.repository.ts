@@ -8,8 +8,11 @@ import { DataSource, EntityManager, QueryRunner } from 'typeorm';
 import { PaymentMapper } from '../mapper/payment.mapper';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { DomainPersistenceException } from '@core/domain/exceptions/domain.exception';
+import { TransactionalRepository } from '@core/infra/database/typeorm/transactional-repository';
 
-export class PaymentRepositoryImpl implements PaymentRepository {
+export class PaymentRepositoryImpl
+  implements PaymentRepository, TransactionalRepository
+{
   private transactionalManager: EntityManager | null = null;
 
   constructor(

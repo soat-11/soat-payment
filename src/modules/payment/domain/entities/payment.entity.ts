@@ -8,8 +8,6 @@ import { DomainBusinessException } from '@core/domain/exceptions/domain.exceptio
 import { PixDetail } from '../value-objects/pix-detail.vo';
 import { PaymentTypeVO } from '../value-objects/payment-type.vo';
 import { PaymentAmountVO } from '../value-objects/payment-amount.vo';
-import { PaymentExpiredAtDomainServiceImpl } from '../service/payment-expired-at.service';
-import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { PaymentCreatedEvent } from '../events/payment-created.event';
 import { PaymentPaidEvent } from '../events/payment-paid.event';
 import {
@@ -33,20 +31,26 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
     readonly id: UniqueEntityID,
     public amount: PaymentAmountVO,
     public type: PaymentTypeVO,
+    expiresAt: Date,
   ) {
     super(id);
     this.status = PaymentStatusVO.create(PaymentStatus.PENDING);
-    this.expiresAt = new PaymentExpiredAtDomainServiceImpl(
-      new SystemDateImpl(new Date()),
-    ).execute().date;
+    this.expiresAt = expiresAt;
     // Object.freeze(this);
   }
 
-  static create(props: Omit<PaymentProps, 'status'>): PaymentEntity {
+  static create(
+    props: Omit<PaymentProps, 'status'> & { expiresAt: Date },
+  ): PaymentEntity {
     const type = PaymentTypeVO.create(props.type);
     const amount = PaymentAmountVO.create(props.amount);
 
-    const payment = new PaymentEntity(UniqueEntityID.create(), amount, type);
+    const payment = new PaymentEntity(
+      UniqueEntityID.create(),
+      amount,
+      type,
+      props.expiresAt,
+    );
     payment.addDomainEvent(new PaymentCreatedEvent(payment));
 
     return payment;
@@ -58,9 +62,8 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
   ): PaymentEntity {
     const type = PaymentTypeVO.create(props.type);
     const amount = PaymentAmountVO.create(props.amount);
-    const payment = new PaymentEntity(id, amount, type);
+    const payment = new PaymentEntity(id, amount, type, props.expiresAt);
     payment.status = PaymentStatusVO.create(props.status);
-    payment.expiresAt = props.expiresAt;
     return payment;
   }
 
