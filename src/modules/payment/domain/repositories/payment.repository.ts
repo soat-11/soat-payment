@@ -5,3 +5,5 @@ export interface PaymentRepository {
   save(payment: PaymentEntity): Promise<void>;
   findById(id: UniqueEntityID): Promise<PaymentEntity | null>;
 }
+
+export const PaymentRepository = Symbol('PaymentRepository');

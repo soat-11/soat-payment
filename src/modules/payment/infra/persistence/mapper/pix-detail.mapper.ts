@@ -1,14 +1,14 @@
 import { Result } from '@core/domain/result';
 import { AbstractMapper } from '@core/domain/mapper/abstract.mapper';
-import { PixDetailORMEntity } from '../entities/pix-detail-typeorm.entity';
-import { PaymentDetailEntity } from '@payment/domain/entities/payment-detail.entity';
+import { PixDetailMongoDBEntity } from '../entities/pix-detail-mongodb.entity';
+
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
 
 export class PixDetailMapper extends AbstractMapper<
-  PixDetailORMEntity,
+  PixDetailMongoDBEntity,
   PaymentDetailEntity
 > {
-  toDomain(orm: PixDetailORMEntity): Result<PaymentDetailEntity> {
+  toDomain(orm: PixDetailMongoDBEntity): Result<PaymentDetailEntity> {
     try {
       const paymentDetail = PaymentDetailEntity.fromPixDetailPersistence(
         orm.id,
@@ -31,9 +31,9 @@ export class PixDetailMapper extends AbstractMapper<
     }
   }
 
-  toORM(domain: PaymentDetailEntity): Result<PixDetailORMEntity> {
+  toORM(domain: PaymentDetailEntity): Result<PixDetailMongoDBEntity> {
     try {
-      const orm = new PixDetailORMEntity();
+      const orm = new PixDetailMongoDBEntity();
       orm.id = domain.id;
       orm.paymentId = domain.paymentId;
       orm.qrCode = domain.getQrCode();

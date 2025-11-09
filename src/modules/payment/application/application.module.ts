@@ -3,12 +3,19 @@ import { Module } from '@nestjs/common';
 import { CreatePaymentUseCaseImpl } from './use-cases/create-payment/create-payment-impl.use-case';
 import { CreateQRCodeImageUseCaseImpl } from './use-cases/create-qrcode/create-qrcode-impl.use-case';
 
-import { PaymentFactoryImpl } from '../domain/factories/payment.factory';
+import {
+  PaymentFactory,
+  PaymentFactoryImpl,
+} from '../domain/factories/payment.factory';
 
 import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { DomainEventDispatcherImpl } from '@core/events/domain-event-dispatcher-impl';
 import { PinoLoggerService } from '@core/infra/logger/pino-logger';
 import { CreatePaymentUseCase } from '@payment/application/use-cases/create-payment/create-payment.use-case';
+import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
+import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
+import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
+import { CreateQRCodeImage } from '@payment/application/use-cases/create-qrcode/create-qrcode.use-case';
 
 @Module({
   providers: [
@@ -37,17 +44,23 @@ import { CreatePaymentUseCase } from '@payment/application/use-cases/create-paym
     },
     {
       provide: CreatePaymentUseCase,
-      useFactory: (uow, factory, dispatcher, logger, createQRCodeUseCase) => {
+      useFactory: (
+        repository: PaymentRepository,
+        factory: PaymentFactory,
+        dispatcher: DomainEventDispatcher,
+        logger: AbstractLoggerService,
+        createQRCodeUseCase: CreateQRCodeImage,
+      ) => {
         return new CreatePaymentUseCaseImpl(
-          uow,
           factory,
           dispatcher,
           logger,
           createQRCodeUseCase,
+          repository,
         );
       },
       inject: [
-        'PaymentUnitOfWork',
+        PaymentRepository,
         'PaymentFactory',
         'DomainEventDispatcher',
         PinoLoggerService,

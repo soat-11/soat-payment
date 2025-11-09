@@ -1,19 +1,12 @@
-import { DataSource } from 'typeorm';
+import { DataSource, MongoRepository } from 'typeorm';
+import { MongoMemoryServer } from 'mongodb-memory-server';
 
 import { CreatePaymentUseCaseImpl } from '@payment/application/use-cases/create-payment/create-payment-impl.use-case';
-import { PaymentRepositoryImpl } from '@payment/infra/persistence/repositories/payment.repository';
-import { PaymentDetailRepositoryImpl } from '@payment/infra/persistence/repositories/payment-detail.repository';
-import { TypeormPaymentUOW } from '@payment/infra/persistence/typeorm-payment.uow';
+
 import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
-import { PaymentTypeORMEntity } from '@payment/infra/persistence/entities/payment-typeorm.entity';
-import { PixDetailORMEntity } from '@payment/infra/persistence/entities/pix-detail-typeorm.entity';
-import { PixDetailMapper } from '@payment/infra/persistence/mapper/pix-detail.mapper';
 import { PaymentMapper } from '@payment/infra/persistence/mapper/payment.mapper';
-import {
-  DomainBusinessException,
-  DomainPersistenceException,
-} from '@core/domain/exceptions/domain.exception';
+import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
 import {
   CreatePaymentUseCase,
   CreatePaymentUseCaseInput,
@@ -24,66 +17,63 @@ import { DomainEventDispatcherImpl } from '@core/events/domain-event-dispatcher-
 import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { CreateQRCodeImageUseCaseImpl } from '@payment/application/use-cases/create-qrcode/create-qrcode-impl.use-case';
 import { CreateQRCodeImage } from '@payment/application/use-cases/create-qrcode/create-qrcode.use-case';
-import { Result } from '@core/domain/result';
+import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
+import { PaymentMongoDBRepositoryImpl } from '@payment/infra/persistence/repositories/payment-mongodb.repository';
+import { PaymentMongoDBEntity } from '@payment/infra/persistence/entities/payment-mongodb.entity';
+import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 
 describe('CreatePaymentUseCase - Integration Test', () => {
+  let mongoServer: MongoMemoryServer;
   let dataSource: DataSource;
-  let uow: TypeormPaymentUOW;
   let useCase: CreatePaymentUseCase;
-  let paymentRepository: PaymentRepositoryImpl;
-  let paymentDetailRepository: PaymentDetailRepositoryImpl;
+  let paymentRepository: PaymentRepository;
+  let mongoRepository: MongoRepository<PaymentMongoDBEntity>;
   let createQRCodeUseCase: CreateQRCodeImage;
 
   beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    const mongoUri = mongoServer.getUri();
+
     dataSource = new DataSource({
-      type: 'sqlite',
-      database: ':memory:',
-      entities: [PaymentTypeORMEntity, PixDetailORMEntity],
+      type: 'mongodb',
+      url: mongoUri,
+      entities: [PaymentMongoDBEntity],
       synchronize: true,
-      logging: false,
     });
 
     await dataSource.initialize();
+
+    mongoRepository = dataSource.getMongoRepository(PaymentMongoDBEntity);
+
+    paymentRepository = new PaymentMongoDBRepositoryImpl(
+      mongoRepository,
+      new PaymentMapper(),
+      new PinoLoggerService(),
+    );
   });
 
   afterAll(async () => {
-    await dataSource.destroy();
+    if (dataSource.isInitialized) {
+      await mongoRepository.clear();
+      await dataSource.destroy();
+    }
+
+    if (mongoServer) {
+      await mongoServer.stop();
+    }
   });
 
   beforeEach(async () => {
-    await dataSource.getRepository(PixDetailORMEntity).clear();
-    await dataSource.getRepository(PaymentTypeORMEntity).clear();
-
-    const paymentMapper = new PaymentMapper();
-    const pixDetailMapper = new PixDetailMapper();
-
-    paymentRepository = new PaymentRepositoryImpl(
-      dataSource,
-      paymentMapper,
-      new PinoLoggerService(),
-    );
-
-    paymentDetailRepository = new PaymentDetailRepositoryImpl(
-      dataSource,
-      pixDetailMapper,
-      new PinoLoggerService(),
-    );
+    await mongoRepository.clear();
 
     createQRCodeUseCase = new CreateQRCodeImageUseCaseImpl();
 
-    uow = new TypeormPaymentUOW(
-      dataSource,
-      paymentRepository,
-      paymentDetailRepository,
-      new PinoLoggerService(),
-    );
-
     useCase = new CreatePaymentUseCaseImpl(
-      uow,
       new PaymentFactoryImpl(new SystemDateImpl(new Date())),
       new DomainEventDispatcherImpl(),
       new PinoLoggerService(),
       createQRCodeUseCase,
+      paymentRepository,
     );
   });
 
@@ -95,133 +85,87 @@ describe('CreatePaymentUseCase - Integration Test', () => {
 
       await useCase.execute(input);
 
-      const payments = await dataSource
-        .getRepository(PaymentTypeORMEntity)
-        .find();
+      const payments = await mongoRepository.find();
 
       expect(payments).toHaveLength(1);
       expect(payments[0].amount).toBe(100);
       expect(payments[0].type).toBe(PaymentType.PIX);
       expect(payments[0].status).toBe(PaymentStatus.PENDING);
-
-      const paymentDetails = await dataSource
-        .getRepository(PixDetailORMEntity)
-        .find();
-
-      expect(paymentDetails).toHaveLength(1);
-      expect(paymentDetails[0].qrCode).toMatch(/^data:image\/png;base64,/);
-      expect(paymentDetails[0].paymentId.value).toBe(payments[0].id.value);
+      expect(payments[0].id).toBeDefined();
+      expect(payments[0]._id).toBeDefined();
     });
 
-    it('should create a payment and save to database with qr code', async () => {
+    it('should create a payment with domain ID preserved', async () => {
       const input: CreatePaymentUseCaseInput = {
         amount: 100,
       };
 
-      const { qrCode } = await useCase.execute(input);
+      const result = await useCase.execute(input);
 
-      expect(qrCode).toMatch(/^data:image\/png;base64,/);
+      const payments = await mongoRepository.find();
+      const payment = payments[0];
 
-      const paymentDetails = await dataSource
-        .getRepository(PixDetailORMEntity)
-        .find();
-
-      const payments = await dataSource
-        .getRepository(PaymentTypeORMEntity)
-        .find();
-
-      expect(paymentDetails).toHaveLength(1);
-      expect(paymentDetails[0].qrCode).toBe(qrCode);
-      expect(paymentDetails[0].paymentId.value).toBe(payments[0].id.value);
+      expect(payment).toBeDefined();
+      expect(payment.id).toBeDefined();
+      expect(payment.amount).toBe(100);
+      expect(result.qrCode).toMatch(/^data:image\/png;base64,/);
     });
   });
 
-  describe('Rollback', () => {
-    it('should rollback transaction on error and not save to database', async () => {
+  describe('Validation', () => {
+    it('should reject invalid amount (negative)', async () => {
       const input: CreatePaymentUseCaseInput = {
         amount: -100,
       };
 
-      jest
-        .spyOn(createQRCodeUseCase, 'execute')
-        .mockResolvedValue(
-          Result.fail(new DomainBusinessException('Erro ao criar QR Code')),
-        );
+      await expect(useCase.execute(input)).rejects.toThrow(
+        DomainBusinessException,
+      );
 
-      await expect(useCase.execute(input)).rejects.toThrow();
-
-      const payments = await dataSource
-        .getRepository(PaymentTypeORMEntity)
-        .find();
-
-      const paymentDetails = await dataSource
-        .getRepository(PixDetailORMEntity)
-        .find();
-
+      const payments = await mongoRepository.find();
       expect(payments).toHaveLength(0);
-      expect(paymentDetails).toHaveLength(0);
     });
 
-    it('should rollback on validation error during detail entity creation', async () => {
+    it('should reject invalid amount (zero)', async () => {
       const input: CreatePaymentUseCaseInput = {
-        amount: -100,
+        amount: 0,
       };
 
-      await expect(useCase.execute(input)).rejects.toThrow();
+      await expect(useCase.execute(input)).rejects.toThrow(
+        DomainBusinessException,
+      );
 
-      const payments = await dataSource
-        .getRepository(PaymentTypeORMEntity)
-        .find();
-
-      const paymentDetails = await dataSource
-        .getRepository(PixDetailORMEntity)
-        .find();
-
+      const payments = await mongoRepository.find();
       expect(payments).toHaveLength(0);
-      expect(paymentDetails).toHaveLength(0);
-    });
-
-    it('Should rollback on detail fails to save', async () => {
-      const input: CreatePaymentUseCaseInput = {
-        amount: -100,
-      };
-
-      await expect(useCase.execute(input)).rejects.toThrow();
-
-      const payments = await dataSource
-        .getRepository(PaymentTypeORMEntity)
-        .find();
-
-      const paymentDetails = await dataSource
-        .getRepository(PixDetailORMEntity)
-        .find();
-
-      expect(payments).toHaveLength(0);
-      expect(paymentDetails).toHaveLength(0);
     });
   });
 
-  describe('Transaction Isolation', () => {
-    it('should maintain transaction isolation between tests', async () => {
+  describe('Repository Integration', () => {
+    it('should find payment by domain ID', async () => {
       const input: CreatePaymentUseCaseInput = {
-        amount: 500,
+        amount: 200,
       };
 
-      jest
-        .spyOn(uow.paymentDetailRepository, 'save')
-        .mockRejectedValue(
-          new DomainPersistenceException(
-            'Erro ao salvar detalhe de pagamento Pix',
-          ),
-        );
+      await useCase.execute(input);
 
-      await expect(useCase.execute(input)).rejects.toThrow();
+      const payments = await mongoRepository.find();
+      expect(payments).toHaveLength(1);
 
-      const payments = await dataSource
-        .getRepository(PaymentTypeORMEntity)
-        .find();
+      const payment = payments[0];
+      const foundPayment = await paymentRepository.findById(payment.id);
 
-      expect(payments).toHaveLength(0);
+      expect(foundPayment).toBeDefined();
+      expect(foundPayment!.id.value).toBe(payment.id.value);
+      expect(foundPayment!.amount.value).toBe(200);
+      expect(foundPayment!.status.value).toBe(PaymentStatus.PENDING);
+    });
+
+    it('should return null for non-existent payment', async () => {
+      const fakeId = UniqueEntityID.create();
+
+      const foundPayment = await paymentRepository.findById(fakeId);
+
+      expect(foundPayment).toBeNull();
     });
   });
 });

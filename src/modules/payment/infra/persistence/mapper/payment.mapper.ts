@@ -1,21 +1,28 @@
 import { Result } from '@core/domain/result';
 import { PaymentEntity } from '@payment/domain/entities/payment.entity';
-import { PaymentTypeORMEntity } from '../entities/payment-typeorm.entity';
+import { PaymentMongoDBEntity } from '../entities/payment-mongodb.entity';
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
 import { AbstractMapper } from '@core/domain/mapper/abstract.mapper';
 
 export class PaymentMapper extends AbstractMapper<
-  PaymentTypeORMEntity,
+  PaymentMongoDBEntity,
   PaymentEntity
 > {
-  toDomain(orm: PaymentTypeORMEntity): Result<PaymentEntity> {
+  toDomain(orm: PaymentMongoDBEntity): Result<PaymentEntity> {
     try {
-      const payment = PaymentEntity.fromPersistence(orm.id, {
+      let payment = PaymentEntity.fromPersistence(orm.id, {
         amount: orm.amount,
         type: orm.type,
         status: orm.status,
         expiresAt: orm.expiresAt,
       });
+
+      if (orm.provider && orm.externalPaymentId) {
+        payment = payment.addPaymentProvider({
+          externalPaymentId: orm.externalPaymentId,
+          provider: orm.provider,
+        });
+      }
 
       return Result.ok(payment);
     } catch (error) {
@@ -31,14 +38,18 @@ export class PaymentMapper extends AbstractMapper<
     }
   }
 
-  toORM(domain: PaymentEntity): Result<PaymentTypeORMEntity> {
+  toORM(domain: PaymentEntity): Result<PaymentMongoDBEntity> {
     try {
-      const orm = new PaymentTypeORMEntity();
+      const orm = new PaymentMongoDBEntity();
       orm.id = domain.id;
       orm.amount = domain.amount.value;
       orm.type = domain.type.value;
       orm.status = domain.status.value;
       orm.expiresAt = domain.expiresAt;
+
+      orm.provider = domain.paymentProvider?.value.provider;
+      orm.externalPaymentId =
+        domain.paymentProvider?.value.externalPaymentId ?? null;
 
       return Result.ok(orm);
     } catch (error) {
