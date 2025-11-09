@@ -233,18 +233,31 @@ export const folderStructureConfig = createFolderStructure({
         },
         {
           name: 'dto',
-          children: [{ name: '*.dto.ts' }, { ruleId: 'test_folder' }],
+          children: [
+            {
+              name: 'request',
+              children: [{ name: '*.dto.ts' }, { ruleId: 'test_folder' }],
+            },
+            {
+              name: 'response',
+              children: [{ name: '*.dto.ts' }, { ruleId: 'test_folder' }],
+            },
+          ],
         },
         {
           name: 'docs',
           children: [
             {
-              name: '*',
+              name: '{kebab-case}',
               children: [{ name: '*.doc.ts' }, { ruleId: 'test_folder' }],
             },
-            { ruleId: 'test_folder' },
           ],
         },
+        {
+          name: 'filters',
+          children: [{ name: '*.filter.ts' }, { ruleId: 'test_folder' }],
+        },
+        { name: 'presentation.module.ts' },
         { ruleId: 'test_folder' },
       ],
     },

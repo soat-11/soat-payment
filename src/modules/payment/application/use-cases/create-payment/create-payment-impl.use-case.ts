@@ -12,6 +12,7 @@ import { PaymentDetailEntity } from '@payment/domain/entities/payment-detail.ent
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 import { PaymentUnitOfWork } from '@payment/domain/repositories/payment-uow.repository';
 import { PaymentFactory } from '@payment/domain/factories/payment.factory';
+import { CreateQRCodeImage } from '@payment/application/use-cases/create-qrcode/create-qrcode.use-case';
 
 export class CreatePaymentUseCaseImpl implements CreatePaymentUseCase {
   constructor(
@@ -19,6 +20,7 @@ export class CreatePaymentUseCaseImpl implements CreatePaymentUseCase {
     private readonly paymentFactory: PaymentFactory,
     private readonly eventDispatcher: DomainEventDispatcher,
     private readonly logger: AbstractLoggerService,
+    private readonly createQRCodeUseCase: CreateQRCodeImage,
   ) {}
 
   async execute(
@@ -37,26 +39,45 @@ export class CreatePaymentUseCaseImpl implements CreatePaymentUseCase {
         type: PaymentType.PIX,
       });
 
+      this.logger.log('Creating QR Code', { paymentId: payment.id.value });
+
+      const qrCode = await this.createQRCodeUseCase.execute({
+        qrData: payment.id.value,
+      });
+
+      if (qrCode.isFailure) {
+        this.logger.error('Error creating QR Code', { error: qrCode.error });
+        throw qrCode.error;
+      }
+
       this.logger.log('Creating payment detail');
+
       const paymentDetail = PaymentDetailEntity.createPixDetail(payment.id, {
-        qrCode: input.qrCode,
+        qrCode: qrCode.value.image,
       });
 
       payment.addPaymentDetail(paymentDetail.info);
 
       this.logger.log('Saving payment and payment detail');
+
       await executeAllOrFail([
         this.uow.paymentRepository.save(payment),
         this.uow.paymentDetailRepository.save(paymentDetail),
       ]);
-      this.logger.log('Payment and payment detail saved');
 
       await this.uow.commit();
+
       this.logger.log('Payment and payment detail committed');
+
       payment.domainEvents.forEach((event) =>
         this.eventDispatcher.dispatch(event),
       );
+
       this.logger.log('Domain events dispatched');
+
+      return {
+        qrCode: qrCode.value.image,
+      };
     } catch (error) {
       this.logger.error('Error creating payment', { error });
       await this.uow.rollback();

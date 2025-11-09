@@ -1,9 +1,10 @@
 export type CreatePaymentUseCaseInput = {
   readonly amount: number;
-  readonly qrCode: string;
 };
 
-export type CreatePaymentUseCaseOutput = void;
+export type CreatePaymentUseCaseOutput = {
+  readonly qrCode: string;
+};
 
 export interface CreatePaymentUseCase {
   execute(

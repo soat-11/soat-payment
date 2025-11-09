@@ -10,7 +10,10 @@ import { PaymentTypeORMEntity } from '@payment/infra/persistence/entities/paymen
 import { PixDetailORMEntity } from '@payment/infra/persistence/entities/pix-detail-typeorm.entity';
 import { PixDetailMapper } from '@payment/infra/persistence/mapper/pix-detail.mapper';
 import { PaymentMapper } from '@payment/infra/persistence/mapper/payment.mapper';
-import { DomainPersistenceException } from '@core/domain/exceptions/domain.exception';
+import {
+  DomainBusinessException,
+  DomainPersistenceException,
+} from '@core/domain/exceptions/domain.exception';
 import {
   CreatePaymentUseCase,
   CreatePaymentUseCaseInput,
@@ -19,6 +22,9 @@ import { PinoLoggerService } from '@core/infra/logger/pino-logger';
 import { PaymentFactoryImpl } from '@payment/domain/factories/payment.factory';
 import { DomainEventDispatcherImpl } from '@core/events/domain-event-dispatcher-impl';
 import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
+import { CreateQRCodeImageUseCaseImpl } from '@payment/application/use-cases/create-qrcode/create-qrcode-impl.use-case';
+import { CreateQRCodeImage } from '@payment/application/use-cases/create-qrcode/create-qrcode.use-case';
+import { Result } from '@core/domain/result';
 
 describe('CreatePaymentUseCase - Integration Test', () => {
   let dataSource: DataSource;
@@ -26,6 +32,7 @@ describe('CreatePaymentUseCase - Integration Test', () => {
   let useCase: CreatePaymentUseCase;
   let paymentRepository: PaymentRepositoryImpl;
   let paymentDetailRepository: PaymentDetailRepositoryImpl;
+  let createQRCodeUseCase: CreateQRCodeImage;
 
   beforeAll(async () => {
     dataSource = new DataSource({
@@ -62,6 +69,8 @@ describe('CreatePaymentUseCase - Integration Test', () => {
       new PinoLoggerService(),
     );
 
+    createQRCodeUseCase = new CreateQRCodeImageUseCaseImpl();
+
     uow = new TypeormPaymentUOW(
       dataSource,
       paymentRepository,
@@ -74,6 +83,7 @@ describe('CreatePaymentUseCase - Integration Test', () => {
       new PaymentFactoryImpl(new SystemDateImpl(new Date())),
       new DomainEventDispatcherImpl(),
       new PinoLoggerService(),
+      createQRCodeUseCase,
     );
   });
 
@@ -81,7 +91,6 @@ describe('CreatePaymentUseCase - Integration Test', () => {
     it('should create a payment and save to database', async () => {
       const input: CreatePaymentUseCaseInput = {
         amount: 100,
-        qrCode: 'test-qr-code-123',
       };
 
       await useCase.execute(input);
@@ -100,7 +109,29 @@ describe('CreatePaymentUseCase - Integration Test', () => {
         .find();
 
       expect(paymentDetails).toHaveLength(1);
-      expect(paymentDetails[0].qrCode).toBe('test-qr-code-123');
+      expect(paymentDetails[0].qrCode).toMatch(/^data:image\/png;base64,/);
+      expect(paymentDetails[0].paymentId.value).toBe(payments[0].id.value);
+    });
+
+    it('should create a payment and save to database with qr code', async () => {
+      const input: CreatePaymentUseCaseInput = {
+        amount: 100,
+      };
+
+      const { qrCode } = await useCase.execute(input);
+
+      expect(qrCode).toMatch(/^data:image\/png;base64,/);
+
+      const paymentDetails = await dataSource
+        .getRepository(PixDetailORMEntity)
+        .find();
+
+      const payments = await dataSource
+        .getRepository(PaymentTypeORMEntity)
+        .find();
+
+      expect(paymentDetails).toHaveLength(1);
+      expect(paymentDetails[0].qrCode).toBe(qrCode);
       expect(paymentDetails[0].paymentId.value).toBe(payments[0].id.value);
     });
   });
@@ -109,8 +140,13 @@ describe('CreatePaymentUseCase - Integration Test', () => {
     it('should rollback transaction on error and not save to database', async () => {
       const input: CreatePaymentUseCaseInput = {
         amount: -100,
-        qrCode: 'test-qr-code',
       };
+
+      jest
+        .spyOn(createQRCodeUseCase, 'execute')
+        .mockResolvedValue(
+          Result.fail(new DomainBusinessException('Erro ao criar QR Code')),
+        );
 
       await expect(useCase.execute(input)).rejects.toThrow();
 
@@ -128,8 +164,7 @@ describe('CreatePaymentUseCase - Integration Test', () => {
 
     it('should rollback on validation error during detail entity creation', async () => {
       const input: CreatePaymentUseCaseInput = {
-        amount: 100,
-        qrCode: '',
+        amount: -100,
       };
 
       await expect(useCase.execute(input)).rejects.toThrow();
@@ -149,7 +184,6 @@ describe('CreatePaymentUseCase - Integration Test', () => {
     it('Should rollback on detail fails to save', async () => {
       const input: CreatePaymentUseCaseInput = {
         amount: -100,
-        qrCode: 'test-qr-code',
       };
 
       await expect(useCase.execute(input)).rejects.toThrow();
@@ -171,7 +205,6 @@ describe('CreatePaymentUseCase - Integration Test', () => {
     it('should maintain transaction isolation between tests', async () => {
       const input: CreatePaymentUseCaseInput = {
         amount: 500,
-        qrCode: 'isolation-test-qr-code',
       };
 
       jest
