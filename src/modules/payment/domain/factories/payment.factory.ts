@@ -7,6 +7,8 @@ export interface PaymentFactory {
   create(props: { amount: number; type: PaymentType }): PaymentEntity;
 }
 
+export const PaymentFactory = Symbol('PaymentFactory');
+
 export class PaymentFactoryImpl implements PaymentFactory {
   constructor(private readonly systemDateService: SystemDateDomainService) {}
 

@@ -34,14 +34,13 @@ export class PaymentMongoDBEntity extends DefaultMongoDBEntity {
 
   @Column({
     type: 'string',
-    name: 'external_payment_id',
+
     nullable: true,
   })
   externalPaymentId: string | null;
 
   @Column({
-    type: 'date',
-    name: 'expires_at',
+    type: 'timestamptz',
   })
   expiresAt!: Date;
 }

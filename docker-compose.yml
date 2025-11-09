@@ -1,0 +1,174 @@
+services:
+  # Subir o app em modo com uma replica
+  app:
+    build:
+      context: .
+      dockerfile: dockerfile.dev
+    container_name: payment-service-dev
+    ports:
+      - '3010:3010'
+      - '9229:9229'
+    environment:
+      NODE_ENV: development
+      PORT: 3010
+      MONGODB_URI: mongodb://mongo:27017/payment
+      MONGODB_WRITE_CONCERN: 1
+    volumes:
+      - .:/app
+    command: yarn start:dev
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - payment-network
+    restart: unless-stopped
+    profiles:
+      - dev
+
+  # Subir o app em modo com replicas
+  app-replica:
+    build:
+      context: .
+      dockerfile: dockerfile.dev
+    container_name: payment-service-replica
+    ports:
+      - '3010:3010'
+      - '9229:9229'
+    environment:
+      NODE_ENV: production
+      PORT: 3010
+      MONGODB_URI: mongodb://mongo1:27017,mongo2:27018/payment?replicaSet=rs0
+      MONGODB_WRITE_CONCERN: 2
+    volumes:
+      - .:/app
+    command: yarn start:dev
+    depends_on:
+      - mongo1
+      - mongo2
+    networks:
+      - payment-network
+    restart: unless-stopped
+    profiles:
+      - replica
+
+  mongo:
+    image: mongo:6-jammy
+    container_name: payment-mongo
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_DATABASE: payment
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - payment-network
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    profiles:
+      - dev
+
+  mongo1:
+    image: mongo:6-jammy
+    container_name: payment-mongo1
+    command: ['--replSet', 'rs0', '--bind_ip_all', '--port', '27017']
+    ports:
+      - '27017:27017'
+    networks:
+      - payment-network
+    volumes:
+      - mongo1-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - replica
+
+  mongo2:
+    image: mongo:6-jammy
+    container_name: payment-mongo2
+    command: ['--replSet', 'rs0', '--bind_ip_all', '--port', '27018']
+    ports:
+      - '27018:27018'
+    networks:
+      - payment-network
+    volumes:
+      - mongo2-data:/data/db
+    profiles:
+      - replica
+
+  mongo-init:
+    image: mongo:6-jammy
+    container_name: mongo-init
+    depends_on:
+      - mongo1
+      - mongo2
+    networks:
+      - payment-network
+    command: >
+      mongosh --host mongo1:27017 --eval "
+        rs.initiate({
+          _id: 'rs0',
+          members: [
+            { _id: 0, host: 'mongo1:27017', priority: 2 },
+            { _id: 1, host: 'mongo2:27018', priority: 1 }
+          ]
+        });
+      "
+    restart: 'no'
+    profiles:
+      - replica
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: payment-mongo-express
+    ports:
+      - '8081:8081'
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongo:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: 'true'
+    depends_on:
+      - mongo
+    networks:
+      - payment-network
+    restart: unless-stopped
+    profiles:
+      - dev
+
+  mongo-express-replica:
+    image: mongo-express:latest
+    container_name: payment-mongo-express-replica
+    ports:
+      - '8081:8081'
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongo1:27017,mongo2:27018/?replicaSet=rs0
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
+    depends_on:
+      - mongo1
+      - mongo2
+    networks:
+      - payment-network
+    restart: unless-stopped
+    profiles:
+      - replica
+
+networks:
+  payment-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
+    driver: local
+  mongo1-data:
+    driver: local
+  mongo2-data:
+    driver: local

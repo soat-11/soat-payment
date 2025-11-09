@@ -1,21 +1,19 @@
 import { Module } from '@nestjs/common';
 import { PaymentMapper } from './persistence/mapper/payment.mapper';
-
-import { PinoLoggerService } from '@core/infra/logger/pino-logger';
-
 import { PaymentMongoDBRepositoryImpl } from '@payment/infra/persistence/repositories/payment-mongodb.repository';
 import { MongoRepository } from 'typeorm';
 import { PaymentMongoDBEntity } from '@payment/infra/persistence/entities/payment-mongodb.entity';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { MongoModule } from '@payment/infra/persistence/datasource/mongo.module';
+import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
+import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
-  imports: [MongoModule],
+  imports: [MongoModule, TypeOrmModule.forFeature([PaymentMongoDBEntity])],
   providers: [
     PaymentMapper,
-
     {
-      provide: 'PaymentRepository',
+      provide: PaymentRepository,
       useFactory: (
         mongoRepository: MongoRepository<PaymentMongoDBEntity>,
         mapper: PaymentMapper,
@@ -28,17 +26,12 @@ import { MongoModule } from '@payment/infra/persistence/datasource/mongo.module'
         );
       },
       inject: [
-        MongoRepository<PaymentMongoDBEntity>,
+        getRepositoryToken(PaymentMongoDBEntity),
         PaymentMapper,
-        PinoLoggerService,
+        AbstractLoggerService,
       ],
     },
   ],
-  exports: [
-    'PaymentRepository',
-    'PaymentDetailRepository',
-    'PaymentUnitOfWork',
-    PaymentMapper,
-  ],
+  exports: [PaymentRepository, PaymentMapper],
 })
 export class PaymentInfraModule {}

@@ -7,7 +7,6 @@ import { Column, Entity, Index } from 'typeorm';
 export class PixDetailMongoDBEntity extends DefaultMongoDBEntity {
   @Column({
     type: 'string',
-    name: 'payment_id',
     transformer: {
       to: (value: UniqueEntityID) => value.value,
       from: (value: string) => UniqueEntityID.create(value),
@@ -17,7 +16,6 @@ export class PixDetailMongoDBEntity extends DefaultMongoDBEntity {
 
   @Column({
     type: 'string',
-    name: 'qr_code',
   })
   qrCode!: string;
 }

@@ -22,14 +22,12 @@ export abstract class DefaultMongoDBEntity {
   id: UniqueEntityID;
 
   @CreateDateColumn({
-    name: 'created_at',
-    type: 'timestamp',
+    type: 'timestamptz',
   })
   createdAt: Date;
 
   @UpdateDateColumn({
-    name: 'updated_at',
-    type: 'timestamp',
+    type: 'timestamptz',
   })
   updatedAt: Date;
 }

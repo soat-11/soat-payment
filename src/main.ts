@@ -1,4 +1,4 @@
-import '@core/infra/instrumentation';
+// import '@core/infra/instrumentation';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -9,16 +9,14 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useLogger(new PinoLoggerService());
 
-  // Validation Pipe global
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // Remove campos não definidos no DTO
-      forbidNonWhitelisted: true, // Retorna erro se enviar campos extras
-      transform: true, // Transforma payloads para tipos corretos
+      whitelist: true,
+      forbidNonWhitelisted: false,
+      transform: true,
     }),
   );
 
-  // Swagger Configuration
   const config = new DocumentBuilder()
     .setTitle('SOAT Payment API')
     .setDescription(
@@ -35,6 +33,8 @@ async function bootstrap() {
   await app.listen(port);
 
   console.log(`🚀 Application is running on: http://localhost:${port}`);
-  console.log(`📚 Swagger docs available at: http://localhost:${port}/api/docs`);
+  console.log(
+    `📚 Swagger docs available at: http://localhost:${port}/api/docs`,
+  );
 }
 bootstrap();

@@ -10,14 +10,15 @@ import {
 
 import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { DomainEventDispatcherImpl } from '@core/events/domain-event-dispatcher-impl';
-import { PinoLoggerService } from '@core/infra/logger/pino-logger';
 import { CreatePaymentUseCase } from '@payment/application/use-cases/create-payment/create-payment.use-case';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { CreateQRCodeImage } from '@payment/application/use-cases/create-qrcode/create-qrcode.use-case';
+import { PaymentInfraModule } from '@payment/infra/infra.module';
 
 @Module({
+  imports: [PaymentInfraModule],
   providers: [
     {
       provide: 'SystemDateDomainService',
@@ -26,7 +27,7 @@ import { CreateQRCodeImage } from '@payment/application/use-cases/create-qrcode/
       },
     },
     {
-      provide: 'PaymentFactory',
+      provide: PaymentFactory,
       useFactory: (systemDateService) => {
         return new PaymentFactoryImpl(systemDateService);
       },
@@ -61,9 +62,9 @@ import { CreateQRCodeImage } from '@payment/application/use-cases/create-qrcode/
       },
       inject: [
         PaymentRepository,
-        'PaymentFactory',
+        PaymentFactory,
         'DomainEventDispatcher',
-        PinoLoggerService,
+        AbstractLoggerService,
         CreateQRCodeImageUseCaseImpl,
       ],
     },

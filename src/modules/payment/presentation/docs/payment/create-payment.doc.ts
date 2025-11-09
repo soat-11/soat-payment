@@ -30,8 +30,6 @@ export function CreatePaymentDoc() {
           description: 'Exemplo de requisição válida',
           value: {
             amount: 100.5,
-            qrCode:
-              '00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-426655440000',
           },
         },
       },

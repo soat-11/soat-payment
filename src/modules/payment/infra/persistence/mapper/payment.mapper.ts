@@ -46,6 +46,8 @@ export class PaymentMapper extends AbstractMapper<
       orm.type = domain.type.value;
       orm.status = domain.status.value;
       orm.expiresAt = domain.expiresAt;
+      orm.createdAt = domain.createdAt;
+      orm.updatedAt = domain.updatedAt;
 
       orm.provider = domain.paymentProvider?.value.provider;
       orm.externalPaymentId =
