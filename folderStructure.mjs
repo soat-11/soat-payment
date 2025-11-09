@@ -193,6 +193,7 @@ export const folderStructureConfig = createFolderStructure({
     module_application_folder: {
       name: '*',
       children: [
+        { name: 'application.module.ts' },
         {
           name: 'use-cases',
           children: [

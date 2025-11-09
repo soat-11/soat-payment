@@ -1,11 +1,12 @@
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
-import { ValueObject } from '@core/domain/value-objects/value-object.vo';
+import { PaymentDetailVO } from './payment-detail.vo';
+import { PaymentType } from '../enum/payment-type.enum';
 
 export type PixDetailProps = {
   qrCode: string;
 };
 
-export class PixDetail extends ValueObject<PixDetailProps> {
+export class PixDetailVO extends PaymentDetailVO<PixDetailProps> {
   protected constructor(props: PixDetailProps) {
     super(props);
   }
@@ -18,7 +19,19 @@ export class PixDetail extends ValueObject<PixDetailProps> {
     }
   }
 
-  static create(props: PixDetailProps): PixDetail {
-    return new PixDetail(props);
+  get paymentType(): PaymentType {
+    return PaymentType.PIX;
+  }
+
+  get qrCode(): string {
+    return this.value.qrCode;
+  }
+
+  toSummary(): string {
+    return `PIX: QR Code [${this.qrCode.substring(0, 20)}...]`;
+  }
+
+  static create(props: PixDetailProps): PixDetailVO {
+    return new PixDetailVO(props);
   }
 }

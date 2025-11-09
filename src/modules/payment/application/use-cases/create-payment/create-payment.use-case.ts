@@ -11,3 +11,5 @@ export interface CreatePaymentUseCase {
     input: CreatePaymentUseCaseInput,
   ): Promise<CreatePaymentUseCaseOutput>;
 }
+
+export const CreatePaymentUseCase = Symbol('CreatePaymentUseCase');

@@ -3,9 +3,8 @@ import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 import { PaymentStatusVO } from '@payment/domain/value-objects/payment-status.vo';
-import { PaymentDetailEntity } from './payment-detail.entity';
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
-import { PixDetail } from '../value-objects/pix-detail.vo';
+import { PixDetailVO } from '../value-objects/pix-detail.vo';
 import { PaymentTypeVO } from '../value-objects/payment-type.vo';
 import { PaymentAmountVO } from '../value-objects/payment-amount.vo';
 import { PaymentCreatedEvent } from '../events/payment-created.event';
@@ -14,6 +13,10 @@ import {
   PaymentProvider,
   PaymentProviderProps,
 } from '../value-objects/payment-provider.vo';
+import {
+  AnyPaymentDetail,
+  isPixDetail,
+} from '@payment/domain/value-objects/payment-detail.vo';
 
 export type PaymentProps = {
   amount: number;
@@ -22,7 +25,7 @@ export type PaymentProps = {
 };
 
 export class PaymentEntity extends AggregateRoot<PaymentEntity> {
-  public paymentDetail?: PaymentDetailEntity;
+  private _detail?: AnyPaymentDetail;
   public status: PaymentStatusVO;
   public paymentProvider?: PaymentProvider;
   public expiresAt: Date;
@@ -37,6 +40,18 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
     this.status = PaymentStatusVO.create(PaymentStatus.PENDING);
     this.expiresAt = expiresAt;
     // Object.freeze(this);
+  }
+
+  get detail(): AnyPaymentDetail | undefined {
+    return this._detail;
+  }
+
+  get pixDetail(): PixDetailVO | undefined {
+    return this._detail && isPixDetail(this._detail) ? this._detail : undefined;
+  }
+
+  get isPix(): boolean {
+    return this.type.value === PaymentType.PIX;
   }
 
   static create(
@@ -67,18 +82,14 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
     return payment;
   }
 
-  addPaymentDetail(detail: PixDetail): this {
-    // Strategy pattern vai ser implementado futuramente para suportar outros tipos de pagamento
-    if (this.type.value !== PaymentType.PIX) {
+  addPaymentDetail(detail: AnyPaymentDetail): this {
+    if (this.type.value !== detail.paymentType) {
       throw new DomainBusinessException(
-        'Tipo de detalhe de pagamento inválido',
+        `Tipo de detalhe inválido: esperado ${this.type.value}, recebido ${detail.paymentType}`,
       );
     }
 
-    this.paymentDetail = PaymentDetailEntity.createPixDetail(this.id, {
-      qrCode: detail.value.qrCode,
-    });
-
+    this._detail = detail;
     return this;
   }
 
