@@ -134,6 +134,7 @@ export const folderStructureConfig = createFolderStructure({
     core_infra_folder: {
       name: '*',
       children: [
+        { name: 'instrumentation', ruleId: 'core_instrumentation_folder' },
         {
           name: 'database',
           children: [

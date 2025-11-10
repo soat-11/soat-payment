@@ -23,7 +23,7 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+API de pagamentos do sistema SOAT implementada com DDD, Clean Architecture e OpenTelemetry para observabilidade completa.
 
 ## Project setup
 
@@ -34,15 +34,103 @@ $ yarn install
 ## Compile and run the project
 
 ```bash
-# development
-$ yarn run start
-
-# watch mode
-$ yarn run start:dev
-
 # production mode
 $ yarn run start:prod
 ```
+
+## Docker - Ambientes e Observabilidade
+
+O projeto usa **Docker Compose moderno (v2.20+)** com `include` para carregar automaticamente todos os arquivos de serviços. Use os scripts npm/yarn ou comandos diretos com profiles:
+
+### 🚀 Subir TUDO (App + MongoDB + Observabilidade Completa)
+
+```bash
+# Sobe: App, MongoDB single, Jaeger, Prometheus, Loki, Grafana
+$ yarn docker:all
+```
+
+### 🔧 Desenvolvimento Básico (sem observabilidade)
+
+```bash
+# Apenas app + MongoDB single
+$ yarn docker:dev
+```
+
+### 📊 Desenvolvimento com Observabilidade Completa
+
+```bash
+# App + MongoDB + OTEL Stack (Jaeger, Prometheus, Loki, Grafana)
+$ yarn docker:dev:otel
+```
+
+### 🔁 Replica Set + Observabilidade
+
+```bash
+# App com MongoDB Replica Set + OTEL Stack
+$ yarn docker:replica:otel
+```
+
+### 🔍 Apenas Stack de Observabilidade (para testes)
+
+```bash
+# Sobe apenas: OTEL Collector, Jaeger, Prometheus, Loki, Grafana
+$ yarn docker:otel:only
+```
+
+### 📝 Ver logs dos containers
+
+```bash
+# Acompanhar logs de todos os containers em tempo real
+$ yarn docker:logs
+```
+
+### ⏹️ Parar containers
+
+```bash
+# Parar todos os containers
+$ yarn docker:down
+
+# Parar e remover volumes (limpa dados)
+$ yarn docker:down:volumes
+```
+
+> **Nota:** Todos os comandos `up` sobem em modo **detached** (`-d`), liberando o terminal. Use `yarn docker:logs` para ver os logs.
+
+## 📊 Acessar Dashboards
+
+Após subir com observabilidade (`docker:all` ou `docker:dev:otel`):
+
+| Serviço           | URL                            | Descrição                               |
+| ----------------- | ------------------------------ | --------------------------------------- |
+| **API**           | http://localhost:3010          | Aplicação NestJS                        |
+| **Swagger**       | http://localhost:3010/api/docs | Documentação da API                     |
+| **Grafana**       | http://localhost:3001          | Visualização de logs, métricas e traces |
+| **Jaeger**        | http://localhost:16686         | Distributed tracing                     |
+| **Prometheus**    | http://localhost:9090          | Métricas                                |
+| **Mongo Express** | http://localhost:8081          | Interface do MongoDB                    |
+
+**Credenciais Grafana:** `admin` / `admin`
+
+## 🔍 Observabilidade com OpenTelemetry
+
+A aplicação possui **instrumentação automática** que captura:
+
+- ✅ **Traces** - Requisições HTTP, queries de DB, propagação de contexto
+- ✅ **Logs** - Correlacionados com trace_id/span_id via Pino
+- ✅ **Métricas** - HTTP requests, latência, taxa de erro, métricas de sistema
+
+### Arquitetura
+
+```
+App (NestJS)
+   ↓ OTLP gRPC/HTTP
+OTEL Collector
+   ├→ Jaeger (traces)
+   ├→ Prometheus (metrics)
+   └→ Loki (logs)
+```
+
+Todos visualizados de forma unificada no **Grafana** com correlação automática entre traces e logs.
 
 ## Run tests
 

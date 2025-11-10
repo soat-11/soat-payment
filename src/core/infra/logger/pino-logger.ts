@@ -26,29 +26,29 @@ export class PinoLoggerService extends AbstractLoggerService<pino.Level> {
   }
 
   private handleTransport(): Pick<LoggerOptions, 'transport'> {
-    if (process.env.NODE_ENV === 'development') {
+    const isDev = process.env.NODE_ENV === 'development';
+
+    // Em desenvolvimento: logs coloridos no console
+    // OTEL auto-instrumentação envia para Loki em paralelo
+    if (isDev) {
       return {
         transport: {
           target: 'pino-pretty',
-          options: { colorize: true, translateTime: true },
+          options: {
+            colorize: true,
+            translateTime: true,
+            ignore: 'pid,hostname',
+          },
         },
       };
     }
 
+    // Em produção: JSON puro no stdout
+    // OTEL auto-instrumentação envia para Loki
+    // NÃO usar pino-loki (deixa OTEL fazer o trabalho)
     return {
       transport: undefined,
     };
-
-    // return {
-    //   transport: {
-    //     target: 'pino-loki',
-    //     options: {
-    //       batching: true,
-    //       interval: 5,
-    //       host: 'http://localhost:3100',
-    //     },
-    //   },
-    // };
   }
 
   fatal(message: string, ...optionalParams: any[]) {

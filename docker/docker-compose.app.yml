@@ -1,0 +1,84 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: dockerfile.dev
+    container_name: payment-service-dev
+    ports:
+      - '3010:3010'
+      - '9229:9229'
+    environment:
+      NODE_ENV: development
+      PORT: 3010
+      MONGODB_URI: mongodb://mongo:27017/payment
+      MONGODB_WRITE_CONCERN: 1
+      # Docker
+      DOCKER_ENV: 'true'
+
+      # OpenTelemetry (variáveis padrão do SDK)
+      OTEL_SDK_DISABLED: 'false' # true para desabilitar OTEL completamente
+      OTEL_SERVICE_NAME: 'soat-payment'
+      OTEL_RESOURCE_ATTRIBUTES: 'service.namespace=soat,deployment.environment=development'
+
+      # Exporters
+      OTEL_TRACES_EXPORTER: 'otlp'
+      OTEL_METRICS_EXPORTER: 'otlp'
+      OTEL_LOGS_EXPORTER: 'otlp'
+
+      # OTLP Endpoint
+      OTEL_EXPORTER_OTLP_PROTOCOL: 'http/protobuf'
+      OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otel-collector:4318'
+    volumes:
+      - ..:/app
+
+    command: yarn start:dev
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - payment-network
+    restart: unless-stopped
+    profiles:
+      - dev
+
+  app-replica:
+    build:
+      context: ..
+      dockerfile: dockerfile.dev
+    container_name: payment-service-replica
+    ports:
+      - '3010:3010'
+      - '9229:9229'
+    environment:
+      NODE_ENV: production
+      PORT: 3010
+      MONGODB_URI: mongodb://mongo1:27017,mongo2:27018/payment?replicaSet=rs0
+      MONGODB_WRITE_CONCERN: 2
+
+      DOCKER_ENV: 'true'
+
+      # OpenTelemetry
+      OTEL_SDK_DISABLED: 'false'
+      OTEL_SERVICE_NAME: 'soat-payment'
+      OTEL_RESOURCE_ATTRIBUTES: 'service.namespace=soat,deployment.environment=production'
+      OTEL_TRACES_EXPORTER: 'otlp'
+      OTEL_METRICS_EXPORTER: 'otlp'
+      OTEL_LOGS_EXPORTER: 'otlp'
+      OTEL_EXPORTER_OTLP_PROTOCOL: 'http/protobuf'
+      OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otel-collector:4318'
+    volumes:
+      - ..:/app
+
+    command: yarn start:dev
+    depends_on:
+      mongo1:
+        condition: service_healthy
+      mongo2:
+        condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
+    networks:
+      - payment-network
+    restart: unless-stopped
+    profiles:
+      - replica

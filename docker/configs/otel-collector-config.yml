@@ -1,0 +1,65 @@
+# Configuração simplificada inspirada em:
+# https://github.com/ErickWendel/rinha-de-backend-2024-q1-nodejs/tree/main/infra
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+
+exporters:
+  # Prometheus - Métricas
+  prometheus:
+    endpoint: '0.0.0.0:8889'
+    namespace: soat_payment
+
+  # OTLP para Jaeger - Traces
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+
+  # Prometheus Remote Write - Alternativa
+  prometheusremotewrite:
+    endpoint: http://prometheus:9090/api/v1/write
+
+  # Loki - Log aggregation
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
+    tls:
+      insecure: true
+
+  # Debug (console)
+  debug:
+    verbosity: detailed
+
+service:
+  pipelines:
+    # Traces → Jaeger
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/jaeger, debug]
+
+    # Métricas → Prometheus
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus, prometheusremotewrite]
+
+    # Logs → Loki + Console
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [loki, debug]

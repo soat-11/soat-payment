@@ -1,4 +1,4 @@
-// import '@core/infra/instrumentation';
+import { InstrumentationService } from '@core/infra/instrumentation';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -36,5 +36,17 @@ async function bootstrap() {
   console.log(
     `📚 Swagger docs available at: http://localhost:${port}/api/docs`,
   );
+
+  process.on('SIGTERM', async () => {
+    console.log('⚠️  SIGTERM signal received: closing HTTP server');
+    await InstrumentationService.shutdown();
+    await app.close();
+  });
+
+  process.on('SIGINT', async () => {
+    console.log('⚠️  SIGINT signal received: closing HTTP server');
+    await InstrumentationService.shutdown();
+    await app.close();
+  });
 }
 bootstrap();
