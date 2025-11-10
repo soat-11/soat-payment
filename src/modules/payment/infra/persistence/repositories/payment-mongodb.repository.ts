@@ -1,36 +1,85 @@
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
-
 import { PaymentEntity } from '@payment/domain/entities/payment.entity';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 import { PaymentMongoDBEntity } from '../entities/payment-mongodb.entity';
-
 import { MongoRepository } from 'typeorm';
 import { PaymentMapper } from '../mapper/payment.mapper';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { DomainPersistenceException } from '@core/domain/exceptions/domain.exception';
+import { PaymentDetailMapperFactory } from '../mapper/payment-detail-mapper.factory';
+import { PaymentType } from '@payment/domain/enum/payment-type.enum';
+import { DefaultMongoDBEntity } from '@core/infra/database/mongodb/default-mongodb.entity';
 
 export class PaymentMongoDBRepositoryImpl implements PaymentRepository {
   constructor(
-    private readonly mongoRepository: MongoRepository<PaymentMongoDBEntity>,
+    private readonly paymentMongoRepository: MongoRepository<PaymentMongoDBEntity>,
     private readonly paymentMapper: PaymentMapper,
+    private readonly detailMapperFactory: PaymentDetailMapperFactory,
     private readonly logger: AbstractLoggerService,
+
+    private readonly detailRepositories: Map<
+      PaymentType,
+      MongoRepository<DefaultMongoDBEntity>
+    >,
   ) {}
 
   async save(payment: PaymentEntity): Promise<void> {
     try {
       this.logger.log('Saving payment', { paymentId: payment.id.value });
 
-      const orm = this.paymentMapper.toORM(payment);
-      if (orm.isFailure) {
-        this.logger.error('Error mapping payment to ORM', { error: orm.error });
-        throw orm.error;
+      if (!payment.detail) {
+        this.logger.error('Error saving payment', {
+          message: 'Detalhe de pagamento não encontrado',
+        });
+
+        throw new DomainPersistenceException(
+          'Detalhe de pagamento não encontrado',
+        );
       }
 
-      this.logger.log('Payment mapped to ORM', { paymentId: payment.id.value });
+      const detailOrmResult = this.detailMapperFactory.toORM(
+        payment.detail,
+        payment.id.value,
+      );
 
-      await this.mongoRepository.save(orm.value);
+      if (detailOrmResult.isFailure) {
+        this.logger.error('Error mapping payment detail to ORM', {
+          error: detailOrmResult.error,
+        });
+        throw detailOrmResult.error;
+      }
 
+      const paymentOrmResult = this.paymentMapper.toORM(payment);
+
+      if (paymentOrmResult.isFailure) {
+        this.logger.error('Error mapping payment to ORM', {
+          error: paymentOrmResult.error,
+        });
+        throw paymentOrmResult.error;
+      }
+
+      const detailRepository = this.detailRepositories.get(
+        payment.detail.paymentType,
+      );
+
+      if (!detailRepository) {
+        throw new DomainPersistenceException(
+          `Repository not found for payment type: ${payment.detail.paymentType}`,
+        );
+      }
+
+      await this.paymentMongoRepository.save(paymentOrmResult.value);
       this.logger.log('Payment saved', { paymentId: payment.id.value });
+
+      this.logger.log('Saving payment detail', {
+        paymentId: payment.id.value,
+        type: payment.detail.paymentType,
+      });
+
+      await detailRepository.save(detailOrmResult.value);
+      this.logger.log('Payment detail saved', {
+        paymentId: payment.id.value,
+      });
     } catch (error) {
       if (error instanceof Error) {
         this.logger.error('Error saving payment', {
@@ -47,26 +96,57 @@ export class PaymentMongoDBRepositoryImpl implements PaymentRepository {
 
   async findById(id: UniqueEntityID): Promise<PaymentEntity | null> {
     try {
-      const result = await this.mongoRepository.findOne({
+      const paymentOrm = await this.paymentMongoRepository.findOne({
         where: {
           id: id,
         },
       });
 
-      if (!result) {
+      if (!paymentOrm) {
         this.logger.log('Payment not found', { paymentId: id.value });
         return null;
       }
 
-      const domain = this.paymentMapper.toDomain(result);
-      if (domain.isFailure) {
+      const paymentResult = this.paymentMapper.toDomain(paymentOrm);
+      if (paymentResult.isFailure) {
         this.logger.error('Error mapping payment to domain', {
-          error: domain.error,
+          error: paymentResult.error,
         });
-        throw domain.error;
+        throw paymentResult.error;
       }
 
-      return domain.value;
+      const payment = paymentResult.value;
+
+      const detailRepository = this.detailRepositories.get(payment.type.value);
+
+      if (detailRepository) {
+        this.logger.log('Loading payment detail', {
+          paymentId: id.value,
+          type: payment.type.value,
+        });
+
+        const detailOrm = await detailRepository.findOne({
+          where: { paymentId: id },
+        });
+
+        if (detailOrm) {
+          const detailResult = this.detailMapperFactory.toDomain(
+            detailOrm,
+            payment.type.value,
+          );
+
+          if (detailResult.isFailure) {
+            this.logger.error('Error mapping payment detail to domain', {
+              error: detailResult.error,
+            });
+            throw detailResult.error;
+          }
+
+          payment.addPaymentDetail(detailResult.value);
+        }
+      }
+
+      return payment;
     } catch (error) {
       if (error instanceof Error) {
         this.logger.error('Error finding payment', {

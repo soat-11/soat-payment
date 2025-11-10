@@ -1,37 +1,70 @@
 import { Module } from '@nestjs/common';
 import { PaymentMapper } from './persistence/mapper/payment.mapper';
+
+import { MongoModule } from '@payment/infra/persistence/datasource/mongo.module';
 import { PaymentMongoDBRepositoryImpl } from '@payment/infra/persistence/repositories/payment-mongodb.repository';
 import { MongoRepository } from 'typeorm';
 import { PaymentMongoDBEntity } from '@payment/infra/persistence/entities/payment-mongodb.entity';
+import { PixDetailMongoDBEntity } from '@payment/infra/persistence/entities/pix-detail-mongodb.entity';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
-import { MongoModule } from '@payment/infra/persistence/datasource/mongo.module';
+import { PaymentDetailMapperFactory } from './persistence/mapper/payment-detail-mapper.factory';
+import { PixDetailMapper } from './persistence/mapper/pix-detail.mapper';
+import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
-import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
+import { DefaultMongoDBEntity } from '@core/infra/database/mongodb/default-mongodb.entity';
+import { getRepositoryToken } from '@nestjs/typeorm';
 
 @Module({
-  imports: [MongoModule, TypeOrmModule.forFeature([PaymentMongoDBEntity])],
+  imports: [MongoModule],
   providers: [
-    PaymentMapper,
+    {
+      provide: PaymentDetailMapperFactory,
+      useFactory: () => {
+        const factory = new PaymentDetailMapperFactory();
+
+        factory.registerMapper(new PixDetailMapper());
+        return factory;
+      },
+    },
+    {
+      provide: PaymentMapper,
+      useFactory: (detailFactory: PaymentDetailMapperFactory) => {
+        return new PaymentMapper(detailFactory);
+      },
+      inject: [PaymentDetailMapperFactory],
+    },
     {
       provide: PaymentRepository,
       useFactory: (
-        mongoRepository: MongoRepository<PaymentMongoDBEntity>,
+        paymentRepository: MongoRepository<PaymentMongoDBEntity>,
+        pixDetailRepository: MongoRepository<PixDetailMongoDBEntity>,
         mapper: PaymentMapper,
+        detailFactory: PaymentDetailMapperFactory,
         logger: AbstractLoggerService,
       ) => {
+        const detailRepositories = new Map<
+          PaymentType,
+          MongoRepository<DefaultMongoDBEntity>
+        >();
+        detailRepositories.set(PaymentType.PIX, pixDetailRepository);
+
         return new PaymentMongoDBRepositoryImpl(
-          mongoRepository,
+          paymentRepository,
           mapper,
+          detailFactory,
           logger,
+          detailRepositories,
         );
       },
       inject: [
         getRepositoryToken(PaymentMongoDBEntity),
+        getRepositoryToken(PixDetailMongoDBEntity),
         PaymentMapper,
+        PaymentDetailMapperFactory,
         AbstractLoggerService,
       ],
     },
   ],
-  exports: [PaymentRepository, PaymentMapper],
+  exports: [PaymentRepository, PaymentMapper, PaymentDetailMapperFactory],
 })
 export class PaymentInfraModule {}

@@ -21,6 +21,7 @@ import { PaymentRepository } from '@payment/domain/repositories/payment.reposito
 import { PaymentMongoDBRepositoryImpl } from '@payment/infra/persistence/repositories/payment-mongodb.repository';
 import { PaymentMongoDBEntity } from '@payment/infra/persistence/entities/payment-mongodb.entity';
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
+import { PaymentDetailMapperFactory } from '@payment/infra/persistence/mapper/payment-detail-mapper.factory';
 
 describe('CreatePaymentUseCase - Integration Test', () => {
   let mongoServer: MongoMemoryServer;
@@ -48,6 +49,7 @@ describe('CreatePaymentUseCase - Integration Test', () => {
     paymentRepository = new PaymentMongoDBRepositoryImpl(
       mongoRepository,
       new PaymentMapper(),
+      new PaymentDetailMapperFactory(),
       new PinoLoggerService(),
     );
   });
