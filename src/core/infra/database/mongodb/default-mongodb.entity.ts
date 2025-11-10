@@ -1,4 +1,5 @@
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
+import { UtcDateColumn } from '@payment/infra/persistence/datasource/utc-date-column.decorator';
 import { ObjectId } from 'mongodb';
 import {
   Column,
@@ -21,13 +22,13 @@ export abstract class DefaultMongoDBEntity {
   })
   id: UniqueEntityID;
 
-  @CreateDateColumn({
-    type: 'timestamptz',
+  @UtcDateColumn({
+    default: new Date(),
   })
-  createdAt: Date;
+  createdAt!: Date;
 
-  @UpdateDateColumn({
-    type: 'timestamptz',
+  @UtcDateColumn({
+    default: new Date(),
   })
   updatedAt: Date;
 }
