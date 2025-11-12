@@ -38,6 +38,16 @@ export class PaymentMongoDBEntity extends DefaultMongoDBEntity {
   })
   externalPaymentId: string | null;
 
+  @Column({
+    type: 'string',
+  })
+  idempotencyKey!: string;
+
+  @Column({
+    type: 'string',
+  })
+  sessionId!: string;
+
   @UtcDateColumn()
   expiresAt: Date;
 }

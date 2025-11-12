@@ -4,6 +4,7 @@ import { PaymentMongoDBEntity } from '../entities/payment-mongodb.entity';
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
 import { AbstractMapper } from '@core/domain/mapper/abstract.mapper';
 import { PaymentDetailMapperFactory } from './payment-detail-mapper.factory';
+import { AnyPaymentDetail } from '@payment/domain/value-objects/payment-detail.vo';
 
 export class PaymentMapper extends AbstractMapper<
   PaymentMongoDBEntity,
@@ -22,6 +23,8 @@ export class PaymentMapper extends AbstractMapper<
         type: orm.type,
         status: orm.status,
         expiresAt: orm.expiresAt,
+        idempotencyKey: orm.idempotencyKey,
+        sessionId: orm.sessionId,
       });
 
       if (orm.provider && orm.externalPaymentId) {
@@ -56,8 +59,8 @@ export class PaymentMapper extends AbstractMapper<
       orm.externalPaymentId =
         domain.paymentProvider?.value.externalPaymentId ?? null;
 
-      // NÃO converte detail aqui - isso é responsabilidade do repository
-      // O repository deve pegar domain.detail e usar a factory separadamente
+      orm.idempotencyKey = domain.idempotencyKey.value;
+      orm.sessionId = domain.sessionId.value;
 
       return Result.ok(orm);
     } catch (error) {
@@ -72,11 +75,7 @@ export class PaymentMapper extends AbstractMapper<
     }
   }
 
-  /**
-   * Helper method para converter PaymentDetail usando a factory
-   * Mas quem chama é o REPOSITORY, não o mapper internamente
-   */
-  toDetailORM(payment: PaymentEntity): Result<any | null> {
+  toDetailORM(payment: PaymentEntity): Result<AnyPaymentDetail | null> {
     if (!payment.detail) {
       return Result.ok(null);
     }

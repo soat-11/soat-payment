@@ -23,12 +23,6 @@ import { CreatePaymentDto } from '@payment/presentation/dto/request/create-payme
 export function CreatePaymentDoc() {
   return applyDecorators(
     ApiHeader({
-      name: 'session-id',
-      description: 'ID da sessão do usuário',
-      required: true,
-      example: faker.string.uuid(),
-    }),
-    ApiHeader({
       name: 'x-idempotency-key',
       description:
         'Chave de idempotência para evitar duplicação de requisições',
@@ -50,7 +44,7 @@ export function CreatePaymentDoc() {
           summary: 'Pagamento válido',
           description: 'Exemplo de requisição válida',
           value: {
-            amount: 100.5,
+            sessionId: '123e4567-e89b-12d3-a456-426614174000',
           },
         },
       },
