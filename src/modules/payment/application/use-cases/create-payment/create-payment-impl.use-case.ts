@@ -14,6 +14,8 @@ import { PaymentFactory } from '@payment/domain/factories/payment.factory';
 import { CreateQRCodeImage } from '@payment/application/use-cases/create-qrcode/create-qrcode.use-case';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 import { PixDetailVO } from '@payment/domain/value-objects/pix-detail.vo';
+import { IdempotencyKeyVO } from '@payment/domain/value-objects/idempotency-key.vo';
+import { PaymentAlreadyExistsException } from '@payment/domain/exceptions/payment.exception';
 
 export class CreatePaymentUseCaseImpl implements CreatePaymentUseCase {
   constructor(
@@ -33,6 +35,12 @@ export class CreatePaymentUseCaseImpl implements CreatePaymentUseCase {
     });
 
     try {
+      const existingPayment = await this.paymentRepository.findByIdempotencyKey(
+        IdempotencyKeyVO.create(input.idempotencyKey),
+      );
+
+      if (existingPayment) throw new PaymentAlreadyExistsException();
+
       this.logger.log('Creating payment entity');
 
       const payment = this.paymentFactory.create({

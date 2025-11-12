@@ -7,6 +7,7 @@ import { PaymentMapper } from '../mapper/payment.mapper';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { DomainPersistenceException } from '@core/domain/exceptions/domain.exception';
 import { PaymentDetailMapperFactory } from '../mapper/payment-detail-mapper.factory';
+import { IdempotencyKeyVO } from '@payment/domain/value-objects/idempotency-key.vo';
 
 export class PaymentMongoDBRepositoryImpl implements PaymentRepository {
   constructor(
@@ -155,6 +156,42 @@ export class PaymentMongoDBRepositoryImpl implements PaymentRepository {
         });
       }
       throw error;
+    }
+  }
+
+  async findByIdempotencyKey(
+    idempotencyKey: IdempotencyKeyVO,
+  ): Promise<PaymentEntity | null> {
+    try {
+      const paymentOrm = await this.paymentMongoRepository.findOne({
+        where: { idempotencyKey: idempotencyKey.value },
+      });
+
+      if (!paymentOrm) {
+        this.logger.log('Payment not found', {
+          idempotencyKey: idempotencyKey.value,
+        });
+        return null;
+      }
+
+      const paymentResult = this.paymentMapper.toDomain(paymentOrm);
+      if (paymentResult.isFailure) {
+        this.logger.error('Error mapping payment to domain', {
+          error: paymentResult.error,
+        });
+        throw paymentResult.error;
+      }
+
+      return paymentResult.value;
+    } catch (error) {
+      if (error instanceof Error) {
+        this.logger.error('Error finding payment by idempotency key', {
+          message: error.message,
+          trace: error.stack,
+        });
+        throw error;
+      }
+      throw new DomainPersistenceException('Erro ao buscar pagamento');
     }
   }
 }

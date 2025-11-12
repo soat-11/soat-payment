@@ -1,4 +1,7 @@
-import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
+import {
+  DomainBusinessException,
+  DomainConflictException,
+} from '@core/domain/exceptions/domain.exception';
 import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
 import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
@@ -75,5 +78,11 @@ export class IdempotencyKeyInvalidException extends DomainBusinessException {
 export class SessionIdInvalidException extends DomainBusinessException {
   constructor(value: string) {
     super(`Session ID inválido: ${value}`);
+  }
+}
+
+export class PaymentAlreadyExistsException extends DomainConflictException {
+  constructor() {
+    super('Pagamento já existe');
   }
 }

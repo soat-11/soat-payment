@@ -25,6 +25,7 @@ import { PaymentDetailMapperFactory } from '@payment/infra/persistence/mapper/pa
 import { PixDetailMongoDBEntity } from '@payment/infra/persistence/entities/pix-detail-mongodb.entity';
 import { PixDetailMapper } from '@payment/infra/persistence/mapper/pix-detail.mapper';
 import { faker } from '@faker-js/faker';
+import { DomainConflictException } from '@core/domain/exceptions/domain.exception';
 
 describe('CreatePaymentUseCase - Integration Test', () => {
   let mongoServer: MongoMemoryServer;
@@ -127,6 +128,26 @@ describe('CreatePaymentUseCase - Integration Test', () => {
       expect(payment.amount).toBe(100);
 
       expect(result.image).toMatch(/^data:image\/png;base64,/);
+    });
+  });
+
+  describe('Failure', () => {
+    it('should a duplicated idempotency key', async () => {
+      const input: CreatePaymentUseCaseInput = {
+        idempotencyKey: faker.string.uuid(),
+        sessionId: faker.string.uuid(),
+      };
+
+      await expect(useCase.execute(input)).resolves.not.toThrow();
+
+      const payments = await mongoRepository.find();
+      expect(payments).toHaveLength(1);
+
+      expect(payments[0].idempotencyKey).toBe(input.idempotencyKey);
+
+      await expect(useCase.execute(input)).rejects.toThrow(
+        DomainConflictException,
+      );
     });
   });
 });

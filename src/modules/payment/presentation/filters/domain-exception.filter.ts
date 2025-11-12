@@ -27,7 +27,7 @@ export class DomainExceptionFilter implements ExceptionFilter {
     response.status(status).json({
       statusCode: status,
       message,
-      error: this.getErrorName(status),
+      error: message,
       timestamp: new Date().toISOString(),
       path: request.url,
     });
@@ -51,22 +51,5 @@ export class DomainExceptionFilter implements ExceptionFilter {
     }
 
     return HttpStatus.INTERNAL_SERVER_ERROR;
-  }
-
-  private getErrorName(status: number): string {
-    switch (status) {
-      case HttpStatus.BAD_REQUEST:
-        return 'Bad Request';
-      case HttpStatus.UNPROCESSABLE_ENTITY:
-        return 'Unprocessable Entity';
-      case HttpStatus.NOT_FOUND:
-        return 'Not Found';
-      case HttpStatus.CONFLICT:
-        return 'Conflict';
-      case HttpStatus.INTERNAL_SERVER_ERROR:
-        return 'Internal Server Error';
-      default:
-        return 'Unknown Error';
-    }
   }
 }

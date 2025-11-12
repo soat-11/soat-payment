@@ -33,6 +33,7 @@ async function bootstrap() {
     apiReference({
       content: document,
       darkMode: true,
+      theme: 'laserwave',
     }),
   );
   SwaggerModule.setup('api/docs', app, document);

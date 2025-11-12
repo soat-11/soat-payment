@@ -40,6 +40,7 @@ export class PaymentMongoDBEntity extends DefaultMongoDBEntity {
 
   @Column({
     type: 'string',
+    unique: true,
   })
   idempotencyKey!: string;
 

@@ -6,11 +6,13 @@ import {
   ApiInternalServerErrorResponse,
   ApiHeader,
   ApiOkResponse,
+  ApiConflictResponse,
 } from '@nestjs/swagger';
 
 import { ErrorResponseDto } from '@core/infra/http/dtos/error-response.dto';
 import { faker } from '@faker-js/faker';
 import {
+  PaymentAlreadyExistsException,
   PaymentAmountInvalidException,
   PaymentExternalPaymentIdRequiredException,
   PaymentProviderInvalidException,
@@ -97,7 +99,16 @@ export function CreatePaymentDoc() {
         },
       },
     }),
-
+    ApiConflictResponse({
+      description: 'Conflict',
+      type: ErrorResponseDto,
+      examples: {
+        PaymentAlreadyExists: {
+          summary: 'Pagamento já existe',
+          value: { message: new PaymentAlreadyExistsException().message },
+        },
+      },
+    }),
     ApiInternalServerErrorResponse({
       description: 'Internal Server Error',
       type: ErrorResponseDto,
