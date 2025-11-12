@@ -7,8 +7,6 @@ import { PaymentMapper } from '../mapper/payment.mapper';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { DomainPersistenceException } from '@core/domain/exceptions/domain.exception';
 import { PaymentDetailMapperFactory } from '../mapper/payment-detail-mapper.factory';
-import { PaymentType } from '@payment/domain/enum/payment-type.enum';
-import { DefaultMongoDBEntity } from '@core/infra/database/mongodb/default-mongodb.entity';
 
 export class PaymentMongoDBRepositoryImpl implements PaymentRepository {
   constructor(
@@ -16,11 +14,6 @@ export class PaymentMongoDBRepositoryImpl implements PaymentRepository {
     private readonly paymentMapper: PaymentMapper,
     private readonly detailMapperFactory: PaymentDetailMapperFactory,
     private readonly logger: AbstractLoggerService,
-
-    private readonly detailRepositories: Map<
-      PaymentType,
-      MongoRepository<DefaultMongoDBEntity>
-    >,
   ) {}
 
   async save(payment: PaymentEntity): Promise<void> {
@@ -58,15 +51,18 @@ export class PaymentMongoDBRepositoryImpl implements PaymentRepository {
         throw paymentOrmResult.error;
       }
 
-      const detailRepository = this.detailRepositories.get(
+      const detailRepositoryResult = this.detailMapperFactory.getRepository(
         payment.detail.paymentType,
       );
 
-      if (!detailRepository) {
-        throw new DomainPersistenceException(
-          `Repository not found for payment type: ${payment.detail.paymentType}`,
-        );
+      if (detailRepositoryResult.isFailure) {
+        this.logger.error('Error getting detail repository', {
+          error: detailRepositoryResult.error,
+        });
+        throw detailRepositoryResult.error;
       }
+
+      const detailRepository = detailRepositoryResult.value;
 
       await this.paymentMongoRepository.save(paymentOrmResult.value);
       this.logger.log('Payment saved', { paymentId: payment.id.value });
@@ -117,9 +113,13 @@ export class PaymentMongoDBRepositoryImpl implements PaymentRepository {
 
       const payment = paymentResult.value;
 
-      const detailRepository = this.detailRepositories.get(payment.type.value);
+      const detailRepositoryResult = this.detailMapperFactory.getRepository(
+        payment.type.value,
+      );
 
-      if (detailRepository) {
+      if (detailRepositoryResult.isSuccess) {
+        const detailRepository = detailRepositoryResult.value;
+
         this.logger.log('Loading payment detail', {
           paymentId: id.value,
           type: payment.type.value,

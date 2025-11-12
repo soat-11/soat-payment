@@ -9,9 +9,7 @@ import { PixDetailMongoDBEntity } from '@payment/infra/persistence/entities/pix-
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { PaymentDetailMapperFactory } from './persistence/mapper/payment-detail-mapper.factory';
 import { PixDetailMapper } from './persistence/mapper/pix-detail.mapper';
-import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
-import { DefaultMongoDBEntity } from '@core/infra/database/mongodb/default-mongodb.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 
 @Module({
@@ -19,12 +17,15 @@ import { getRepositoryToken } from '@nestjs/typeorm';
   providers: [
     {
       provide: PaymentDetailMapperFactory,
-      useFactory: () => {
+      useFactory: (
+        pixDetailRepository: MongoRepository<PixDetailMongoDBEntity>,
+      ) => {
         const factory = new PaymentDetailMapperFactory();
 
-        factory.registerMapper(new PixDetailMapper());
+        factory.registerMapper(new PixDetailMapper(), pixDetailRepository);
         return factory;
       },
+      inject: [getRepositoryToken(PixDetailMongoDBEntity)],
     },
     {
       provide: PaymentMapper,
@@ -37,28 +38,19 @@ import { getRepositoryToken } from '@nestjs/typeorm';
       provide: PaymentRepository,
       useFactory: (
         paymentRepository: MongoRepository<PaymentMongoDBEntity>,
-        pixDetailRepository: MongoRepository<PixDetailMongoDBEntity>,
         mapper: PaymentMapper,
         detailFactory: PaymentDetailMapperFactory,
         logger: AbstractLoggerService,
       ) => {
-        const detailRepositories = new Map<
-          PaymentType,
-          MongoRepository<DefaultMongoDBEntity>
-        >();
-        detailRepositories.set(PaymentType.PIX, pixDetailRepository);
-
         return new PaymentMongoDBRepositoryImpl(
           paymentRepository,
           mapper,
           detailFactory,
           logger,
-          detailRepositories,
         );
       },
       inject: [
         getRepositoryToken(PaymentMongoDBEntity),
-        getRepositoryToken(PixDetailMongoDBEntity),
         PaymentMapper,
         PaymentDetailMapperFactory,
         AbstractLoggerService,

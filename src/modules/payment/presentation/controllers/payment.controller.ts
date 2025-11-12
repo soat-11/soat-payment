@@ -6,8 +6,12 @@ import {
   HttpStatus,
   UseFilters,
   Inject,
+  Headers,
+  StreamableFile,
+  Header,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
 
 import { CreatePaymentDto } from '../dto/request/create-payment.dto';
 import { CreatePaymentResponseDto } from '../dto/response/create-payment-response.dto';
@@ -25,17 +29,23 @@ export class PaymentController {
   ) {}
 
   @Post()
-  @HttpCode(HttpStatus.CREATED)
+  @HttpCode(HttpStatus.OK)
+  @Header('Content-Type', 'image/png')
+  @Header('Content-Disposition', 'inline; filename="qrcode.png"')
   @CreatePaymentDoc()
   async create(
     @Body() createPaymentDto: CreatePaymentDto,
-  ): Promise<CreatePaymentResponseDto> {
-    const { qrCode } = await this.createPaymentUseCase.execute({
-      amount: createPaymentDto.amount,
+    @Headers('x-idempotency-key') idempotencyKey: string,
+  ): Promise<StreamableFile> {
+    const result = await this.createPaymentUseCase.execute({
+      sessionId: createPaymentDto.sessionId,
+      idempotencyKey: idempotencyKey,
     });
 
-    return {
-      qrCode,
-    };
+    const dto = plainToInstance(CreatePaymentResponseDto, {
+      qrCode: result.image,
+    });
+
+    return new StreamableFile(dto.qrCode);
   }
 }

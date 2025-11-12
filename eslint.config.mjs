@@ -28,9 +28,18 @@ export default [
       '**/.eslintrc.js',
       'eslint.config.mjs',
       'node_modules/**',
+      'dist/**',
+      'coverage/**',
+      '**/*.js',
+      '**/*.js.map',
+      '**/*.d.ts',
+      '*.tsbuildinfo',
       'test/jest-e2e.json',
       'test/setup.ts',
       'test/jest.config.ts',
+      'folderStructure.mjs',
+      'eslint-rules/**',
+      'projectStructure.cache.json',
     ],
   },
   ...fixupConfigRules(
@@ -63,8 +72,9 @@ export default [
       sourceType: 'module',
 
       parserOptions: {
-        project: './tsconfig.json',
-        tsconfigRootDir: __dirname,
+        // Removido 'project' para melhorar performance
+        // Se precisar de regras que dependem de type-checking,
+        // considere usar apenas em arquivos específicos
       },
     },
 

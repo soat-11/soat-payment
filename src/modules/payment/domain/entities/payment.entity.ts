@@ -3,7 +3,7 @@ import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 import { PaymentStatusVO } from '@payment/domain/value-objects/payment-status.vo';
-import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
+
 import { PixDetailVO } from '../value-objects/pix-detail.vo';
 import { PaymentTypeVO } from '../value-objects/payment-type.vo';
 import { PaymentAmountVO } from '../value-objects/payment-amount.vo';
@@ -17,17 +17,29 @@ import {
   AnyPaymentDetail,
   isPixDetail,
 } from '@payment/domain/value-objects/payment-detail.vo';
+import {
+  PaymentAlreadyPaidException,
+  PaymentDetailInvalidException,
+  PaymentExpiredException,
+  PaymentProviderNotProvidedException,
+} from '@payment/domain/exceptions/payment.exception';
+import { IdempotencyKeyVO } from '@payment/domain/value-objects/idempotency-key.vo';
+import { SessionIdVO } from '@payment/domain/value-objects/session-id.vo';
 
 export type PaymentProps = {
   amount: number;
   type: PaymentType;
   status: PaymentStatus;
+  idempotencyKey: string;
+  sessionId: string;
 };
 
 export class PaymentEntity extends AggregateRoot<PaymentEntity> {
   private _detail?: AnyPaymentDetail;
   public status: PaymentStatusVO;
   public paymentProvider?: PaymentProvider;
+  public idempotencyKey: IdempotencyKeyVO;
+  public sessionId: SessionIdVO;
   public expiresAt: Date;
 
   private constructor(
@@ -35,10 +47,14 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
     public amount: PaymentAmountVO,
     public type: PaymentTypeVO,
     expiresAt: Date,
+    idempotencyKey: IdempotencyKeyVO,
+    sessionId: SessionIdVO,
   ) {
     super(id);
     this.status = PaymentStatusVO.create(PaymentStatus.PENDING);
     this.expiresAt = expiresAt;
+    this.idempotencyKey = idempotencyKey;
+    this.sessionId = sessionId;
     // Object.freeze(this);
   }
 
@@ -65,6 +81,8 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
       amount,
       type,
       props.expiresAt,
+      IdempotencyKeyVO.create(props.idempotencyKey),
+      SessionIdVO.create(props.sessionId),
     );
     payment.addDomainEvent(new PaymentCreatedEvent(payment));
 
@@ -77,15 +95,23 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
   ): PaymentEntity {
     const type = PaymentTypeVO.create(props.type);
     const amount = PaymentAmountVO.create(props.amount);
-    const payment = new PaymentEntity(id, amount, type, props.expiresAt);
+    const payment = new PaymentEntity(
+      id,
+      amount,
+      type,
+      props.expiresAt,
+      IdempotencyKeyVO.create(props.idempotencyKey),
+      SessionIdVO.create(props.sessionId),
+    );
     payment.status = PaymentStatusVO.create(props.status);
     return payment;
   }
 
   addPaymentDetail(detail: AnyPaymentDetail): this {
     if (this.type.value !== detail.paymentType) {
-      throw new DomainBusinessException(
-        `Tipo de detalhe inválido: esperado ${this.type.value}, recebido ${detail.paymentType}`,
+      throw new PaymentDetailInvalidException(
+        this.type.value,
+        detail.paymentType,
       );
     }
 
@@ -100,17 +126,15 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
 
   paid(currentDate: Date): void {
     if (this.status.value === PaymentStatus.PAID) {
-      throw new DomainBusinessException('Pagamento já está como PAGO');
+      throw new PaymentAlreadyPaidException();
     }
 
     if (this.paymentProvider == null) {
-      throw new DomainBusinessException('Provedor de pagamento não informado');
+      throw new PaymentProviderNotProvidedException();
     }
 
     if (currentDate > this.expiresAt) {
-      throw new DomainBusinessException(
-        'Não é possível pagar um pagamento expirado',
-      );
+      throw new PaymentExpiredException();
     }
 
     this.status = PaymentStatusVO.create(PaymentStatus.PAID);

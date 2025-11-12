@@ -28,15 +28,18 @@ export class CreatePaymentUseCaseImpl implements CreatePaymentUseCase {
     input: CreatePaymentUseCaseInput,
   ): Promise<CreatePaymentUseCaseOutput> {
     this.logger.log('Creating payment', {
-      amount: input.amount,
+      sessionId: input.sessionId,
+      idempotencyKey: input.idempotencyKey,
     });
 
     try {
       this.logger.log('Creating payment entity');
 
       const payment = this.paymentFactory.create({
-        amount: input.amount,
+        amount: 100,
         type: PaymentType.PIX,
+        idempotencyKey: input.idempotencyKey,
+        sessionId: input.sessionId,
       });
 
       this.logger.log('Creating QR Code', { paymentId: payment.id.value });
@@ -69,7 +72,7 @@ export class CreatePaymentUseCaseImpl implements CreatePaymentUseCase {
       this.logger.log('Domain events dispatched');
 
       return {
-        qrCode: qrCode.value.image,
+        image: qrCode.value.image,
       };
     } catch (error) {
       if (error instanceof Error) {

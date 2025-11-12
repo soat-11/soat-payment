@@ -1,15 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsPositive, Min } from 'class-validator';
+import { IsUUID } from 'class-validator';
 
 export class CreatePaymentDto {
   @ApiProperty({
-    description: 'Valor do pagamento em reais',
-    example: 100.5,
-    minimum: 0.01,
-    type: 'number',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: 'ID da sessão do usuário',
+    type: 'string',
+    format: 'uuid',
   })
-  @IsNumber({}, { message: 'O valor deve ser um número' })
-  @IsPositive({ message: 'O valor deve ser positivo' })
-  @Min(0.01, { message: 'O valor mínimo é R$ 0,01' })
-  amount: number;
+  @IsUUID(4, { message: 'A sessão deve ser um UUID válido, e versão 4' })
+  sessionId: string;
 }

@@ -160,7 +160,18 @@ export const folderStructureConfig = createFolderStructure({
         },
         {
           name: 'http',
-          children: [{ name: '*.ts' }, { ruleId: 'test_folder' }],
+          children: [
+            { name: '*.ts' },
+            {
+              name: 'dtos',
+              children: [{ name: '*.dto.ts' }, { ruleId: 'test_folder' }],
+            },
+            {
+              name: 'transformers',
+              children: [{ name: '*.transformer.ts' }, { ruleId: 'test_folder' }],
+            },
+            { ruleId: 'test_folder' },
+          ],
         },
         { ruleId: 'test_folder' },
       ],
@@ -169,6 +180,11 @@ export const folderStructureConfig = createFolderStructure({
     core_logger_folder: {
       ruleId: 'test_folder',
       name: '*',
+    },
+
+    core_instrumentation_folder: {
+      name: 'instrumentation',
+      children: [{ name: '*.ts' }, { ruleId: 'test_folder' }],
     },
 
     modules_folder: {
@@ -362,7 +378,11 @@ export const folderStructureConfig = createFolderStructure({
 
     module_mapper_folder: {
       name: 'mapper',
-      children: [{ name: '*.mapper.ts' }, { ruleId: 'test_folder' }],
+      children: [
+        { name: '*.mapper.ts' },
+        { name: '*.mapper.factory.ts' },
+        { ruleId: 'test_folder' },
+      ],
     },
   },
 });

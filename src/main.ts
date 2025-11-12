@@ -4,7 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { PinoLoggerService } from '@core/infra/logger/pino-logger';
-
+import { apiReference } from '@scalar/nestjs-api-reference';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useLogger(new PinoLoggerService());
@@ -27,6 +27,14 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
+
+  app.use(
+    '/api/docs',
+    apiReference({
+      content: document,
+      darkMode: true,
+    }),
+  );
   SwaggerModule.setup('api/docs', app, document);
 
   const port = process.env.PORT ?? 3000;

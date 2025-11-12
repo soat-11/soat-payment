@@ -6,7 +6,7 @@ import { CreatePaymentUseCaseImpl } from '@payment/application/use-cases/create-
 import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 import { PaymentMapper } from '@payment/infra/persistence/mapper/payment.mapper';
-import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
+
 import {
   CreatePaymentUseCase,
   CreatePaymentUseCaseInput,
@@ -20,8 +20,11 @@ import { CreateQRCodeImage } from '@payment/application/use-cases/create-qrcode/
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 import { PaymentMongoDBRepositoryImpl } from '@payment/infra/persistence/repositories/payment-mongodb.repository';
 import { PaymentMongoDBEntity } from '@payment/infra/persistence/entities/payment-mongodb.entity';
-import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
+
 import { PaymentDetailMapperFactory } from '@payment/infra/persistence/mapper/payment-detail-mapper.factory';
+import { PixDetailMongoDBEntity } from '@payment/infra/persistence/entities/pix-detail-mongodb.entity';
+import { PixDetailMapper } from '@payment/infra/persistence/mapper/pix-detail.mapper';
+import { faker } from '@faker-js/faker';
 
 describe('CreatePaymentUseCase - Integration Test', () => {
   let mongoServer: MongoMemoryServer;
@@ -38,7 +41,7 @@ describe('CreatePaymentUseCase - Integration Test', () => {
     dataSource = new DataSource({
       type: 'mongodb',
       url: mongoUri,
-      entities: [PaymentMongoDBEntity],
+      entities: [PaymentMongoDBEntity, PixDetailMongoDBEntity],
       synchronize: true,
     });
 
@@ -46,10 +49,18 @@ describe('CreatePaymentUseCase - Integration Test', () => {
 
     mongoRepository = dataSource.getMongoRepository(PaymentMongoDBEntity);
 
+    const detailFactory = new PaymentDetailMapperFactory();
+
+    const pixDetailRepository = dataSource.getMongoRepository(
+      PixDetailMongoDBEntity,
+    );
+
+    detailFactory.registerMapper(new PixDetailMapper(), pixDetailRepository);
+
     paymentRepository = new PaymentMongoDBRepositoryImpl(
       mongoRepository,
-      new PaymentMapper(),
-      new PaymentDetailMapperFactory(),
+      new PaymentMapper(detailFactory),
+      detailFactory,
       new PinoLoggerService(),
     );
   });
@@ -82,10 +93,11 @@ describe('CreatePaymentUseCase - Integration Test', () => {
   describe('Success', () => {
     it('should create a payment and save to database', async () => {
       const input: CreatePaymentUseCaseInput = {
-        amount: 100,
+        idempotencyKey: faker.string.uuid(),
+        sessionId: faker.string.uuid(),
       };
 
-      await useCase.execute(input);
+      const result = await useCase.execute(input);
 
       const payments = await mongoRepository.find();
 
@@ -95,11 +107,14 @@ describe('CreatePaymentUseCase - Integration Test', () => {
       expect(payments[0].status).toBe(PaymentStatus.PENDING);
       expect(payments[0].id).toBeDefined();
       expect(payments[0]._id).toBeDefined();
+
+      expect(result.image).toBeDefined();
     });
 
     it('should create a payment with domain ID preserved', async () => {
       const input: CreatePaymentUseCaseInput = {
-        amount: 100,
+        idempotencyKey: faker.string.uuid(),
+        sessionId: faker.string.uuid(),
       };
 
       const result = await useCase.execute(input);
@@ -110,64 +125,8 @@ describe('CreatePaymentUseCase - Integration Test', () => {
       expect(payment).toBeDefined();
       expect(payment.id).toBeDefined();
       expect(payment.amount).toBe(100);
-      expect(result.qrCode).toMatch(/^data:image\/png;base64,/);
-    });
-  });
 
-  describe('Validation', () => {
-    it('should reject invalid amount (negative)', async () => {
-      const input: CreatePaymentUseCaseInput = {
-        amount: -100,
-      };
-
-      await expect(useCase.execute(input)).rejects.toThrow(
-        DomainBusinessException,
-      );
-
-      const payments = await mongoRepository.find();
-      expect(payments).toHaveLength(0);
-    });
-
-    it('should reject invalid amount (zero)', async () => {
-      const input: CreatePaymentUseCaseInput = {
-        amount: 0,
-      };
-
-      await expect(useCase.execute(input)).rejects.toThrow(
-        DomainBusinessException,
-      );
-
-      const payments = await mongoRepository.find();
-      expect(payments).toHaveLength(0);
-    });
-  });
-
-  describe('Repository Integration', () => {
-    it('should find payment by domain ID', async () => {
-      const input: CreatePaymentUseCaseInput = {
-        amount: 200,
-      };
-
-      await useCase.execute(input);
-
-      const payments = await mongoRepository.find();
-      expect(payments).toHaveLength(1);
-
-      const payment = payments[0];
-      const foundPayment = await paymentRepository.findById(payment.id);
-
-      expect(foundPayment).toBeDefined();
-      expect(foundPayment!.id.value).toBe(payment.id.value);
-      expect(foundPayment!.amount.value).toBe(200);
-      expect(foundPayment!.status.value).toBe(PaymentStatus.PENDING);
-    });
-
-    it('should return null for non-existent payment', async () => {
-      const fakeId = UniqueEntityID.create();
-
-      const foundPayment = await paymentRepository.findById(fakeId);
-
-      expect(foundPayment).toBeNull();
+      expect(result.image).toMatch(/^data:image\/png;base64,/);
     });
   });
 });

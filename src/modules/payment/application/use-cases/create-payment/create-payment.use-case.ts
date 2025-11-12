@@ -1,9 +1,10 @@
 export type CreatePaymentUseCaseInput = {
-  readonly amount: number;
+  readonly sessionId: string;
+  readonly idempotencyKey: string;
 };
 
 export type CreatePaymentUseCaseOutput = {
-  readonly qrCode: string;
+  readonly image: string;
 };
 
 export interface CreatePaymentUseCase {

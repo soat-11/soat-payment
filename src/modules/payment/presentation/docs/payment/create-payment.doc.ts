@@ -1,19 +1,40 @@
-import { applyDecorators } from '@nestjs/common';
+import { applyDecorators, InternalServerErrorException } from '@nestjs/common';
 import {
   ApiOperation,
-  ApiResponse,
   ApiBody,
   ApiBadRequestResponse,
   ApiInternalServerErrorResponse,
+  ApiHeader,
+  ApiOkResponse,
 } from '@nestjs/swagger';
-import { CreatePaymentDto } from '../../dto/request/create-payment.dto';
+
+import { ErrorResponseDto } from '@core/infra/http/dtos/error-response.dto';
+import { faker } from '@faker-js/faker';
 import {
-  CreatePaymentResponseDto,
-  ErrorResponseDto,
-} from '../../dto/response/create-payment-response.dto';
+  PaymentAmountInvalidException,
+  PaymentExternalPaymentIdRequiredException,
+  PaymentProviderInvalidException,
+  PaymentStatusInvalidException,
+} from '@payment/domain/exceptions/payment.exception';
+import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
+import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
+import { CreatePaymentDto } from '@payment/presentation/dto/request/create-payment.dto';
 
 export function CreatePaymentDoc() {
   return applyDecorators(
+    ApiHeader({
+      name: 'session-id',
+      description: 'ID da sessão do usuário',
+      required: true,
+      example: faker.string.uuid(),
+    }),
+    ApiHeader({
+      name: 'x-idempotency-key',
+      description:
+        'Chave de idempotência para evitar duplicação de requisições',
+      required: true,
+      example: faker.string.uuid(),
+    }),
     ApiOperation({
       summary: 'Criar novo pagamento PIX',
       description:
@@ -35,84 +56,61 @@ export function CreatePaymentDoc() {
       },
     }),
 
-    ApiResponse({
-      status: 201,
-      description: 'Pagamento criado com sucesso',
-      type: CreatePaymentResponseDto,
+    ApiOkResponse({
+      description: 'Imagem PNG do QR Code para pagamento PIX',
+      schema: {
+        type: 'string',
+        format: 'binary',
+      },
       content: {
-        'application/json': {
-          examples: {
-            success: {
-              summary: 'Sucesso',
-              value: {
-                message: 'Pagamento criado com sucesso',
-                status: 'success',
-                timestamp: '2025-11-05T10:00:00.000Z',
-              },
-            },
+        'image/png': {
+          schema: {
+            type: 'string',
+            format: 'binary',
           },
         },
       },
     }),
 
     ApiBadRequestResponse({
-      description: 'Dados inválidos ou regra de negócio violada',
+      description: 'Bad Request',
       type: ErrorResponseDto,
-      content: {
-        'application/json': {
-          examples: {
-            invalidAmount: {
-              summary: 'Valor inválido',
-              value: {
-                statusCode: 400,
-                message: ['O valor deve ser positivo'],
-                error: 'Bad Request',
-                timestamp: '2025-11-05T10:00:00.000Z',
-                path: '/payments',
-              },
-            },
-            invalidQrCode: {
-              summary: 'QR Code inválido',
-              value: {
-                statusCode: 400,
-                message: ['O QR Code deve ter no mínimo 10 caracteres'],
-                error: 'Bad Request',
-                timestamp: '2025-11-05T10:00:00.000Z',
-                path: '/payments',
-              },
-            },
-            businessRule: {
-              summary: 'Regra de negócio violada',
-              value: {
-                statusCode: 400,
-                message: 'Valor do pagamento deve ser maior que zero.',
-                error: 'Bad Request',
-                timestamp: '2025-11-05T10:00:00.000Z',
-                path: '/payments',
-              },
-            },
+      examples: {
+        PaymentAmountInvalid: {
+          summary: 'Valor do pagamento inválido',
+          value: { message: new PaymentAmountInvalidException(0).message },
+        },
+        PaymentProviderInvalid: {
+          summary: 'Provedor de pagamento inválido',
+          value: {
+            message: new PaymentProviderInvalidException(
+              PaymentProviders.MERCADO_PAGO,
+            ).message,
+          },
+        },
+        PaymentExternalPaymentIdRequired: {
+          summary: 'ID externo do pagamento é obrigatório',
+          value: {
+            message: new PaymentExternalPaymentIdRequiredException('').message,
+          },
+        },
+        PaymentStatusInvalid: {
+          summary: 'Status de pagamento inválido',
+          value: {
+            message: new PaymentStatusInvalidException(PaymentStatus.PENDING)
+              .message,
           },
         },
       },
     }),
 
     ApiInternalServerErrorResponse({
-      description: 'Erro interno no servidor',
+      description: 'Internal Server Error',
       type: ErrorResponseDto,
-      content: {
-        'application/json': {
-          examples: {
-            serverError: {
-              summary: 'Erro de persistência',
-              value: {
-                statusCode: 500,
-                message: 'Erro ao salvar pagamento',
-                error: 'Internal Server Error',
-                timestamp: '2025-11-05T10:00:00.000Z',
-                path: '/payments',
-              },
-            },
-          },
+      examples: {
+        InternalServerError: {
+          summary: 'Erro interno do servidor',
+          value: { message: new InternalServerErrorException().message },
         },
       },
     }),

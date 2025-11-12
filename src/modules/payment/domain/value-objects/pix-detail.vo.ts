@@ -1,6 +1,6 @@
-import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
 import { PaymentDetailVO } from './payment-detail.vo';
 import { PaymentType } from '../enum/payment-type.enum';
+import { PixDetailInvalidException } from '@payment/domain/exceptions/payment.exception';
 
 export type PixDetailProps = {
   qrCode: string;
@@ -13,9 +13,7 @@ export class PixDetailVO extends PaymentDetailVO<PixDetailProps> {
 
   protected validate(input: PixDetailProps): void {
     if (typeof input.qrCode !== 'string' || input.qrCode.trim() === '') {
-      throw new DomainBusinessException(
-        'Código QR inválido: deve ser uma string não vazia',
-      );
+      throw new PixDetailInvalidException();
     }
   }
 

@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { StreamableFile } from '@nestjs/common';
 import { PaymentController } from '../payment.controller';
 import { CreatePaymentUseCase } from '@payment/application/use-cases/create-payment/create-payment.use-case';
 import { CreatePaymentDto } from '../../dto/request/create-payment.dto';
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
-import { CreatePaymentUseCaseImpl } from '@payment/application/use-cases/create-payment/create-payment-impl.use-case';
 
 describe('PaymentController', () => {
   let controller: PaymentController;
@@ -18,16 +18,15 @@ describe('PaymentController', () => {
       controllers: [PaymentController],
       providers: [
         {
-          provide: CreatePaymentUseCaseImpl,
+          provide: CreatePaymentUseCase,
           useValue: mockCreatePaymentUseCase,
         },
       ],
     }).compile();
 
     controller = module.get<PaymentController>(PaymentController);
-    createPaymentUseCase = module.get<CreatePaymentUseCase>(
-      CreatePaymentUseCaseImpl,
-    );
+    createPaymentUseCase =
+      module.get<CreatePaymentUseCase>(CreatePaymentUseCase);
   });
 
   afterEach(() => {
@@ -36,40 +35,39 @@ describe('PaymentController', () => {
 
   describe('create', () => {
     const validDto: CreatePaymentDto = {
-      amount: 100,
+      sessionId: '123e4567-e89b-12d3-a456-426614174000',
     };
+    const idempotencyKey = '550e8400-e29b-41d4-a716-446655440000';
 
-    it('should create a payment successfully', async () => {
+    it('should create a payment and return QR Code image as StreamableFile', async () => {
+      const mockImageBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA';
       jest.spyOn(mockCreatePaymentUseCase, 'execute').mockResolvedValue({
-        qrCode: 'valid-qr-code-123',
+        image: mockImageBase64,
       });
 
-      const result = await controller.create(validDto);
+      const result = await controller.create(validDto, idempotencyKey);
 
-      expect(result).toEqual({
-        qrCode: 'valid-qr-code-123',
-      });
-
+      expect(result).toBeInstanceOf(StreamableFile);
       expect(createPaymentUseCase.execute).toHaveBeenCalledWith({
-        amount: validDto.amount,
+        sessionId: validDto.sessionId,
+        idempotencyKey: idempotencyKey,
       });
-
       expect(createPaymentUseCase.execute).toHaveBeenCalledTimes(1);
     });
 
     it('should throw DomainBusinessException when use case fails', async () => {
-      const errorMessage = 'Valor do pagamento deve ser maior que zero.';
+      const errorMessage = 'Erro ao criar pagamento';
       jest
         .spyOn(mockCreatePaymentUseCase, 'execute')
-        .mockRejectedValue(
-          new DomainBusinessException('Erro ao criar pagamento'),
-        );
+        .mockRejectedValue(new DomainBusinessException(errorMessage));
 
-      await expect(controller.create(validDto)).rejects.toThrow(
+      await expect(controller.create(validDto, idempotencyKey)).rejects.toThrow(
         DomainBusinessException,
       );
 
-      await expect(controller.create(validDto)).rejects.toThrow(errorMessage);
+      await expect(controller.create(validDto, idempotencyKey)).rejects.toThrow(
+        errorMessage,
+      );
     });
   });
 });

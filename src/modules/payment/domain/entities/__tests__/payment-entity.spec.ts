@@ -7,6 +7,7 @@ import { PaymentPaidEvent } from '@payment/domain/events/payment-paid.event';
 import { PaymentCreatedEvent } from '@payment/domain/events/payment-created.event';
 import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
 import { PixDetailVO } from '@payment/domain/value-objects/pix-detail.vo';
+import { faker } from '@faker-js/faker';
 
 describe('PaymentEntity', () => {
   const createPayment = (amount: number) => {
@@ -14,6 +15,8 @@ describe('PaymentEntity', () => {
       amount,
       type: PaymentType.PIX,
       expiresAt: new Date(Date.now() + 3600 * 1000),
+      idempotencyKey: faker.string.uuid(),
+      sessionId: faker.string.uuid(),
     });
   };
 
@@ -47,6 +50,8 @@ describe('PaymentEntity', () => {
             amount: -50,
             type: PaymentType.PIX,
             expiresAt: new Date(Date.now() + 3600 * 1000),
+            idempotencyKey: faker.string.uuid(),
+            sessionId: faker.string.uuid(),
           }),
         ).toThrow(DomainBusinessException);
       });
@@ -57,6 +62,8 @@ describe('PaymentEntity', () => {
             amount: 0,
             type: PaymentType.PIX,
             expiresAt: new Date(Date.now() + 3600 * 1000),
+            idempotencyKey: faker.string.uuid(),
+            sessionId: faker.string.uuid(),
           }),
         ).toThrow(DomainBusinessException);
       });
@@ -178,6 +185,8 @@ describe('PaymentEntity', () => {
           amount: 100,
           type: PaymentType.PIX,
           expiresAt,
+          idempotencyKey: faker.string.uuid(),
+          sessionId: faker.string.uuid(),
         });
 
         payment.addPaymentProvider({
@@ -231,6 +240,8 @@ describe('PaymentEntity', () => {
           type: PaymentType.PIX,
           status: PaymentStatus.PAID,
           expiresAt: new Date(Date.now() + 3600 * 1000),
+          idempotencyKey: faker.string.uuid(),
+          sessionId: faker.string.uuid(),
         });
 
         expect(payment).toBeInstanceOf(PaymentEntity);
@@ -245,6 +256,8 @@ describe('PaymentEntity', () => {
           type: PaymentType.PIX,
           status: PaymentStatus.PENDING,
           expiresAt: new Date(Date.now() + 3600 * 1000),
+          idempotencyKey: faker.string.uuid(),
+          sessionId: faker.string.uuid(),
         });
 
         expect(payment.id).toBe(id);
