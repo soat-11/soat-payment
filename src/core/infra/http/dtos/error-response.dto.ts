@@ -1,4 +1,3 @@
-import { HttpStatus } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ErrorResponseDto {
@@ -6,7 +5,6 @@ export class ErrorResponseDto {
     description: 'Código de status HTTP',
     example: 400,
     type: 'number',
-    enum: HttpStatus,
   })
   statusCode: number;
 

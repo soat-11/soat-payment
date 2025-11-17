@@ -10,7 +10,7 @@ import { DefaultMongoDBEntity } from '@core/infra/database/mongodb/default-mongo
 export class PaymentDetailMapperFactory {
   private mappers = new Map<
     PaymentType,
-    PaymentDetailMapper<PixDetailMongoDBEntity, AnyPaymentDetail>
+    PaymentDetailMapper<unknown, AnyPaymentDetail>
   >();
 
   private repositories = new Map<
@@ -19,14 +19,16 @@ export class PaymentDetailMapperFactory {
   >();
 
   registerMapper(
-    mapper: PaymentDetailMapper<PixDetailMongoDBEntity, AnyPaymentDetail>,
+    mapper: PaymentDetailMapper<unknown, AnyPaymentDetail>,
     repository: MongoRepository<DefaultMongoDBEntity>,
   ): void {
     this.mappers.set(mapper.supportedType, mapper);
     this.repositories.set(mapper.supportedType, repository);
   }
 
-  getRepository(type: PaymentType): Result<MongoRepository<DefaultMongoDBEntity>> {
+  getRepository(
+    type: PaymentType,
+  ): Result<MongoRepository<DefaultMongoDBEntity>> {
     const repository = this.repositories.get(type);
     if (!repository) {
       return Result.fail(
@@ -40,7 +42,7 @@ export class PaymentDetailMapperFactory {
 
   getMapper(
     type: PaymentType,
-  ): Result<PaymentDetailMapper<PixDetailMongoDBEntity, AnyPaymentDetail>> {
+  ): Result<PaymentDetailMapper<unknown, AnyPaymentDetail>> {
     const mapper = this.mappers.get(type);
     if (!mapper) {
       return Result.fail(
