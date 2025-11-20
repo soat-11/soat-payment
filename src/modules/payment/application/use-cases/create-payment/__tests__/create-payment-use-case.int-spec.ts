@@ -26,14 +26,19 @@ import { PixDetailMongoDBEntity } from '@payment/infra/persistence/entities/pix-
 import { PixDetailMapper } from '@payment/infra/persistence/mapper/pix-detail.mapper';
 import { faker } from '@faker-js/faker';
 import { DomainConflictException } from '@core/domain/exceptions/domain.exception';
+import { CartGateway } from '@payment/domain/gateways/cart.gateway';
+import { PaymentAmountCalculatorImpl } from '@payment/domain/service/payment-amount-calculator.service';
 
 describe('CreatePaymentUseCase - Integration Test', () => {
   let mongoServer: MongoMemoryServer;
   let dataSource: DataSource;
   let useCase: CreatePaymentUseCase;
   let paymentRepository: PaymentRepository;
-  let mongoRepository: MongoRepository<PaymentMongoDBEntity>;
+
+ let mongoRepository: MongoRepository<PaymentMongoDBEntity>;
   let createQRCodeUseCase: CreateQRCodeImage;
+  let cartGateway: CartGateway;
+  let paymentAmountCalculator: PaymentAmountCalculatorImpl;
 
   beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
@@ -81,6 +86,25 @@ describe('CreatePaymentUseCase - Integration Test', () => {
     await mongoRepository.clear();
 
     createQRCodeUseCase = new CreateQRCodeImageUseCaseImpl();
+    paymentAmountCalculator = new PaymentAmountCalculatorImpl();
+    cartGateway = {
+      async getCart(sessionId: string) {
+        return Promise.resolve({
+          items: [
+            {
+              sku: '123',
+              quantity: 2,
+              unitPrice: 100,
+            },
+            {
+              sku: '456',
+              quantity: 1,
+              unitPrice: 50,
+            }
+          ]
+        })
+      },
+    };
 
     useCase = new CreatePaymentUseCaseImpl(
       new PaymentFactoryImpl(new SystemDateImpl(new Date())),
@@ -88,6 +112,8 @@ describe('CreatePaymentUseCase - Integration Test', () => {
       new PinoLoggerService(),
       createQRCodeUseCase,
       paymentRepository,
+      cartGateway,
+      paymentAmountCalculator,
     );
   });
 
@@ -103,7 +129,7 @@ describe('CreatePaymentUseCase - Integration Test', () => {
       const payments = await mongoRepository.find();
 
       expect(payments).toHaveLength(1);
-      expect(payments[0].amount).toBe(100);
+      expect(payments[0].amount).toBe(250);
       expect(payments[0].type).toBe(PaymentType.PIX);
       expect(payments[0].status).toBe(PaymentStatus.PENDING);
       expect(payments[0].id).toBeDefined();
@@ -125,7 +151,7 @@ describe('CreatePaymentUseCase - Integration Test', () => {
 
       expect(payment).toBeDefined();
       expect(payment.id).toBeDefined();
-      expect(payment.amount).toBe(100);
+      expect(payment.amount).toBe(250);
 
       expect(result.image).toMatch(/^data:image\/png;base64,/);
     });

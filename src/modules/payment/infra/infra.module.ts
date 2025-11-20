@@ -12,6 +12,8 @@ import { PixDetailMapper } from './persistence/mapper/pix-detail.mapper';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
+import { CartGateway } from '@payment/domain/gateways/cart.gateway';
+import { HttpCartGateway } from './gateways/http-cart.gateway';
 
 @Module({
   imports: [MongoModule],
@@ -57,7 +59,11 @@ import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
         AbstractLoggerService,
       ],
     },
+    {
+      provide: CartGateway,
+      useClass: HttpCartGateway,
+    },
   ],
-  exports: [PaymentRepository, PaymentMapper, PaymentDetailMapperFactory],
+  exports: [PaymentRepository, PaymentMapper, PaymentDetailMapperFactory, CartGateway],
 })
 export class PaymentInfraModule {}

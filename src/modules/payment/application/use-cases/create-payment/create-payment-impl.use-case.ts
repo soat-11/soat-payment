@@ -16,6 +16,8 @@ import { PaymentRepository } from '@payment/domain/repositories/payment.reposito
 import { PixDetailVO } from '@payment/domain/value-objects/pix-detail.vo';
 import { IdempotencyKeyVO } from '@payment/domain/value-objects/idempotency-key.vo';
 import { PaymentAlreadyExistsException } from '@payment/domain/exceptions/payment.exception';
+import { CartGateway } from '@payment/domain/gateways/cart.gateway';
+import { PaymentAmountCalculator } from '@payment/domain/service/payment-amount-calculator.service';
 
 export class CreatePaymentUseCaseImpl implements CreatePaymentUseCase {
   constructor(
@@ -24,6 +26,8 @@ export class CreatePaymentUseCaseImpl implements CreatePaymentUseCase {
     private readonly logger: AbstractLoggerService,
     private readonly createQRCodeUseCase: CreateQRCodeImage,
     private readonly paymentRepository: PaymentRepository,
+    private readonly cartGateway: CartGateway,
+    private readonly paymentAmountCalculator: PaymentAmountCalculator,
   ) {}
 
   async execute(
@@ -43,8 +47,11 @@ export class CreatePaymentUseCaseImpl implements CreatePaymentUseCase {
 
       this.logger.log('Creating payment entity');
 
+      const cart = await this.cartGateway.getCart(input.sessionId);
+      const amount = this.paymentAmountCalculator.calculate(cart);
+
       const payment = this.paymentFactory.create({
-        amount: 100,
+        amount,
         type: PaymentType.PIX,
         idempotencyKey: input.idempotencyKey,
         sessionId: input.sessionId,

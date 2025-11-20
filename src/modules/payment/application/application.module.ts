@@ -14,8 +14,15 @@ import { CreatePaymentUseCase } from '@payment/application/use-cases/create-paym
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
-import { CreateQRCodeImage } from '@payment/application/use-cases/create-qrcode/create-qrcode.use-case';
+
+
 import { PaymentInfraModule } from '@payment/infra/infra.module';
+import {
+  PaymentAmountCalculator,
+  PaymentAmountCalculatorImpl,
+} from '@payment/domain/service/payment-amount-calculator.service';
+import { CartGateway } from '@payment/domain/gateways/cart.gateway';
+import { CreateQRCodeImage } from '@payment/application/use-cases/create-qrcode/create-qrcode.use-case';
 
 @Module({
   imports: [PaymentInfraModule],
@@ -44,6 +51,10 @@ import { PaymentInfraModule } from '@payment/infra/infra.module';
       useClass: CreateQRCodeImageUseCaseImpl,
     },
     {
+      provide: PaymentAmountCalculator,
+      useClass: PaymentAmountCalculatorImpl,
+    },
+    {
       provide: CreatePaymentUseCase,
       useFactory: (
         repository: PaymentRepository,
@@ -51,6 +62,8 @@ import { PaymentInfraModule } from '@payment/infra/infra.module';
         dispatcher: DomainEventDispatcher,
         logger: AbstractLoggerService,
         createQRCodeUseCase: CreateQRCodeImage,
+        cartGateway: CartGateway,
+        paymentAmountCalculator: PaymentAmountCalculator,
       ) => {
         return new CreatePaymentUseCaseImpl(
           factory,
@@ -58,6 +71,8 @@ import { PaymentInfraModule } from '@payment/infra/infra.module';
           logger,
           createQRCodeUseCase,
           repository,
+          cartGateway,
+          paymentAmountCalculator,
         );
       },
       inject: [
@@ -66,6 +81,8 @@ import { PaymentInfraModule } from '@payment/infra/infra.module';
         'DomainEventDispatcher',
         AbstractLoggerService,
         CreateQRCodeImageUseCaseImpl,
+        CartGateway,
+        PaymentAmountCalculator,
       ],
     },
   ],
