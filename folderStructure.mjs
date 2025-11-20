@@ -167,8 +167,15 @@ export const folderStructureConfig = createFolderStructure({
               children: [{ name: '*.dto.ts' }, { ruleId: 'test_folder' }],
             },
             {
+              name: 'client',
+              children: [{ name: '*.ts' }, { ruleId: 'test_folder' }],
+            },
+            {
               name: 'transformers',
-              children: [{ name: '*.transformer.ts' }, { ruleId: 'test_folder' }],
+              children: [
+                { name: '*.transformer.ts' },
+                { ruleId: 'test_folder' },
+              ],
             },
             { ruleId: 'test_folder' },
           ],
@@ -287,7 +294,7 @@ export const folderStructureConfig = createFolderStructure({
         { name: 'exceptions', ruleId: 'module_exceptions_folder' },
         { name: 'enum', children: [{ name: '*.enum.ts' }] },
         { name: 'domain-events', ruleId: 'core_events_folder' },
-
+        { name: 'gateways', ruleId: 'module_gateways_folder' },
         {
           name: 'service',
           children: [{ name: '*.service.ts' }, { ruleId: 'test_folder' }],
@@ -310,7 +317,10 @@ export const folderStructureConfig = createFolderStructure({
         { ruleId: 'test_folder' },
       ],
     },
-
+    module_gateways_folder: {
+      name: 'gateways',
+      children: [{ name: '*.gateway.ts' }, { ruleId: 'test_folder' }],
+    },
     module_infra_folder: {
       name: '*',
       enforceExistence: ['infra.module.ts'],
@@ -321,10 +331,14 @@ export const folderStructureConfig = createFolderStructure({
         },
         { name: 'persistence', ruleId: 'module_persistence_folder' },
         { name: 'infra.module.ts' },
+        { name: 'acl', ruleId: 'module_acl_folder' },
         { ruleId: 'test_folder' },
       ],
     },
-
+    module_acl_folder: {
+      name: '{kebab-case}',
+      children: [{ name: '*.ts' }, { ruleId: 'module_acl_folder' }],
+    },
     module_persistence_folder: {
       name: '*',
       enforceExistence: ['repositories', 'entities', 'datasource'],

@@ -6,11 +6,12 @@ import { PaymentMongoDBRepositoryImpl } from '@payment/infra/persistence/reposit
 import { MongoRepository } from 'typeorm';
 import { PaymentMongoDBEntity } from '@payment/infra/persistence/entities/payment-mongodb.entity';
 import { PixDetailMongoDBEntity } from '@payment/infra/persistence/entities/pix-detail-mongodb.entity';
-import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
+
 import { PaymentDetailMapperFactory } from './persistence/mapper/payment-detail-mapper.factory';
 import { PixDetailMapper } from './persistence/mapper/pix-detail.mapper';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 
 @Module({
   imports: [MongoModule],
