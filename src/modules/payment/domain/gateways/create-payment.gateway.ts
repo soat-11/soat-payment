@@ -1,3 +1,4 @@
+import { Result } from '@core/domain/result';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 
 export type PixCreatePaymentItemType = {
@@ -32,5 +33,5 @@ export type CreateAnyPaymentResponse = PixCreatePaymentResponseType;
 export interface CreatePaymentGateway {
   createPayment(
     payment: AnyCreatePaymentType,
-  ): Promise<CreateAnyPaymentResponse>;
+  ): Promise<Result<CreateAnyPaymentResponse>>;
 }

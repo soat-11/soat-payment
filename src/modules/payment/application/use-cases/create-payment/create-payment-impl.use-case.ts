@@ -18,6 +18,7 @@ import { IdempotencyKeyVO } from '@payment/domain/value-objects/idempotency-key.
 import { PaymentAlreadyExistsException } from '@payment/domain/exceptions/payment.exception';
 import { CartGateway } from '@payment/domain/gateways/cart.gateway';
 import { PaymentAmountCalculator } from '@payment/domain/service/payment-amount-calculator.service';
+import { CreatePaymentGateway } from '@payment/domain/gateways/create-payment.gateway';
 
 export class CreatePaymentUseCaseImpl implements CreatePaymentUseCase {
   constructor(
@@ -28,6 +29,7 @@ export class CreatePaymentUseCaseImpl implements CreatePaymentUseCase {
     private readonly paymentRepository: PaymentRepository,
     private readonly cartGateway: CartGateway,
     private readonly paymentAmountCalculator: PaymentAmountCalculator,
+    private readonly createPaymentGateway: CreatePaymentGateway
   ) {}
 
   async execute(
@@ -57,10 +59,31 @@ export class CreatePaymentUseCaseImpl implements CreatePaymentUseCase {
         sessionId: input.sessionId,
       });
 
-      this.logger.log('Creating QR Code', { paymentId: payment.id.value });
+      this.logger.log('Sending payment to gateway', { paymentId: payment.id.value });
+
+      const createPaymentGatewayResult = await this.createPaymentGateway.createPayment({
+        amount: payment.amount.value,
+        type: payment.type.value,
+        idempotencyKey: payment.idempotencyKey.value,
+        expirationTime: payment.expiresAt,
+        externalReference: payment.idempotencyKey.value,
+        items: cart.items.map(item => ({
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          title: item.sku
+        })),
+      });
+
+      if (createPaymentGatewayResult.isFailure) {
+        this.logger.error('Error creating payment', { error: createPaymentGatewayResult.error });
+        throw createPaymentGatewayResult.error;
+      }
+
+      this.logger.log('Creating QR Code', { paymentId: createPaymentGatewayResult.value.qrCode });
+
 
       const qrCode = await this.createQRCodeUseCase.execute({
-        qrData: payment.id.value,
+        qrData: createPaymentGatewayResult.value.qrCode,
       });
 
       if (qrCode.isFailure) {

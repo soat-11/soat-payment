@@ -28,6 +28,8 @@ import { faker } from '@faker-js/faker';
 import { DomainConflictException } from '@core/domain/exceptions/domain.exception';
 import { CartGateway } from '@payment/domain/gateways/cart.gateway';
 import { PaymentAmountCalculatorImpl } from '@payment/domain/service/payment-amount-calculator.service';
+import { CreatePaymentGateway } from '@payment/domain/gateways/create-payment.gateway';
+import { Result } from '@core/domain/result';
 
 describe('CreatePaymentUseCase - Integration Test', () => {
   let mongoServer: MongoMemoryServer;
@@ -39,6 +41,7 @@ describe('CreatePaymentUseCase - Integration Test', () => {
   let createQRCodeUseCase: CreateQRCodeImage;
   let cartGateway: CartGateway;
   let paymentAmountCalculator: PaymentAmountCalculatorImpl;
+  let createPaymentGateway: CreatePaymentGateway;
 
   beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
@@ -106,6 +109,14 @@ describe('CreatePaymentUseCase - Integration Test', () => {
       },
     };
 
+    createPaymentGateway = {
+      async createPayment(payment) {
+        return Promise.resolve(Result.ok({
+          qrCode: 'qrCode-teste',
+        }))
+      },
+    };
+
     useCase = new CreatePaymentUseCaseImpl(
       new PaymentFactoryImpl(new SystemDateImpl(new Date())),
       new DomainEventDispatcherImpl(),
@@ -114,6 +125,7 @@ describe('CreatePaymentUseCase - Integration Test', () => {
       paymentRepository,
       cartGateway,
       paymentAmountCalculator,
+      createPaymentGateway,
     );
   });
 
@@ -144,6 +156,12 @@ describe('CreatePaymentUseCase - Integration Test', () => {
         sessionId: faker.string.uuid(),
       };
 
+      const qrCodeSpy = jest.spyOn(createPaymentGateway, 'createPayment').mockResolvedValue(
+        Result.ok({
+          qrCode: 'qrCode-teste',
+        })
+      );
+
       const result = await useCase.execute(input);
 
       const payments = await mongoRepository.find();
@@ -153,7 +171,11 @@ describe('CreatePaymentUseCase - Integration Test', () => {
       expect(payment.id).toBeDefined();
       expect(payment.amount).toBe(250);
 
+      expect(qrCodeSpy).toHaveBeenCalledWith(expect.objectContaining({
+        amount: 250,
+      }));
       expect(result.image).toMatch(/^data:image\/png;base64,/);
+
     });
   });
 

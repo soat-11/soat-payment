@@ -19,6 +19,7 @@ import {
   CreateQRCodeMercadoPagoResponseSchema,
 } from './dtos/mercadopago-qrcode.dto';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
+import { Result } from '@core/domain/result';
 
 export class CreatePixPaymentGatewayImpl implements CreatePaymentGateway {
   private readonly URL = `${process.env.PAYMENT_API_URL}/v1/orders`;
@@ -44,8 +45,8 @@ export class CreatePixPaymentGatewayImpl implements CreatePaymentGateway {
 
   async createPayment(
     payment: AnyCreatePaymentType,
-  ): Promise<CreateAnyPaymentResponse> {
-    // Futuramente implementar Strategy para criar o pagamento
+  ): Promise<Result<CreateAnyPaymentResponse>> {
+
     this.logger.log('Creating payment', {
       externalReference: payment.externalReference,
     });
@@ -54,7 +55,7 @@ export class CreatePixPaymentGatewayImpl implements CreatePaymentGateway {
       this.logger.warn('Payment type not supported', {
         payment: payment,
       });
-      throw new DomainBusinessException('Tipo de pagamento não suportado');
+      return Result.fail(new DomainBusinessException('Tipo de pagamento não suportado'));
     }
     this.logger.log('Creating items');
     const items = payment.items.map((item) => ({
@@ -72,7 +73,7 @@ export class CreatePixPaymentGatewayImpl implements CreatePaymentGateway {
       external_reference: payment.externalReference,
       config: {
         qr: {
-          external_pos_id: process.env.PAYMENT_POS_ID || '',
+          external_pos_id: process.env.MERCADO_PAGO_POS_ID || '',
           mode: 'dynamic',
         },
       },
@@ -94,9 +95,9 @@ export class CreatePixPaymentGatewayImpl implements CreatePaymentGateway {
       this.logger.error('Error validating MercadoPago payload', {
         error: validationResult.error,
       });
-      throw new DomainBusinessException(
+      return Result.fail(new DomainBusinessException(
         `Erro na validação do payload do MercadoPago: ${validationResult.error.message}`,
-      );
+      ));
     }
 
     this.logger.log('Sending request to MercadoPago');
@@ -113,16 +114,16 @@ export class CreatePixPaymentGatewayImpl implements CreatePaymentGateway {
       this.logger.error('Error sending request to MercadoPago', {
         error: response.data,
       });
-      throw HttpClientResponseUtils.handleErrorResponse(response.data);
+      return Result.fail(HttpClientResponseUtils.handleErrorResponse(response.data));
     }
 
     if (HttpClientResponseUtils.isEmptyResponse(response)) {
       this.logger.error('Empty response from MercadoPago', {
         response: response,
       });
-      throw new DomainExceptionGeneric(
+      return Result.fail(new DomainExceptionGeneric(
         'Ocorreu um erro inesperado, entre em contato com o suporte.',
-      );
+      ));
     }
     this.logger.log('Parsing response from MercadoPago');
 
@@ -134,15 +135,15 @@ export class CreatePixPaymentGatewayImpl implements CreatePaymentGateway {
       this.logger.error('Error parsing response from MercadoPago', {
         error: responseValidation.error,
       });
-      throw new DomainExceptionGeneric(
+      return Result.fail(new DomainExceptionGeneric(
         `Erro na validação da resposta do MercadoPago: ${responseValidation.error.message}`,
-      );
+      ));
     }
 
     this.logger.log('Successfully created payment');
 
-    return {
+    return Result.ok({
       qrCode: responseValidation.data.type_response.qr_data,
-    };
+    });
   }
 }
