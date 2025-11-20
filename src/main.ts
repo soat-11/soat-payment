@@ -5,6 +5,8 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { PinoLoggerService } from '@core/infra/logger/pino-logger';
 import { apiReference } from '@scalar/nestjs-api-reference';
+import { GlobalExceptionFilter } from '@core/infra/filters/global-exception.filter';
+import { HttpAdapterHost } from '@nestjs/core';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useLogger(new PinoLoggerService());
@@ -15,6 +17,11 @@ async function bootstrap() {
       forbidNonWhitelisted: false,
       transform: true,
     }),
+  );
+
+  const httpAdapter = app.get(HttpAdapterHost);
+  app.useGlobalFilters(
+    new GlobalExceptionFilter(httpAdapter, new PinoLoggerService()),
   );
 
   const config = new DocumentBuilder()
