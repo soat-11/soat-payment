@@ -14,8 +14,11 @@ export class PinoLoggerService extends AbstractLoggerService<pino.Level> {
   constructor(
     config: Config = { suppressConsole: process.env.NODE_ENV === 'test' },
     loggerInstance?: PinoBaseLogger,
+    context?: string,
   ) {
     super({ suppressConsole: config?.suppressConsole || false });
+    this._context = context;
+
     const level = process.env.LOG_LEVEL || 'info';
     const options: LoggerOptions = {
       level,
@@ -28,8 +31,6 @@ export class PinoLoggerService extends AbstractLoggerService<pino.Level> {
   private handleTransport(): Pick<LoggerOptions, 'transport'> {
     const isDev = process.env.NODE_ENV === 'development';
 
-    // Em desenvolvimento: logs coloridos no console
-    // OTEL auto-instrumentação envia para Loki em paralelo
     if (isDev) {
       return {
         transport: {
@@ -43,9 +44,6 @@ export class PinoLoggerService extends AbstractLoggerService<pino.Level> {
       };
     }
 
-    // Em produção: JSON puro no stdout
-    // OTEL auto-instrumentação envia para Loki
-    // NÃO usar pino-loki (deixa OTEL fazer o trabalho)
     return {
       transport: undefined,
     };
@@ -57,7 +55,7 @@ export class PinoLoggerService extends AbstractLoggerService<pino.Level> {
   }
 
   setContext(context: string): void {
-    this.context = context;
+    this._context = context;
   }
 
   setLogLevels(levels: string[]): void {
@@ -103,18 +101,11 @@ export class PinoLoggerService extends AbstractLoggerService<pino.Level> {
     level: LogLevel,
     message: string,
     extra: LogExtra,
-    context?: string,
-    trace?: string,
   ): void {
-    // eslint-disable-next-line no-restricted-syntax
-    const teste = this.getDefaultFields(trace ? new Error(trace) : undefined);
+
     const traceId = this.getTraceIdFromContext();
     const base: BaseLogMeta & { traceId?: string } = {
-      defaultContext: {
-        originClass: teste.defaultContext?.originClass ?? 'unknown',
-        originMethod: teste.defaultContext?.originMethod ?? 'unknown',
-      },
-      context,
+      context: this.context,
       extra,
       traceId: traceId,
     };

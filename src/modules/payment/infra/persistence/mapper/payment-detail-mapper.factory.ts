@@ -3,9 +3,9 @@ import { AnyPaymentDetail } from '@payment/domain/value-objects/payment-detail.v
 import { PaymentDetailMapper } from './payment-detail.mapper.interface';
 import { Result } from '@core/domain/result';
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
-import { PixDetailMongoDBEntity } from '@payment/infra/persistence/entities/pix-detail-mongodb.entity';
 import { MongoRepository } from 'typeorm';
-import { DefaultMongoDBEntity } from '@payment/infra/database/mongodb/default-mongodb.entity';
+import { DefaultMongoDBEntity } from '@core/infra/database/mongodb/default-mongodb.entity';
+
 
 export class PaymentDetailMapperFactory {
   private mappers = new Map<

@@ -1,25 +1,47 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { Injectable } from '@nestjs/common';
+import { AbstractLoggerService } from '../abstract-logger';
+import { CoreModule } from '../../../core.module';
 import { PinoLoggerService } from '../pino-logger';
 
-describe('PinoLoggerService OpenTelemetry integration', () => {
-  it('should log with real OpenTelemetry traceId', () => {
-    const service = new PinoLoggerService({ suppressConsole: false });
-    const loggerSpy = jest.spyOn(service['logger'], 'error');
+@Injectable()
+class TestService {
+  constructor(public readonly logger: AbstractLoggerService) {}
 
-    class ErrorTest {
-      create() {
-        service.error('test message');
-      }
-    }
-    const errorTest = new ErrorTest();
-    errorTest.create();
+  someAction() {
+    this.logger.log('action executed');
+  }
+}
 
-    expect(loggerSpy).toHaveBeenCalled();
-    const [contextObj, message] = loggerSpy.mock.calls[0];
-    expect(message).toBe('test message');
-    expect(contextObj).toHaveProperty(
-      'defaultContext.originClass',
-      'ErrorTest',
-    );
-    expect(contextObj).toHaveProperty('defaultContext.originMethod', 'create');
+describe('Logger Integration (INQUIRER Scope)', () => {
+  let moduleRef: TestingModule;
+  let testService: TestService;
+
+  beforeEach(async () => {
+    moduleRef = await Test.createTestingModule({
+      imports: [CoreModule],
+      providers: [TestService],
+    }).compile();
+
+    testService = moduleRef.get<TestService>(TestService);
+  });
+
+  it('should inject logger with context derived from the consuming class name', () => {
+    expect(testService.logger).toBeInstanceOf(PinoLoggerService);
+
+
+    const pinoLogger = testService.logger
+
+    expect(pinoLogger.context).toBe('TestService');
+  });
+
+  it('should maintain correct context when logging', () => {
+    const pinoLogger = testService.logger;
+
+
+    expect(pinoLogger.context).toBeDefined();
+    expect(pinoLogger.context).not.toBe('unknown');
+    expect(pinoLogger.context).toBe('TestService');
+
   });
 });
