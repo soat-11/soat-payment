@@ -14,6 +14,9 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { CartGateway } from '@payment/domain/gateways/cart.gateway';
 import { HttpCartGateway } from './gateways/http-cart.gateway';
+import { CreatePaymentGateway } from '@payment/domain/gateways/create-payment.gateway';
+import { CreatePixPaymentGatewayImpl } from './acl/payments-gateway/mercado-pago/create-pix-payment.gateway';
+import { HttpClient, PostMethod } from '@core/infra/http/client/http-client';
 
 @Module({
   imports: [MongoModule],
@@ -63,7 +66,17 @@ import { HttpCartGateway } from './gateways/http-cart.gateway';
       provide: CartGateway,
       useClass: HttpCartGateway,
     },
+    {
+      provide: CreatePaymentGateway,
+      useFactory: (
+        client: PostMethod,
+        logger: AbstractLoggerService,
+      ) => {
+        return new CreatePixPaymentGatewayImpl(client, logger);
+      },
+      inject: [HttpClient, AbstractLoggerService],
+    },
   ],
-  exports: [PaymentRepository, PaymentMapper, PaymentDetailMapperFactory, CartGateway],
+  exports: [PaymentRepository, PaymentMapper, PaymentDetailMapperFactory, CartGateway, CreatePaymentGateway],
 })
 export class PaymentInfraModule {}

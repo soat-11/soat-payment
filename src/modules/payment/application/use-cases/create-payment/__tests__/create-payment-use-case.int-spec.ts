@@ -117,16 +117,22 @@ describe('CreatePaymentUseCase - Integration Test', () => {
       },
     };
 
-    useCase = new CreatePaymentUseCaseImpl(
-      new PaymentFactoryImpl(new SystemDateImpl(new Date())),
-      new DomainEventDispatcherImpl(),
-      new PinoLoggerService(),
-      createQRCodeUseCase,
+    useCase = new CreatePaymentUseCaseImpl({
+      paymentFactory: new PaymentFactoryImpl(new SystemDateImpl(new Date())),
+      eventDispatcher: new DomainEventDispatcherImpl(),
+      logger: new PinoLoggerService(),
       paymentRepository,
-      cartGateway,
-      paymentAmountCalculator,
-      createPaymentGateway,
-    );
+      gateways: {
+        cart: cartGateway,
+        payment: createPaymentGateway,
+      },
+      useCases: {
+        createQRCode: createQRCodeUseCase,
+      },
+      services: {
+        amountCalculator: paymentAmountCalculator,
+      },
+    });
   });
 
   describe('Success', () => {

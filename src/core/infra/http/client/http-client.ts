@@ -99,3 +99,5 @@ export class HttpClientResponseUtils {
     return new DomainExceptionGeneric('Ocorreu um erro desconhecido');
   }
 }
+
+export const HttpClient = Symbol.for('HttpClient');

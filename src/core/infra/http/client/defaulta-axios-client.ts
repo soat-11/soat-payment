@@ -6,7 +6,7 @@ import {
 } from '@core/infra/http/client/http-client';
 import { AxiosInstance } from 'axios';
 
-export abstract class DefaultAxiosClient implements GetMethod, PostMethod {
+export class DefaultAxiosClient implements GetMethod, PostMethod {
   constructor(private readonly client: AxiosInstance) {}
 
   async post<TParams extends object, TReturn extends object>(

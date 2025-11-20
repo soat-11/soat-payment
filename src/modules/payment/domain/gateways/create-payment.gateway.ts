@@ -35,3 +35,6 @@ export interface CreatePaymentGateway {
     payment: AnyCreatePaymentType,
   ): Promise<Result<CreateAnyPaymentResponse>>;
 }
+
+
+export const CreatePaymentGateway = Symbol.for('CreatePaymentGateway');

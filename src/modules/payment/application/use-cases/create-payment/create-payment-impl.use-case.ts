@@ -19,49 +19,56 @@ import { PaymentAlreadyExistsException } from '@payment/domain/exceptions/paymen
 import { CartGateway } from '@payment/domain/gateways/cart.gateway';
 import { PaymentAmountCalculator } from '@payment/domain/service/payment-amount-calculator.service';
 import { CreatePaymentGateway } from '@payment/domain/gateways/create-payment.gateway';
+export type CreatePaymentUseCaseDependencies = {
+  paymentFactory: PaymentFactory;
+  eventDispatcher: DomainEventDispatcher;
+  logger: AbstractLoggerService;
+  paymentRepository: PaymentRepository;
+  gateways: {
+    cart: CartGateway;
+    payment: CreatePaymentGateway;
+  };
+  useCases: {
+    createQRCode: CreateQRCodeImage;
+  };
+  services: {
+    amountCalculator: PaymentAmountCalculator;
+  };
+}
 
 export class CreatePaymentUseCaseImpl implements CreatePaymentUseCase {
-  constructor(
-    private readonly paymentFactory: PaymentFactory,
-    private readonly eventDispatcher: DomainEventDispatcher,
-    private readonly logger: AbstractLoggerService,
-    private readonly createQRCodeUseCase: CreateQRCodeImage,
-    private readonly paymentRepository: PaymentRepository,
-    private readonly cartGateway: CartGateway,
-    private readonly paymentAmountCalculator: PaymentAmountCalculator,
-    private readonly createPaymentGateway: CreatePaymentGateway
-  ) {}
+  constructor(private readonly deps: CreatePaymentUseCaseDependencies) {}
 
   async execute(
     input: CreatePaymentUseCaseInput,
   ): Promise<CreatePaymentUseCaseOutput> {
-    this.logger.log('Creating payment', {
+    this.deps.logger.log('Creating payment', {
       sessionId: input.sessionId,
       idempotencyKey: input.idempotencyKey,
     });
 
     try {
-      const existingPayment = await this.paymentRepository.findByIdempotencyKey(
+      const existingPayment = await this.deps.paymentRepository.findByIdempotencyKey(
         IdempotencyKeyVO.create(input.idempotencyKey),
       );
 
       if (existingPayment) throw new PaymentAlreadyExistsException();
 
-      this.logger.log('Creating payment entity');
+      this.deps.logger.log('Creating payment entity');
 
-      const cart = await this.cartGateway.getCart(input.sessionId);
-      const amount = this.paymentAmountCalculator.calculate(cart);
+      const cart = await this.deps.gateways.cart.getCart(input.sessionId);
+      const amount = this.deps.services.amountCalculator.calculate(cart);
 
-      const payment = this.paymentFactory.create({
+      const payment = this.deps.paymentFactory.create({
         amount,
         type: PaymentType.PIX,
         idempotencyKey: input.idempotencyKey,
         sessionId: input.sessionId,
       });
 
-      this.logger.log('Sending payment to gateway', { paymentId: payment.id.value });
+      this.deps.logger.log('Sending payment to gateway', { paymentId: payment.id.value });
 
-      const createPaymentGatewayResult = await this.createPaymentGateway.createPayment({
+      const createPaymentGatewayResult = await this.deps.gateways.payment.createPayment({
         amount: payment.amount.value,
         type: payment.type.value,
         idempotencyKey: payment.idempotencyKey.value,
@@ -75,23 +82,23 @@ export class CreatePaymentUseCaseImpl implements CreatePaymentUseCase {
       });
 
       if (createPaymentGatewayResult.isFailure) {
-        this.logger.error('Error creating payment', { error: createPaymentGatewayResult.error });
+        this.deps.logger.error('Error creating payment', { error: createPaymentGatewayResult.error });
         throw createPaymentGatewayResult.error;
       }
 
-      this.logger.log('Creating QR Code', { paymentId: createPaymentGatewayResult.value.qrCode });
+      this.deps.logger.log('Creating QR Code', { paymentId: createPaymentGatewayResult.value.qrCode });
 
 
-      const qrCode = await this.createQRCodeUseCase.execute({
+      const qrCode = await this.deps.useCases.createQRCode.execute({
         qrData: createPaymentGatewayResult.value.qrCode,
       });
 
       if (qrCode.isFailure) {
-        this.logger.error('Error creating QR Code', { error: qrCode.error });
+        this.deps.logger.error('Error creating QR Code', { error: qrCode.error });
         throw qrCode.error;
       }
 
-      this.logger.log('Creating payment detail');
+      this.deps.logger.log('Creating payment detail');
 
       payment.addPaymentDetail(
         PixDetailVO.create({
@@ -99,29 +106,29 @@ export class CreatePaymentUseCaseImpl implements CreatePaymentUseCase {
         }),
       );
 
-      await this.paymentRepository.save(payment);
+      await this.deps.paymentRepository.save(payment);
 
-      this.logger.log('Payment saved', { paymentId: payment.id.value });
+      this.deps.logger.log('Payment saved', { paymentId: payment.id.value });
 
       payment.domainEvents.forEach((event) =>
-        this.eventDispatcher.dispatch(event),
+        this.deps.eventDispatcher.dispatch(event),
       );
 
-      this.logger.log('Domain events dispatched');
+      this.deps.logger.log('Domain events dispatched');
 
       return {
         image: qrCode.value.image,
       };
     } catch (error) {
       if (error instanceof Error) {
-        this.logger.error('Error creating payment', {
+        this.deps.logger.error('Error creating payment', {
           message: error.message,
           trace: error.stack,
         });
         throw error;
       }
 
-      this.logger.error('Error creating payment', {
+      this.deps.logger.error('Error creating payment', {
         message: 'Unknown error creating payment',
         trace: 'Unknown error creating payment',
       });

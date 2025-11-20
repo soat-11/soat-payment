@@ -23,6 +23,9 @@ import {
 } from '@payment/domain/service/payment-amount-calculator.service';
 import { CartGateway } from '@payment/domain/gateways/cart.gateway';
 import { CreateQRCodeImage } from '@payment/application/use-cases/create-qrcode/create-qrcode.use-case';
+import { CreatePaymentGateway } from '@payment/domain/gateways/create-payment.gateway';
+
+
 
 @Module({
   imports: [PaymentInfraModule],
@@ -64,16 +67,24 @@ import { CreateQRCodeImage } from '@payment/application/use-cases/create-qrcode/
         createQRCodeUseCase: CreateQRCodeImage,
         cartGateway: CartGateway,
         paymentAmountCalculator: PaymentAmountCalculator,
+        createPaymentGateway: CreatePaymentGateway,
       ) => {
-        return new CreatePaymentUseCaseImpl(
-          factory,
-          dispatcher,
+        return new CreatePaymentUseCaseImpl({
+          paymentFactory: factory,
+          eventDispatcher: dispatcher,
           logger,
-          createQRCodeUseCase,
-          repository,
-          cartGateway,
-          paymentAmountCalculator,
-        );
+          paymentRepository: repository,
+          gateways: {
+            cart: cartGateway,
+            payment: createPaymentGateway,
+          },
+          useCases: {
+            createQRCode: createQRCodeUseCase,
+          },
+          services: {
+            amountCalculator: paymentAmountCalculator,
+          },
+        });
       },
       inject: [
         PaymentRepository,
@@ -83,6 +94,7 @@ import { CreateQRCodeImage } from '@payment/application/use-cases/create-qrcode/
         CreateQRCodeImageUseCaseImpl,
         CartGateway,
         PaymentAmountCalculator,
+        CreatePaymentGateway,
       ],
     },
   ],
