@@ -22,7 +22,7 @@ import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { Result } from '@core/domain/result';
 
 export class CreatePixPaymentGatewayImpl implements CreatePaymentGateway {
-  private readonly URL = `${process.env.PAYMENT_API_URL}/v1/orders`;
+  private readonly URL = `${process.env.MERCADO_PAGO_API_URL}/v1/orders`;
 
   constructor(
     private readonly client: PostMethod,
@@ -73,7 +73,7 @@ export class CreatePixPaymentGatewayImpl implements CreatePaymentGateway {
       external_reference: payment.externalReference,
       config: {
         qr: {
-          external_pos_id: process.env.MERCADO_PAGO_POS_ID || '',
+          external_pos_id: process.env.MERCADO_PAGO_POS_ID as string,
           mode: 'dynamic',
         },
       },
@@ -105,7 +105,7 @@ export class CreatePixPaymentGatewayImpl implements CreatePaymentGateway {
       CreateQRCodeMercadoPagoRequest,
       CreateQRCodeMercadoPagoResponse
     >(this.URL, validationResult.data, {
-      Authorization: `Bearer ${process.env.PAYMENT_ACCESS_TOKEN}`,
+      Authorization: `Bearer ${process.env.MERCADO_PAGO_PAYMENT_ACCESS_TOKEN}`,
       'Content-Type': 'application/json',
       'X-Idempotency-Key': payment.idempotencyKey,
     });
