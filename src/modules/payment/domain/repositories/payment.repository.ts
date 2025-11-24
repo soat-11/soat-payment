@@ -1,6 +1,6 @@
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
-import { PaymentEntity } from '../entities/payment.entity';
 import { IdempotencyKeyVO } from '@payment/domain/value-objects/idempotency-key.vo';
+import { PaymentEntity } from '../entities/payment.entity';
 
 export interface PaymentRepository {
   save(payment: PaymentEntity): Promise<void>;
@@ -8,6 +8,7 @@ export interface PaymentRepository {
   findByIdempotencyKey(
     idempotencyKey: IdempotencyKeyVO,
   ): Promise<PaymentEntity | null>;
+  update(payment: PaymentEntity): Promise<void>;
 }
 
 export const PaymentRepository = Symbol('PaymentRepository');

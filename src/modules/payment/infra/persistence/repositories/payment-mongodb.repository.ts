@@ -1,13 +1,13 @@
+import { DomainPersistenceException } from '@core/domain/exceptions/domain.exception';
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
+import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { PaymentEntity } from '@payment/domain/entities/payment.entity';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
-import { PaymentMongoDBEntity } from '../entities/payment-mongodb.entity';
-import { MongoRepository } from 'typeorm';
-import { PaymentMapper } from '../mapper/payment.mapper';
-import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
-import { DomainPersistenceException } from '@core/domain/exceptions/domain.exception';
-import { PaymentDetailMapperFactory } from '../mapper/payment-detail-mapper.factory';
 import { IdempotencyKeyVO } from '@payment/domain/value-objects/idempotency-key.vo';
+import { MongoRepository } from 'typeorm';
+import { PaymentMongoDBEntity } from '../entities/payment-mongodb.entity';
+import { PaymentDetailMapperFactory } from '../mapper/payment-detail-mapper.factory';
+import { PaymentMapper } from '../mapper/payment.mapper';
 
 export class PaymentMongoDBRepositoryImpl implements PaymentRepository {
   constructor(
@@ -192,6 +192,36 @@ export class PaymentMongoDBRepositoryImpl implements PaymentRepository {
         throw error;
       }
       throw new DomainPersistenceException('Erro ao buscar pagamento');
+    }
+  }
+
+  async update(payment: PaymentEntity): Promise<void> {
+    try {
+      await this.paymentMongoRepository.update(
+        {
+          id: payment.id,
+        },
+        {
+          amount: payment.amount.value,
+          externalPaymentId: payment.paymentProvider?.value.externalPaymentId,
+          provider: payment.paymentProvider?.value.provider,
+          idempotencyKey: payment.idempotencyKey.value,
+          status: payment.status.value,
+          type: payment.type.value,
+          expiresAt: payment.expiresAt,
+          updatedAt: new Date(),
+          sessionId: payment.sessionId.value,
+        },
+      );
+    } catch (error) {
+      if (error instanceof Error) {
+        this.logger.error('Error updating payment', {
+          message: error.message,
+          trace: error.stack,
+        });
+        throw error;
+      }
+      throw new DomainPersistenceException('Erro ao atualizar pagamento');
     }
   }
 }

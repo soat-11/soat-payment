@@ -1,7 +1,7 @@
 import { DefaultHttpClientResponse, PostMethod } from "@core/infra/http/client/http-client"
 import { PinoLoggerService } from "@core/infra/logger/pino-logger"
 import { PaymentType } from "@payment/domain/enum/payment-type.enum"
-import { CreatePixPaymentGatewayImpl } from "@payment/infra/acl/payments-gateway/mercado-pago/create-pix-payment.gateway"
+import { CreatePixPaymentGatewayImpl } from "@payment/infra/acl/payments-gateway/mercado-pago/gateways/create-pix-payment.gateway"
 import { CreateQRCodeMercadoPagoResponse } from "@payment/infra/acl/payments-gateway/mercado-pago/dtos"
 
 describe('CreatePixPaymentGateway', () => {

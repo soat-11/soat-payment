@@ -17,7 +17,7 @@ import {
   CreateQRCodeMercadoPagoRequestSchema,
   CreateQRCodeMercadoPagoResponse,
   CreateQRCodeMercadoPagoResponseSchema,
-} from './dtos/mercadopago-qrcode.dto';
+} from '../dtos/mercadopago-qrcode.dto';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { Result } from '@core/domain/result';
 
