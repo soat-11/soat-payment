@@ -7,13 +7,18 @@ services:
     ports:
       - '3010:3010'
       - '9229:9229'
+    env_file:
+      - ../.env
     environment:
       NODE_ENV: development
       PORT: 3010
       MONGODB_URI: mongodb://mongo:27017/payment
       MONGODB_WRITE_CONCERN: 1
-      # Docker
       DOCKER_ENV: 'true'
+      MERCADO_PAGO_API_URL: ${MERCADO_PAGO_API_URL}
+      MERCADO_PAGO_POS_ID: ${MERCADO_PAGO_POS_ID}
+      MERCADO_PAGO_PAYMENT_ACCESS_TOKEN: ${MERCADO_PAGO_PAYMENT_ACCESS_TOKEN}
+
 
       # OpenTelemetry (variáveis padrão do SDK)
       OTEL_SDK_DISABLED: 'false' # true para desabilitar OTEL completamente
@@ -40,6 +45,7 @@ services:
     restart: unless-stopped
     profiles:
       - dev
+      - observability
 
   app-replica:
     build:
@@ -52,7 +58,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3010
-      MONGODB_URI: mongodb://mongo1:27017,mongo2:27018/payment?replicaSet=rs0
+      MONGODB_URI: mongodb://mongo:27017,mongo2:27018/payment?replicaSet=rs0
       MONGODB_WRITE_CONCERN: 2
 
       DOCKER_ENV: 'true'
@@ -71,7 +77,7 @@ services:
 
     command: yarn start:dev
     depends_on:
-      mongo1:
+      mongo:
         condition: service_healthy
       mongo2:
         condition: service_healthy

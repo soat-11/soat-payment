@@ -10,8 +10,6 @@ networks:
 volumes:
   mongo-data:
     driver: local
-  mongo1-data:
-    driver: local
   mongo2-data:
     driver: local
 

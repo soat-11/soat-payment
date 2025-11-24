@@ -30,6 +30,8 @@ import { CartGateway } from '@payment/domain/gateways/cart.gateway';
 import { PaymentAmountCalculatorImpl } from '@payment/domain/service/payment-amount-calculator.service';
 import { CreatePaymentGateway } from '@payment/domain/gateways/create-payment.gateway';
 import { Result } from '@core/domain/result';
+import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
+import { PaymentCreatedEvent } from '@payment/domain/events/payment-created.event';
 
 describe('CreatePaymentUseCase - Integration Test', () => {
   let mongoServer: MongoMemoryServer;
@@ -42,6 +44,7 @@ describe('CreatePaymentUseCase - Integration Test', () => {
   let cartGateway: CartGateway;
   let paymentAmountCalculator: PaymentAmountCalculatorImpl;
   let createPaymentGateway: CreatePaymentGateway;
+  let domainEventDispatcher: DomainEventDispatcher
 
   beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
@@ -90,6 +93,7 @@ describe('CreatePaymentUseCase - Integration Test', () => {
 
     createQRCodeUseCase = new CreateQRCodeImageUseCaseImpl();
     paymentAmountCalculator = new PaymentAmountCalculatorImpl();
+    domainEventDispatcher = new DomainEventDispatcherImpl()
     cartGateway = {
       async getCart(sessionId: string) {
         return Promise.resolve({
@@ -119,7 +123,7 @@ describe('CreatePaymentUseCase - Integration Test', () => {
 
     useCase = new CreatePaymentUseCaseImpl({
       paymentFactory: new PaymentFactoryImpl(new SystemDateImpl(new Date())),
-      eventDispatcher: new DomainEventDispatcherImpl(),
+      eventDispatcher: domainEventDispatcher,
       logger: new PinoLoggerService(),
       paymentRepository,
       gateways: {
@@ -183,6 +187,44 @@ describe('CreatePaymentUseCase - Integration Test', () => {
       expect(result.image).toMatch(/^data:image\/png;base64,/);
 
     });
+
+    it('Should send domain events', async () => {
+    const input: CreatePaymentUseCaseInput = {
+        idempotencyKey: faker.string.uuid(),
+        sessionId: faker.string.uuid(),
+      };
+
+      const qrCodeSpy = jest.spyOn(createPaymentGateway, 'createPayment').mockResolvedValue(
+        Result.ok({
+          qrCode: 'qrCode-teste',
+        })
+      );
+
+      const spyDomainEventDispatcher = jest.spyOn(domainEventDispatcher, 'dispatch')
+
+      await useCase.execute(input);
+
+      const payments = await mongoRepository.find();
+      const payment = payments[0];
+
+      expect(payment).toBeDefined();
+      expect(payment.id).toBeDefined();
+      const expectedEvent: PaymentCreatedEvent = expect.objectContaining({
+        data: expect.objectContaining({
+          id: expect.objectContaining({ _id: expect.any(String) }),
+          amount: expect.objectContaining({ _value: 250 }),
+          type: expect.objectContaining({ _value: PaymentType.PIX }),
+          status: expect.objectContaining({ _value: PaymentStatus.PENDING }),
+          idempotencyKey: expect.objectContaining({ _value: input.idempotencyKey }),
+          sessionId: expect.objectContaining({ _value: input.sessionId }),
+        }),
+        dateTimeOccurred: expect.any(Date),
+        eventDate: expect.any(Date),
+      });
+      expect(spyDomainEventDispatcher).toHaveBeenCalledWith(expectedEvent);
+
+
+    })
   });
 
   describe('Failure', () => {
