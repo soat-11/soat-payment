@@ -53,14 +53,14 @@ export class MarkAsPaidGatewayImpl
 
       await this.repository.update(payment);
 
-      payment.domainEvents.forEach((event) => {
+      for (const event of payment.domainEvents) {
         this.logger.log('Payment marked as paid', {
           paymentReference,
           event,
         });
 
-        this.dispatcher.dispatch(event);
-      });
+        await this.dispatcher.dispatch(event);
+      }
 
       return Result.ok();
     } catch (e) {
