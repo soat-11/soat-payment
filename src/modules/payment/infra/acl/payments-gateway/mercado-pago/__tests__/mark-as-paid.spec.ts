@@ -125,7 +125,5 @@ describe('MarkAsPaidGatewayImpl', () => {
         new DomainBusinessException('Invalid action'),
       );
     });
-
-    it('Should roolback insert when domain dispatcher fail', () => {});
   });
 });

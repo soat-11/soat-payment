@@ -5,10 +5,10 @@ const config: Config.InitialOptions = {
   testEnvironment: 'node',
   moduleFileExtensions: ['ts', 'js', 'json'],
   rootDir: '..',
+  setupFilesAfterEnv: ['<rootDir>/test/setup.ts'],
   transform: {
-    '^.+\\.ts$': ['ts-jest', { useESM: true, tsconfig: 'tsconfig.json' }],
+    '^.+\\.ts$': ['ts-jest', { tsconfig: 'tsconfig.json' }],
   },
-  transformIgnorePatterns: ['/node_modules/(?!@faker-js/)'],
   moduleNameMapper: {
     '^@core/(.*)$': '<rootDir>/src/core/$1',
     '^@payment/(.*)$': '<rootDir>/src/modules/payment/$1',
