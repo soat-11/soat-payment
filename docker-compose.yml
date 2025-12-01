@@ -1,5 +1,6 @@
 include:
   - ./docker/docker-compose.database.yml
+  - ./docker/docker-compose.aws.yml
   - ./docker/docker-compose.app.yml
   - ./docker/docker-compose.observability.yml
 
