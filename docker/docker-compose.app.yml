@@ -1,48 +1,48 @@
 services:
-  app:
-    build:
-      context: ..
-      dockerfile: dockerfile.dev
-    container_name: payment-service-dev
+  localstack:
+    image: localstack/localstack:latest
     ports:
-      - '3010:3010'
-      - '9229:9229'
-    env_file:
-      - ../.env
+      - '4566:4566'
+      - '4510-4559:4510-4559'
     environment:
-      NODE_ENV: development
-      PORT: 3010
-      MONGODB_URI: mongodb://mongo:27017/payment
-      MONGODB_WRITE_CONCERN: 1
-      DOCKER_ENV: 'true'
-      MERCADO_PAGO_API_URL: ${MERCADO_PAGO_API_URL}
-      MERCADO_PAGO_POS_ID: ${MERCADO_PAGO_POS_ID}
-      MERCADO_PAGO_PAYMENT_ACCESS_TOKEN: ${MERCADO_PAGO_PAYMENT_ACCESS_TOKEN}
-
-
-      # OpenTelemetry (variáveis padrão do SDK)
-      OTEL_SDK_DISABLED: 'false' # true para desabilitar OTEL completamente
-      OTEL_SERVICE_NAME: 'soat-payment'
-      OTEL_RESOURCE_ATTRIBUTES: 'service.namespace=soat,deployment.environment=development'
-
-      # Exporters
-      OTEL_TRACES_EXPORTER: 'otlp'
-      OTEL_METRICS_EXPORTER: 'otlp'
-      OTEL_LOGS_EXPORTER: 'otlp'
-
-      # OTLP Endpoint
-      OTEL_EXPORTER_OTLP_PROTOCOL: 'http/protobuf'
-      OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otel-collector:4318'
-    volumes:
-      - ..:/app
-
-    command: yarn start:dev
-    depends_on:
-      mongo:
-        condition: service_healthy
+      - SERVICES=sqs
+      - DEBUG=1
+      - LOCALSTACK_HOST=localhost.localstack.cloud
+      - EXTRA_CORS_ALLOWED_ORIGINS=https://app.localstack.cloud
+      - DISABLE_CORS_CHECKS=1
     networks:
       - payment-network
     restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:4566/_localstack/health']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    profiles:
+      - dev
+      - observability
+
+  localstack-init:
+    image: amazon/aws-cli:latest
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        echo "Aguardando LocalStack..."
+        sleep 5
+        echo "Criando fila SQS: payment-queue"
+        aws --endpoint-url=http://localstack:4566 sqs create-queue --queue-name payment-queue
+        echo "Filas criadas:"
+        aws --endpoint-url=http://localstack:4566 sqs list-queues
+    depends_on:
+      localstack:
+        condition: service_healthy
+    networks:
+      - payment-network
     profiles:
       - dev
       - observability
