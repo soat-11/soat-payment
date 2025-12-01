@@ -1,10 +1,14 @@
+import {
+  DeleteMessageCommand,
+  ReceiveMessageCommand,
+  SQSClient,
+} from '@aws-sdk/client-sqs';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import SQS from 'aws-sdk/clients/sqs';
 
 @Injectable()
 export abstract class SqsConsumer implements OnModuleInit, OnModuleDestroy {
-  private sqs: SQS;
+  private sqs: SQSClient;
   private queueUrl: string;
   private isPolling = false;
   private pollingInterval: NodeJS.Timeout | null = null;
@@ -13,9 +17,9 @@ export abstract class SqsConsumer implements OnModuleInit, OnModuleDestroy {
     protected readonly logger: AbstractLoggerService,
     queueUrlEnvVar: string,
   ) {
-    this.sqs = new SQS({
-      apiVersion: '2012-11-05',
+    this.sqs = new SQSClient({
       region: process.env.AWS_REGION,
+      endpoint: process.env.AWS_ENDPOINT,
     });
     this.queueUrl = process.env[queueUrlEnvVar] || '';
 
@@ -55,12 +59,12 @@ export abstract class SqsConsumer implements OnModuleInit, OnModuleDestroy {
     if (!this.isPolling) return;
 
     try {
-      const response = await this.sqs
-        .receiveMessage({
-          QueueUrl: this.queueUrl,
-          WaitTimeSeconds: 20,
-        })
-        .promise();
+      const command = new ReceiveMessageCommand({
+        QueueUrl: this.queueUrl,
+        WaitTimeSeconds: 20,
+      });
+
+      const response = await this.sqs.send(command);
 
       if (response.Messages && response.Messages.length > 0) {
         await Promise.all(
@@ -76,7 +80,7 @@ export abstract class SqsConsumer implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async processMessage(message: SQS.Message) {
+  private async processMessage(message: any) {
     try {
       if (!message.Body) return;
 
@@ -86,12 +90,12 @@ export abstract class SqsConsumer implements OnModuleInit, OnModuleDestroy {
 
       await this.handleMessage(content);
 
-      await this.sqs
-        .deleteMessage({
-          QueueUrl: this.queueUrl,
-          ReceiptHandle: message.ReceiptHandle!,
-        })
-        .promise();
+      const deleteCommand = new DeleteMessageCommand({
+        QueueUrl: this.queueUrl,
+        ReceiptHandle: message.ReceiptHandle!,
+      });
+
+      await this.sqs.send(deleteCommand);
     } catch (error) {
       this.logger.error('Error processing message', { error, message });
     }

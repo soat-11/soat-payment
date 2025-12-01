@@ -34,6 +34,8 @@
     "docker:down:volumes": "cd docker && docker compose --profile dev --profile replica --profile observability down -v"
   },
   "dependencies": {
+    "@aws-sdk/client-sns": "^3.939.0",
+    "@aws-sdk/client-sqs": "^3.939.0",
     "@faker-js/faker": "9",
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
@@ -54,7 +56,6 @@
     "@opentelemetry/sdk-trace-node": "^2.2.0",
     "@opentelemetry/semantic-conventions": "^1.38.0",
     "@scalar/nestjs-api-reference": "^1.0.7",
-    "aws-sdk": "^2.1692.0",
     "axios": "^1.13.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
@@ -80,6 +81,8 @@
     "@types/node": "^22.10.7",
     "@types/supertest": "^6.0.2",
     "@types/uuid": "^11.0.0",
+    "aws-sdk-client-mock": "^4.1.0",
+    "aws-sdk-client-mock-jest": "^4.1.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-import-resolver-typescript": "^4.4.4",
