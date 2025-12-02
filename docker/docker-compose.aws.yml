@@ -34,8 +34,10 @@ services:
       - |
         echo "Aguardando LocalStack..."
         sleep 5
-        echo "Criando fila SQS: payment-queue"
-        aws --endpoint-url=http://localstack:4566 sqs create-queue --queue-name payment-queue
+        echo "Criando fila SQS: create-payment-queue"
+        aws --endpoint-url=http://localstack:4566 sqs create-queue --queue-name create-payment-queue
+        echo "Criando fila SQS: payment-paid-queue"
+        aws --endpoint-url=http://localstack:4566 sqs create-queue --queue-name payment-paid-queue
         echo "Filas criadas:"
         aws --endpoint-url=http://localstack:4566 sqs list-queues
     depends_on:
@@ -46,4 +48,3 @@ services:
     profiles:
       - dev
       - observability
-

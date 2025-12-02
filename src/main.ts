@@ -31,6 +31,10 @@ async function bootstrap() {
     )
     .setVersion('1.0')
     .addTag('Payments', 'Endpoints relacionados a pagamentos')
+    .addTag(
+      'SQS Consumers',
+      'Documentação do formato das mensagens SQS consumidas pelo serviço',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
