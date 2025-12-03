@@ -94,6 +94,12 @@ export class PaymentAlreadyCanceledException extends DomainBusinessException {
   }
 }
 
+export class PaymentCannotBeCanceledException extends DomainBusinessException {
+  constructor(status: PaymentStatus) {
+    super(`Não é possível cancelar um pagamento com status: ${status}`);
+  }
+}
+
 export class PaymentNotFoundException extends DomainBusinessException {
   constructor(paymentId: UniqueEntityID) {
     super(`Pagamento não encontrado: ${paymentId}`);

@@ -13,6 +13,7 @@ const config: Config.InitialOptions = {
     '^@core/(.*)$': '<rootDir>/src/core/$1',
     '^@payment/(.*)$': '<rootDir>/src/modules/payment/$1',
     '^@modules/(.*)$': '<rootDir>/src/modules/$1',
+    '^@test/(.*)$': '<rootDir>/test/$1',
     '^src/(.*)$': '<rootDir>/src/$1',
     '^test/(.*)$': '<rootDir>/test/$1',
   },
