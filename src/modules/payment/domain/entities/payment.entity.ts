@@ -1,4 +1,6 @@
 import { AggregateRoot } from '@core/domain/aggregate-root';
+import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
+import { Result } from '@core/domain/result';
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
@@ -126,30 +128,32 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
     return this;
   }
 
-  paid(currentDate: Date): void {
+  paid(currentDate: Date): Result<void, DomainBusinessException> {
     if (this.status.value === PaymentStatus.PAID) {
-      throw new PaymentAlreadyPaidException();
+      return Result.fail(new PaymentAlreadyPaidException());
     }
 
     if (this.paymentProvider == null) {
-      throw new PaymentProviderNotProvidedException();
+      return Result.fail(new PaymentProviderNotProvidedException());
     }
 
     if (currentDate > this.expiresAt) {
-      throw new PaymentExpiredException();
+      return Result.fail(new PaymentExpiredException());
     }
 
     this.status = PaymentStatusVO.create(PaymentStatus.PAID);
     this.addDomainEvent(new PaymentPaidEvent(this));
+    return Result.ok();
   }
 
-  cancel(currentDate: Date): void {
+  cancel(currentDate: Date): Result<void, DomainBusinessException> {
     if (this.status.value === PaymentStatus.CANCELED) {
-      throw new PaymentAlreadyCanceledException();
+      return Result.fail(new PaymentAlreadyCanceledException());
     }
 
     this.status = PaymentStatusVO.create(PaymentStatus.CANCELED);
     this.canceledAt = currentDate;
     // this.addDomainEvent(new PaymentCanceledEvent(this));
+    return Result.ok();
   }
 }

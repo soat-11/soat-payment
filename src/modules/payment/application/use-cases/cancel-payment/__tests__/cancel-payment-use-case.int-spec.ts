@@ -19,7 +19,7 @@ import { PixDetailMapper } from '@payment/infra/persistence/mapper/pix-detail.ma
 import { PaymentMongoDBRepositoryImpl } from '@payment/infra/persistence/repositories/payment-mongodb.repository';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { DataSource } from 'typeorm';
-import { CancelPaymentUseCase } from '../cancel-payment.use-case';
+import { CancelPaymentUseCase } from '@payment/application/use-cases/cancel-payment/cancel-payment.use-case';
 
 describe('CancelPaymentUseCase - Integration Test', () => {
   let mongoServer: MongoMemoryServer;
@@ -92,9 +92,12 @@ describe('CancelPaymentUseCase - Integration Test', () => {
       expect(payments?.status.value).toBe(PaymentStatus.PENDING);
       expect(payments?.canceledAt).toBeNull();
 
-      await useCase.execute({
+      const result = await useCase.execute({
         paymentId: mockedPayment.id,
       });
+
+      expect(result.isSuccess).toBe(true);
+      expect(result.value.canceledAt).toBeInstanceOf(Date);
 
       const paymentsUpdated = await paymentRepository.findById(
         mockedPayment.id,
@@ -106,13 +109,16 @@ describe('CancelPaymentUseCase - Integration Test', () => {
   });
 
   describe('Error', () => {
-    it('should throw an error if the payment is not found', async () => {
-      await expect(
-        useCase.execute({ paymentId: UniqueEntityID.create() }),
-      ).rejects.toThrow(PaymentNotFoundException);
+    it('should return error if the payment is not found', async () => {
+      const result = await useCase.execute({
+        paymentId: UniqueEntityID.create(),
+      });
+
+      expect(result.isFailure).toBe(true);
+      expect(result.error).toBeInstanceOf(PaymentNotFoundException);
     });
 
-    it('should throw an error if the payment is already canceled', async () => {
+    it('should return error if the payment is already canceled', async () => {
       const mockedPayment = PaymentEntity.create({
         amount: 100,
         expiresAt: new Date(Date.now() + 1000 * 60 * 10),
@@ -131,13 +137,17 @@ describe('CancelPaymentUseCase - Integration Test', () => {
         );
       await paymentRepository.save(mockedPayment);
 
-      await useCase.execute({
+      const firstResult = await useCase.execute({
+        paymentId: mockedPayment.id,
+      });
+      expect(firstResult.isSuccess).toBe(true);
+
+      const secondResult = await useCase.execute({
         paymentId: mockedPayment.id,
       });
 
-      await expect(
-        useCase.execute({ paymentId: mockedPayment.id }),
-      ).rejects.toThrow(PaymentAlreadyCanceledException);
+      expect(secondResult.isFailure).toBe(true);
+      expect(secondResult.error).toBeInstanceOf(PaymentAlreadyCanceledException);
     });
   });
 });

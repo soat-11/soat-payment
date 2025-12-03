@@ -182,7 +182,42 @@ export class PaymentMongoDBRepositoryImpl implements PaymentRepository {
         throw paymentResult.error;
       }
 
-      return paymentResult.value;
+      const payment = paymentResult.value;
+
+      const detailRepositoryResult = this.detailMapperFactory.getRepository(
+        payment.type.value,
+      );
+
+      if (detailRepositoryResult.isSuccess) {
+        const detailRepository = detailRepositoryResult.value;
+
+        this.logger.log('Loading payment detail', {
+          paymentId: payment.id.value,
+          type: payment.type.value,
+        });
+
+        const detailOrm = await detailRepository.findOne({
+          where: { paymentId: payment.id },
+        });
+
+        if (detailOrm) {
+          const detailResult = this.detailMapperFactory.toDomain(
+            detailOrm,
+            payment.type.value,
+          );
+
+          if (detailResult.isFailure) {
+            this.logger.error('Error mapping payment detail to domain', {
+              error: detailResult.error,
+            });
+            throw detailResult.error;
+          }
+
+          payment.addPaymentDetail(detailResult.value);
+        }
+      }
+
+      return payment;
     } catch (error) {
       if (error instanceof Error) {
         this.logger.error('Error finding payment by idempotency key', {
@@ -211,6 +246,7 @@ export class PaymentMongoDBRepositoryImpl implements PaymentRepository {
           expiresAt: payment.expiresAt,
           updatedAt: new Date(),
           sessionId: payment.sessionId.value,
+          canceledAt: payment.canceledAt,
         },
       );
     } catch (error) {

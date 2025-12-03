@@ -20,63 +20,54 @@ export class MarkAsPaidGatewayImpl
     paymentReference: string,
     body: ProcessPaymentDTOSchemaRequest,
   ): Promise<Result<void>> {
-    try {
-      if (body.action !== 'payment.created') {
-        this.logger.error('Invalid action', {
-          action: body.action,
-          paymentReference,
-        });
-        return Result.fail(new DomainBusinessException('Invalid action'));
-      }
+    if (body.action !== 'payment.created') {
+      this.logger.error('Invalid action', {
+        action: body.action,
+        paymentReference,
+      });
+      return Result.fail(new DomainBusinessException('Invalid action'));
+    }
 
-      const idempotencyKey = IdempotencyKeyVO.create(paymentReference);
+    const idempotencyKey = IdempotencyKeyVO.create(paymentReference);
 
-      if (!idempotencyKey) {
-        this.logger.error('Invalid idempotency key', {
-          paymentReference,
-        });
-        return Result.fail(
-          new DomainBusinessException('Invalid idempotency key'),
-        );
-      }
-
-      const payment =
-        await this.repository.findByIdempotencyKey(idempotencyKey);
-      if (!payment) {
-        this.logger.error('Payment not found', {
-          paymentReference,
-        });
-        return Result.fail(new DomainBusinessException('Payment not found'));
-      }
-
-      payment.paid(new Date());
-
-      await this.repository.update(payment);
-
-      for (const event of payment.domainEvents) {
-        this.logger.log('Payment marked as paid', {
-          paymentReference,
-          event,
-        });
-
-        await this.dispatcher.dispatch(event);
-      }
-
-      return Result.ok();
-    } catch (e) {
-      if (e instanceof Error) {
-        this.logger.error('Error marking payment as paid', {
-          message: e.message,
-          trace: e.stack,
-        });
-        return Result.fail(
-          new DomainBusinessException('Error marking payment as paid'),
-        );
-      }
-
+    if (!idempotencyKey) {
+      this.logger.error('Invalid idempotency key', {
+        paymentReference,
+      });
       return Result.fail(
-        new DomainBusinessException('Error marking payment as paid'),
+        new DomainBusinessException('Invalid idempotency key'),
       );
     }
+
+    const payment =
+      await this.repository.findByIdempotencyKey(idempotencyKey);
+    if (!payment) {
+      this.logger.error('Payment not found', {
+        paymentReference,
+      });
+      return Result.fail(new DomainBusinessException('Payment not found'));
+    }
+
+    const paidResult = payment.paid(new Date());
+    if (paidResult.isFailure) {
+      this.logger.error('Error marking payment as paid', {
+        paymentReference,
+        error: paidResult.error.message,
+      });
+      return Result.fail(paidResult.error);
+    }
+
+    await this.repository.update(payment);
+
+    for (const event of payment.domainEvents) {
+      this.logger.log('Payment marked as paid', {
+        paymentReference,
+        event,
+      });
+
+      await this.dispatcher.dispatch(event);
+    }
+
+    return Result.ok();
   }
 }

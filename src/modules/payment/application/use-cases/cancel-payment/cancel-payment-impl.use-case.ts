@@ -1,6 +1,9 @@
+import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
+import { Result } from '@core/domain/result';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import {
   CancelPaymentUseCase,
+  CancelPaymentUseCaseError,
   CancelPaymentUseCaseInput,
   CancelPaymentUseCaseOutput,
 } from '@payment/application/use-cases/cancel-payment/cancel-payment.use-case';
@@ -15,7 +18,7 @@ export class CancelPaymentUseCaseImpl implements CancelPaymentUseCase {
 
   async execute(
     input: CancelPaymentUseCaseInput,
-  ): Promise<CancelPaymentUseCaseOutput> {
+  ): Promise<Result<CancelPaymentUseCaseOutput, CancelPaymentUseCaseError>> {
     this.logger.log('Cancelando pagamento', { paymentId: input.paymentId });
     const payment = await this.paymentRepository.findById(input.paymentId);
 
@@ -23,13 +26,25 @@ export class CancelPaymentUseCaseImpl implements CancelPaymentUseCase {
       this.logger.log('Pagamento não encontrado', {
         paymentId: input.paymentId,
       });
-      throw new PaymentNotFoundException(input.paymentId);
+      return Result.fail(new PaymentNotFoundException(input.paymentId));
     }
 
-    payment.cancel(new Date());
+    const cancelResult = payment.cancel(new Date());
+
+    if (cancelResult.isFailure) {
+      this.logger.log('Erro ao cancelar pagamento', {
+        paymentId: input.paymentId,
+        error: cancelResult.error.message,
+      });
+      return Result.fail(cancelResult.error);
+    }
 
     await this.paymentRepository.update(payment);
 
     this.logger.log('Pagamento cancelado', { paymentId: input.paymentId });
+
+    return Result.ok({
+      canceledAt: payment.canceledAt!,
+    });
   }
 }

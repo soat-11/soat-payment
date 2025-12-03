@@ -75,18 +75,22 @@ describe('PaymentEntity', () => {
     describe('Success', () => {
       it('should cancel a payment', () => {
         const payment = createPayment(100);
-        payment.cancel(new Date());
+        const result = payment.cancel(new Date());
+
+        expect(result.isSuccess).toBe(true);
         expect(payment.status.value).toBe(PaymentStatus.CANCELED);
       });
     });
 
     describe('Failure', () => {
-      it('should throw an error when payment is already cancelled', () => {
+      it('should return error when payment is already cancelled', () => {
         const payment = createPayment(100);
         payment.cancel(new Date());
-        expect(() => payment.cancel(new Date())).toThrow(
-          PaymentAlreadyCanceledException,
-        );
+
+        const result = payment.cancel(new Date());
+
+        expect(result.isFailure).toBe(true);
+        expect(result.error).toBeInstanceOf(PaymentAlreadyCanceledException);
       });
     });
   });
@@ -180,8 +184,9 @@ describe('PaymentEntity', () => {
           provider: PaymentProviders.MERCADO_PAGO,
         });
 
-        payment.paid(new Date());
+        const result = payment.paid(new Date());
 
+        expect(result.isSuccess).toBe(true);
         expect(payment.status.value).toBe(PaymentStatus.PAID);
       });
     });
@@ -197,7 +202,10 @@ describe('PaymentEntity', () => {
 
         payment.paid(new Date());
 
-        expect(() => payment.paid(new Date())).toThrow(DomainBusinessException);
+        const result = payment.paid(new Date());
+
+        expect(result.isFailure).toBe(true);
+        expect(result.error).toBeInstanceOf(DomainBusinessException);
       });
 
       it('should not pay an expired payment', () => {
@@ -216,13 +224,19 @@ describe('PaymentEntity', () => {
         });
 
         const futureDate = new Date('2024-01-01T14:00:00Z');
-        expect(() => payment.paid(futureDate)).toThrow(DomainBusinessException);
+        const result = payment.paid(futureDate);
+
+        expect(result.isFailure).toBe(true);
+        expect(result.error).toBeInstanceOf(DomainBusinessException);
       });
 
-      it('should throw an error when payment provider is not set', () => {
+      it('should return error when payment provider is not set', () => {
         const payment = createPayment(100);
 
-        expect(() => payment.paid(new Date())).toThrow(DomainBusinessException);
+        const result = payment.paid(new Date());
+
+        expect(result.isFailure).toBe(true);
+        expect(result.error).toBeInstanceOf(DomainBusinessException);
       });
     });
   });
@@ -244,8 +258,9 @@ describe('PaymentEntity', () => {
           provider: PaymentProviders.MERCADO_PAGO,
         });
 
-        payment.paid(new Date());
+        const result = payment.paid(new Date());
 
+        expect(result.isSuccess).toBe(true);
         expect(payment.domainEvents).toHaveLength(2);
         expect(payment.domainEvents[0]).toBeInstanceOf(PaymentCreatedEvent);
         expect(payment.domainEvents[1]).toBeInstanceOf(PaymentPaidEvent);

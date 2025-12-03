@@ -21,6 +21,10 @@
     "test:cov": "NODE_ENV=test jest --coverage --config ./test/jest.config.ts",
     "test:debug": "NODE_ENV=test node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand --config ./test/jest.config.ts",
     "test:e2e": "NODE_ENV=test jest --config ./test/jest-e2e.json",
+    "test:property": "NODE_ENV=test jest --testPathPattern=property.spec.ts --config ./test/jest.config.ts",
+    "test:mutation": "stryker run",
+    "test:mutation:domain": "stryker run --mutate 'src/modules/payment/domain/**/*.ts'",
+    "test:mutation:report": "stryker run && open reports/mutation/html/index.html",
     "docker:dev": "cd docker && docker compose --profile dev up -d",
     "docker:dev:otel": "cd docker && docker compose --profile dev --profile observability up -d",
     "docker:replica": "cd docker && docker compose --profile replica up -d",
@@ -70,6 +74,10 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "@stryker-mutator/core": "^8.7.1",
+    "@stryker-mutator/jest-runner": "^8.7.1",
+    "@stryker-mutator/typescript-checker": "^8.7.1",
+    "fast-check": "^3.23.2",
     "@eslint/compat": "^1.4.0",
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.18.0",

@@ -51,4 +51,9 @@ export class PaymentMongoDBEntity extends DefaultMongoDBEntity {
 
   @UtcDateColumn()
   expiresAt: Date;
+
+  @UtcDateColumn({
+    nullable: true,
+  })
+  canceledAt: Date | null;
 }

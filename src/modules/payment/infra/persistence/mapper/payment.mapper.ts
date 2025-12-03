@@ -1,10 +1,11 @@
-import { Result } from '@core/domain/result';
-import { PaymentEntity } from '@payment/domain/entities/payment.entity';
-import { PaymentMongoDBEntity } from '../entities/payment-mongodb.entity';
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
 import { AbstractMapper } from '@core/domain/mapper/abstract.mapper';
-import { PaymentDetailMapperFactory } from './payment-detail-mapper.factory';
+import { Result } from '@core/domain/result';
+import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
+import { PaymentEntity } from '@payment/domain/entities/payment.entity';
 import { AnyPaymentDetail } from '@payment/domain/value-objects/payment-detail.vo';
+import { PaymentMongoDBEntity } from '../entities/payment-mongodb.entity';
+import { PaymentDetailMapperFactory } from './payment-detail-mapper.factory';
 
 export class PaymentMapper extends AbstractMapper<
   PaymentMongoDBEntity,
@@ -16,9 +17,19 @@ export class PaymentMapper extends AbstractMapper<
     super();
   }
 
+  private ensureUniqueEntityID(
+    id: UniqueEntityID | string | { _id: string },
+  ): UniqueEntityID {
+    if (id instanceof UniqueEntityID) return id;
+    if (typeof id === 'object' && '_id' in id)
+      return UniqueEntityID.create(id._id);
+    return UniqueEntityID.create(id);
+  }
+
   toDomain(orm: PaymentMongoDBEntity): Result<PaymentEntity> {
     try {
-      const payment = PaymentEntity.fromPersistence(orm.id, {
+      const id = this.ensureUniqueEntityID(orm.id as UniqueEntityID | string);
+      const payment = PaymentEntity.fromPersistence(id, {
         amount: orm.amount,
         type: orm.type,
         status: orm.status,
