@@ -4,27 +4,28 @@ import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 import { PaymentStatusVO } from '@payment/domain/value-objects/payment-status.vo';
 
-import { PixDetailVO } from '../value-objects/pix-detail.vo';
-import { PaymentTypeVO } from '../value-objects/payment-type.vo';
-import { PaymentAmountVO } from '../value-objects/payment-amount.vo';
-import { PaymentCreatedEvent } from '../events/payment-created.event';
-import { PaymentPaidEvent } from '../events/payment-paid.event';
 import {
-  PaymentProvider,
-  PaymentProviderProps,
-} from '../value-objects/payment-provider.vo';
-import {
-  AnyPaymentDetail,
-  isPixDetail,
-} from '@payment/domain/value-objects/payment-detail.vo';
-import {
+  PaymentAlreadyCanceledException,
   PaymentAlreadyPaidException,
   PaymentDetailInvalidException,
   PaymentExpiredException,
   PaymentProviderNotProvidedException,
 } from '@payment/domain/exceptions/payment.exception';
 import { IdempotencyKeyVO } from '@payment/domain/value-objects/idempotency-key.vo';
+import {
+  AnyPaymentDetail,
+  isPixDetail,
+} from '@payment/domain/value-objects/payment-detail.vo';
 import { SessionIdVO } from '@payment/domain/value-objects/session-id.vo';
+import { PaymentCreatedEvent } from '../events/payment-created.event';
+import { PaymentPaidEvent } from '../events/payment-paid.event';
+import { PaymentAmountVO } from '../value-objects/payment-amount.vo';
+import {
+  PaymentProvider,
+  PaymentProviderProps,
+} from '../value-objects/payment-provider.vo';
+import { PaymentTypeVO } from '../value-objects/payment-type.vo';
+import { PixDetailVO } from '../value-objects/pix-detail.vo';
 
 export type PaymentProps = {
   amount: number;
@@ -41,6 +42,7 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
   public idempotencyKey: IdempotencyKeyVO;
   public sessionId: SessionIdVO;
   public expiresAt: Date;
+  public canceledAt: Date | null = null;
 
   private constructor(
     readonly id: UniqueEntityID,
@@ -139,5 +141,15 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
 
     this.status = PaymentStatusVO.create(PaymentStatus.PAID);
     this.addDomainEvent(new PaymentPaidEvent(this));
+  }
+
+  cancel(currentDate: Date): void {
+    if (this.status.value === PaymentStatus.CANCELED) {
+      throw new PaymentAlreadyCanceledException();
+    }
+
+    this.status = PaymentStatusVO.create(PaymentStatus.CANCELED);
+    this.canceledAt = currentDate;
+    // this.addDomainEvent(new PaymentCanceledEvent(this));
   }
 }

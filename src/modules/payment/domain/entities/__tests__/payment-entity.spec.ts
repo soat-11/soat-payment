@@ -1,13 +1,14 @@
-import { PaymentType } from '@payment/domain/enum/payment-type.enum';
-import { PaymentEntity } from '../payment.entity';
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
-import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
-import { PaymentPaidEvent } from '@payment/domain/events/payment-paid.event';
-import { PaymentCreatedEvent } from '@payment/domain/events/payment-created.event';
-import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
-import { PixDetailVO } from '@payment/domain/value-objects/pix-detail.vo';
 import { faker } from '@faker-js/faker';
+import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
+import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
+import { PaymentType } from '@payment/domain/enum/payment-type.enum';
+import { PaymentCreatedEvent } from '@payment/domain/events/payment-created.event';
+import { PaymentPaidEvent } from '@payment/domain/events/payment-paid.event';
+import { PaymentAlreadyCanceledException } from '@payment/domain/exceptions/payment.exception';
+import { PixDetailVO } from '@payment/domain/value-objects/pix-detail.vo';
+import { PaymentEntity } from '../payment.entity';
 
 describe('PaymentEntity', () => {
   const createPayment = (amount: number) => {
@@ -66,6 +67,26 @@ describe('PaymentEntity', () => {
             sessionId: faker.string.uuid(),
           }),
         ).toThrow(DomainBusinessException);
+      });
+    });
+  });
+
+  describe('Payment Cancellation', () => {
+    describe('Success', () => {
+      it('should cancel a payment', () => {
+        const payment = createPayment(100);
+        payment.cancel(new Date());
+        expect(payment.status.value).toBe(PaymentStatus.CANCELED);
+      });
+    });
+
+    describe('Failure', () => {
+      it('should throw an error when payment is already cancelled', () => {
+        const payment = createPayment(100);
+        payment.cancel(new Date());
+        expect(() => payment.cancel(new Date())).toThrow(
+          PaymentAlreadyCanceledException,
+        );
       });
     });
   });
