@@ -1,0 +1,18 @@
+# Temporal Dynamic Configuration for development
+# https://docs.temporal.io/references/dynamic-configuration
+
+system.forceSearchAttributesCacheRefreshOnRead:
+  - value: true
+    constraints: {}
+
+limit.maxIDLength:
+  - value: 255
+    constraints: {}
+
+history.maximumSignalsPerExecution:
+  - value: 10000
+    constraints: {}
+
+frontend.enableClientVersionCheck:
+  - value: false
+    constraints: {}

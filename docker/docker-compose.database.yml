@@ -21,24 +21,24 @@ services:
       - observability
 
   # MongoDB Exporter (para métricas no Prometheus)
-  mongo-exporter:
-    image: percona/mongodb_exporter:0.40
-    container_name: mongo-exporter
-    command:
-      - '--mongodb.uri=mongodb://mongo:27017'
-      - '--discovering-mode'
-      - '--collect-all'
-    ports:
-      - '9216:9216'
-    depends_on:
-      mongo:
-        condition: service_healthy
-    networks:
-      - payment-network
-    restart: unless-stopped
-    profiles:
-      - dev
-      - observability
+  # mongo-exporter:
+  #   image: percona/mongodb_exporter:0.40
+  #   container_name: mongo-exporter
+  #   command:
+  #     - '--mongodb.uri=mongodb://mongo:27017'
+  #     - '--discovering-mode'
+  #     - '--collect-all'
+  #   ports:
+  #     - '9216:9216'
+  #   depends_on:
+  #     mongo:
+  #       condition: service_healthy
+  #   networks:
+  #     - payment-network
+  #   restart: unless-stopped
+  #   profiles:
+  #     - dev
+  #     - observability
 
   # Mongo Express (UI)
   mongo-express:

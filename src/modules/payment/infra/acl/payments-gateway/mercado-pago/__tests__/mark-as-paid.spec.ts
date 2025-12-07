@@ -1,48 +1,17 @@
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
-import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
-import { DomainEventDispatcherImpl } from '@core/events/domain-event-dispatcher-impl';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { PinoLoggerService } from '@core/infra/logger/pino-logger';
 import { faker } from '@faker-js/faker';
-import { PaymentEntity } from '@payment/domain/entities/payment.entity';
-import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
-import { PaymentType } from '@payment/domain/enum/payment-type.enum';
-import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
-import { PaymentProvider } from '@payment/domain/value-objects/payment-provider.vo';
-import { PixDetailVO } from '@payment/domain/value-objects/pix-detail.vo';
 import { ProcessPaymentDTOSchemaRequest } from '@payment/infra/acl/payments-gateway/mercado-pago/dtos/process-payment.dto';
-import { MarkAsPaidGatewayImpl } from '@payment/infra/acl/payments-gateway/mercado-pago/gateways/mark-as-paid.gateway';
+import {
+  MarkAsPaidGatewayImpl,
+  PaymentSignalService,
+} from '@payment/infra/acl/payments-gateway/mercado-pago/gateways/mark-as-paid.gateway';
 
 describe('MarkAsPaidGatewayImpl', () => {
-  let useCase: MarkAsPaidGatewayImpl;
-  let repository: PaymentRepository;
+  let gateway: MarkAsPaidGatewayImpl;
   let logger: AbstractLoggerService;
-  let dispatcher: DomainEventDispatcher;
-
-  const paymentEntityFactory = ({
-    externalReference,
-    provider,
-  }: {
-    externalReference: string;
-    provider: PaymentProvider;
-  }) => {
-    return PaymentEntity.create({
-      amount: 100,
-      expiresAt: new Date(new Date().getTime() + 10 * 60 * 1000),
-      idempotencyKey: externalReference,
-      sessionId: faker.string.uuid(),
-      type: PaymentType.PIX,
-    })
-      .addPaymentDetail(
-        PixDetailVO.create({
-          qrCode: faker.string.uuid(),
-        }),
-      )
-      .addPaymentProvider({
-        externalPaymentId: provider.value.externalPaymentId,
-        provider: provider.value.provider,
-      });
-  };
+  let signalService: jest.Mocked<PaymentSignalService>;
 
   const mercadoPagoRequest: ProcessPaymentDTOSchemaRequest = {
     action: 'payment.created',
@@ -59,70 +28,82 @@ describe('MarkAsPaidGatewayImpl', () => {
   };
 
   beforeEach(() => {
-    repository = {
-      findByIdempotencyKey: jest.fn(),
-      update: jest.fn(),
-      save: jest.fn(),
-      findById: jest.fn(),
-    };
     logger = new PinoLoggerService({
       suppressConsole: true,
     });
-    dispatcher = new DomainEventDispatcherImpl();
-    useCase = new MarkAsPaidGatewayImpl(repository, logger, dispatcher);
+    signalService = {
+      signalPaymentConfirmed: jest.fn(),
+      signalPaymentFailed: jest.fn(),
+    };
+
+    gateway = new MarkAsPaidGatewayImpl(logger, signalService);
   });
 
   describe('Success', () => {
-    it('Should process payment', async () => {
-      const externalReference = faker.string.uuid();
-      const provider = PaymentProvider.create({
-        externalPaymentId: externalReference,
-        provider: PaymentProviders.MERCADO_PAGO,
-      });
+    it('should send signal to workflow when action is payment.created', async () => {
+      const idempotencyKey = faker.string.uuid();
 
-      const result: PaymentEntity = paymentEntityFactory({
-        externalReference,
-        provider,
-      });
+      signalService.signalPaymentConfirmed.mockResolvedValue();
 
-      jest.spyOn(repository, 'findByIdempotencyKey').mockResolvedValue(result);
-
-      const eventsSpy = jest.spyOn(dispatcher, 'dispatch');
-
-      const response = await useCase.markAsPaid(
-        externalReference,
+      const response = await gateway.markAsPaid(
+        idempotencyKey,
         mercadoPagoRequest,
       );
 
       expect(response.isSuccess).toBeTruthy();
-
-      expect(eventsSpy).toHaveBeenCalled();
+      expect(signalService.signalPaymentConfirmed).toHaveBeenCalledWith(
+        idempotencyKey,
+      );
     });
   });
 
   describe('Failure', () => {
-    it('Should not process payment when action is wrong', async () => {
-      const externalReference = faker.string.uuid();
-      const provider = PaymentProvider.create({
-        externalPaymentId: externalReference,
-        provider: PaymentProviders.MERCADO_PAGO,
-      });
+    it('should not process payment when action is invalid', async () => {
+      const idempotencyKey = faker.string.uuid();
 
-      const result: PaymentEntity = paymentEntityFactory({
-        externalReference,
-        provider,
-      });
-
-      jest.spyOn(repository, 'findByIdempotencyKey').mockResolvedValue(result);
-
-      const response = await useCase.markAsPaid(externalReference, {
+      const response = await gateway.markAsPaid(idempotencyKey, {
         ...mercadoPagoRequest,
-        action: 'payment.te',
+        action: 'payment.invalid',
       });
 
       expect(response.isFailure).toBeTruthy();
       expect(response.error).toStrictEqual(
         new DomainBusinessException('Invalid action'),
+      );
+      expect(signalService.signalPaymentConfirmed).not.toHaveBeenCalled();
+    });
+
+    it('should return ok when workflow not found (payment expired)', async () => {
+      const idempotencyKey = faker.string.uuid();
+
+      signalService.signalPaymentConfirmed.mockRejectedValue(
+        new Error('workflow not found'),
+      );
+
+      const response = await gateway.markAsPaid(
+        idempotencyKey,
+        mercadoPagoRequest,
+      );
+
+      // Should return ok to acknowledge webhook (don't retry)
+      expect(response.isSuccess).toBeTruthy();
+    });
+
+    it('should return failure when signal service throws unexpected error', async () => {
+      const idempotencyKey = faker.string.uuid();
+
+      signalService.signalPaymentConfirmed.mockRejectedValue(
+        new Error('Connection failed'),
+      );
+
+      const response = await gateway.markAsPaid(
+        idempotencyKey,
+        mercadoPagoRequest,
+      );
+
+      expect(response.isFailure).toBeTruthy();
+      expect(response.error).toStrictEqual(
+        new DomainBusinessException('Failed to process webhook'),
       );
     });
   });

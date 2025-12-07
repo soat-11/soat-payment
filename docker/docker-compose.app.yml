@@ -21,8 +21,10 @@ services:
       AWS_ENDPOINT: http://localstack:4566
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
-      AWS_SQS_CREATE_PAYMENT_QUEUE_URL: http://localstack:4566/000000000000/create-payment-queue
+      AWS_SQS_CANCEL_PAYMENT_QUEUE_URL: http://localstack:4566/000000000000/cancel-payment-queue
       AWS_SQS_PAYMENT_PAID_QUEUE_URL: http://localstack:4566/000000000000/payment-paid-queue
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_NAMESPACE: default
     volumes:
       - ..:/app
     command: yarn start:dev

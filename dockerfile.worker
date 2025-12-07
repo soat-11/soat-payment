@@ -1,0 +1,21 @@
+FROM node:24-slim
+
+WORKDIR /app
+
+# Instalar dependências do sistema necessárias para o Temporal
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar arquivos de configuração
+COPY package.json yarn.lock tsconfig.json tsconfig.build.json ./
+
+# Instalar dependências
+RUN yarn install --frozen-lockfile
+
+# Copiar código fonte
+COPY src ./src
+
+CMD ["yarn", "temporal:worker:dev"]

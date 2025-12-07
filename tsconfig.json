@@ -17,6 +17,7 @@
     "paths": {
       "@core/*": ["./src/core/*"],
       "@payment/*": ["./src/modules/payment/*"],
+      "@temporal/*": ["./src/modules/temporal/*"],
       "@modules/*": ["./src/modules/*"],
       "@test/*": ["./test/*"]
     },

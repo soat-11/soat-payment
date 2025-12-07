@@ -8,7 +8,7 @@ export const CreateQRCodeMercadoPagoRequestSchema = z.object({
   }),
   expiration_time: z.string().regex(/^PT(\d+H)?(\d+M)?(\d+S)?$/, {
     message:
-      'O tempo de expiração deve estar no formato ISO 8601 duration (ex: PT1H30M)',
+      'O tempo de expiração deve estar no formato ISO 8601 duration (ex: PT1H30M), recebido: ${value}',
   }),
   config: z.object({
     qr: z.object({

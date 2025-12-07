@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { CreatePaymentUseCaseImpl } from './use-cases/create-payment/create-payment-impl.use-case';
 import { CreateQRCodeImageUseCaseImpl } from './use-cases/create-qrcode/create-qrcode-impl.use-case';
+import { CancelPaymentUseCaseImpl } from './use-cases/cancel-payment/cancel-payment-impl.use-case';
 
 import {
   PaymentFactory,
@@ -11,6 +12,7 @@ import {
 import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { DomainEventDispatcherImpl } from '@core/events/domain-event-dispatcher-impl';
 import { CreatePaymentUseCase } from '@payment/application/use-cases/create-payment/create-payment.use-case';
+import { CancelPaymentUseCase } from '@payment/application/use-cases/cancel-payment/cancel-payment.use-case';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
@@ -97,7 +99,17 @@ import { CreatePaymentGateway } from '@payment/domain/gateways/create-payment.ga
         CreatePaymentGateway,
       ],
     },
+    {
+      provide: CancelPaymentUseCase,
+      useFactory: (
+        repository: PaymentRepository,
+        logger: AbstractLoggerService,
+      ) => {
+        return new CancelPaymentUseCaseImpl(repository, logger);
+      },
+      inject: [PaymentRepository, AbstractLoggerService],
+    },
   ],
-  exports: [CreatePaymentUseCase],
+  exports: [CreatePaymentUseCase, CancelPaymentUseCase, 'DomainEventDispatcher'],
 })
 export class PaymentApplicationModule {}

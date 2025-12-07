@@ -2,23 +2,25 @@ import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { Module } from '@nestjs/common';
 
 import { PaymentApplicationModule } from '@payment/application/application.module';
-import { CreatePaymentUseCase } from '@payment/application/use-cases/create-payment/create-payment.use-case';
-import { CreatePaymentConsumer } from '@payment/presentation/consumers/sqs-create-payment-consumer';
-import { PaymentDocsController } from '@payment/presentation/controllers/payment-docs.controller';
+import { MarkAsPaidGatewayImpl } from '@payment/infra/acl/payments-gateway/mercado-pago/gateways/mark-as-paid.gateway';
+import { PaymentSignalAdapter } from '@payment/infra/acl/payments-gateway/mercado-pago/gateways/payment-signal.adapter';
+import { MercadoPagoWebhookController } from '@payment/presentation/controllers/mercado-pago-webhook.controller';
+import { TemporalModule } from '@temporal/temporal.module';
 
 @Module({
-  imports: [PaymentApplicationModule],
-  controllers: [PaymentDocsController],
+  imports: [PaymentApplicationModule, TemporalModule],
+  controllers: [MercadoPagoWebhookController],
   providers: [
+    PaymentSignalAdapter,
     {
-      provide: CreatePaymentConsumer,
+      provide: 'MarkAsPaidGateway',
       useFactory: (
         logger: AbstractLoggerService,
-        createPaymentUseCase: CreatePaymentUseCase,
+        signalAdapter: PaymentSignalAdapter,
       ) => {
-        return new CreatePaymentConsumer(logger, createPaymentUseCase);
+        return new MarkAsPaidGatewayImpl(logger, signalAdapter);
       },
-      inject: [AbstractLoggerService, CreatePaymentUseCase],
+      inject: [AbstractLoggerService, PaymentSignalAdapter],
     },
   ],
 })
