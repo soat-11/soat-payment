@@ -2,7 +2,6 @@ import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { SqsConsumer } from '@core/infra/sqs/sqs-consumer';
 import { Injectable } from '@nestjs/common';
 import { CreatePaymentUseCase } from '@payment/application/use-cases/create-payment/create-payment.use-case';
-import { PaymentAlreadyExistsException } from '@payment/domain/exceptions/payment.exception';
 import { CreatePaymentDto } from '@payment/presentation/dto/request/create-payment.dto';
 
 @Injectable()
@@ -25,23 +24,19 @@ export class CreatePaymentConsumer extends SqsConsumer<CreatePaymentDto> {
       idempotencyKey: payload.idempotencyKey,
     });
 
-    if (result.isFailure) {
-      if (result.error instanceof PaymentAlreadyExistsException) {
-        this.logger.log('Payment already exists, treating as success', {
-          idempotencyKey: payload.idempotencyKey,
-        });
-        return;
-      }
-
-      this.logger.error('Failed to create payment', {
-        error: result.error.message,
-        idempotencyKey: payload.idempotencyKey,
+    if (result.isSuccess) {
+      this.logger.log('Payment created', {
+        paymentId: result.value.paymentId,
       });
-      throw result.error;
+      return;
     }
 
-    this.logger.log('Payment created', {
-      paymentId: result.value.paymentId,
+    this.logger.error('Failed to create payment (no retry)', {
+      error: result.error.message,
+      errorType: result.error.constructor.name,
+      idempotencyKey: payload.idempotencyKey,
     });
+
+    return;
   }
 }

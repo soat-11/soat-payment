@@ -1,6 +1,6 @@
 services:
   mongo:
-    image: mongo:6-jammy
+    image: mongo:8.2.2-noble
     container_name: payment-mongo
     ports:
       - '27017:27017'

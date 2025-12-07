@@ -3,7 +3,7 @@ import { IsUUID } from 'class-validator';
 
 export class CreatePaymentDto {
   @ApiProperty({
-    example: '123e4567-e89b-12d3-a456-426614174000',
+    example: 'ca2cc362-b56d-4013-93a5-a64fb64594a8',
     description: 'ID da sessão do usuário',
     type: 'string',
     format: 'uuid',
@@ -12,7 +12,7 @@ export class CreatePaymentDto {
   sessionId: string;
 
   @ApiProperty({
-    example: '550e8400-e29b-41d4-a716-446655440000',
+    example: '9a700a9c-30ae-4f5a-a83a-6eb3c6d94179',
     description: 'Chave de idempotência para evitar duplicação de requisições',
     type: 'string',
     format: 'uuid',

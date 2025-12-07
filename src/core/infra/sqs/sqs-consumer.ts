@@ -100,7 +100,18 @@ export abstract class SqsConsumer<TPayload = unknown>
         handleMessage: async (
           message: Message,
         ): Promise<Message | undefined> => {
+          this.logger.log('sqs-consumer: starting message handling', {
+            resource: this.constructor.name,
+            messageId: message.MessageId,
+          });
           await this.processMessage(message);
+          this.logger.log(
+            'sqs-consumer: processMessage completed, returning undefined to trigger deletion',
+            {
+              resource: this.constructor.name,
+              messageId: message.MessageId,
+            },
+          );
           return undefined;
         },
         sqs: this.client,
@@ -109,48 +120,7 @@ export abstract class SqsConsumer<TPayload = unknown>
         visibilityTimeout: this.options.visibilityTimeout,
       });
 
-      this.consumer.on('started', () => {
-        this.logger.log('Consumer started', {
-          resource: this.constructor.name,
-          queueUrl: this.queueUrl,
-        });
-      });
-
-      this.consumer.on('stopped', () => {
-        this.logger.log('Consumer stopped', {
-          resource: this.constructor.name,
-          queueUrl: this.queueUrl,
-        });
-      });
-
-      this.consumer.on('error', (error) => {
-        this.logger.error('Consumer error', {
-          resource: this.constructor.name,
-          error: error.message,
-          stack: error.stack,
-          queueUrl: this.queueUrl,
-        });
-      });
-
-      this.consumer.on('processing_error', (error, message) => {
-        this.logger.error('Processing error', {
-          resource: this.constructor.name,
-          error: error.message,
-          stack: error.stack,
-          messageId: message?.MessageId,
-          queueUrl: this.queueUrl,
-        });
-      });
-
-      this.consumer.on('timeout_error', (error, message) => {
-        this.logger.error('Timeout error', {
-          resource: this.constructor.name,
-          error: error.message,
-          stack: error.stack,
-          messageId: message?.MessageId,
-          queueUrl: this.queueUrl,
-        });
-      });
+      this.setupEventHandlers();
 
       this.logger.log(`Consumer initialized for queue: ${this.queueUrl}`, {
         resource: this.constructor.name,
@@ -167,6 +137,82 @@ export abstract class SqsConsumer<TPayload = unknown>
       });
       return false;
     }
+  }
+
+  private setupEventHandlers(): void {
+    if (!this.consumer) return;
+
+    this.consumer.on('started', () => {
+      this.logger.log('Consumer started', {
+        resource: this.constructor.name,
+        queueUrl: this.queueUrl,
+      });
+    });
+
+    this.consumer.on('stopped', () => {
+      this.logger.log('Consumer stopped', {
+        resource: this.constructor.name,
+        queueUrl: this.queueUrl,
+      });
+    });
+
+    this.consumer.on('error', (error) => {
+      this.logger.error('Consumer error', {
+        resource: this.constructor.name,
+        error: error.message,
+        stack: error.stack,
+        queueUrl: this.queueUrl,
+      });
+    });
+
+    this.consumer.on('processing_error', (error, message) => {
+      this.logger.error('Processing error', {
+        resource: this.constructor.name,
+        error: error.message,
+        stack: error.stack,
+        messageId: message?.MessageId,
+        queueUrl: this.queueUrl,
+      });
+    });
+
+    this.consumer.on('timeout_error', (error, message) => {
+      this.logger.error('Timeout error', {
+        resource: this.constructor.name,
+        error: error.message,
+        stack: error.stack,
+        messageId: message?.MessageId,
+        queueUrl: this.queueUrl,
+      });
+    });
+
+    this.consumer.on('message_received', (message) => {
+      this.logger.log('Message received', {
+        resource: this.constructor.name,
+        messageId: message.MessageId,
+      });
+    });
+
+    this.consumer.on('message_processed', (message) => {
+      this.logger.log('Message processed and deleted', {
+        resource: this.constructor.name,
+        messageId: message.MessageId,
+        receiptHandle: message.ReceiptHandle?.substring(0, 50),
+      });
+    });
+
+    // Debug: evento disparado quando a resposta de deleção é recebida
+    this.consumer.on('response_processed' as never, () => {
+      this.logger.log('Delete response received from SQS', {
+        resource: this.constructor.name,
+      });
+    });
+
+    this.consumer.on('empty', () => {
+      this.logger.debug?.('Queue is empty', {
+        resource: this.constructor.name,
+        queueUrl: this.queueUrl,
+      });
+    });
   }
 
   protected start(): void {
@@ -263,13 +309,15 @@ export abstract class SqsConsumer<TPayload = unknown>
           messageId: message.MessageId,
         },
       );
-      // Return to acknowledge and delete the poison pill message
       return;
     }
 
     try {
       await this.handleMessage(payload);
-      // sqs-consumer automatically deletes the message after successful processing
+      this.logger.log('handleMessage completed successfully', {
+        resource: this.constructor.name,
+        messageId: message.MessageId,
+      });
     } catch (error) {
       this.logger.error('Error in handleMessage', {
         resource: this.constructor.name,
@@ -281,13 +329,10 @@ export abstract class SqsConsumer<TPayload = unknown>
       if (this.dlqUrl && error instanceof Error) {
         const sentToDlq = await this.sendToDlq(payload, error);
         if (sentToDlq) {
-          // If sent to DLQ successfully, return to acknowledge and delete from source queue
           return;
         }
       }
 
-      // Re-throw to let sqs-consumer handle visibility timeout
-      // Message will become visible again after visibilityTimeout expires
       throw error;
     }
   }

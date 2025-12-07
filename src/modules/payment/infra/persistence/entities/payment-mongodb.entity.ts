@@ -2,8 +2,8 @@ import { DefaultMongoDBEntity } from '@core/infra/database/mongodb/default-mongo
 import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
 import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
-import { UtcDateColumn } from '../datasource/utc-date-column.decorator';
 import { Column, Entity } from 'typeorm';
+import { UtcDateColumn } from '../datasource/utc-date-column.decorator';
 
 @Entity('payments')
 export class PaymentMongoDBEntity extends DefaultMongoDBEntity {

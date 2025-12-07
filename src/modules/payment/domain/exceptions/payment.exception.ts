@@ -72,7 +72,7 @@ export class PixDetailInvalidException extends DomainBusinessException {
 
 export class IdempotencyKeyInvalidException extends DomainBusinessException {
   constructor(value: string) {
-    super(`Chave idempotente inválida: ${value}`);
+    super(`Chave idempotência inválida: ${value}`);
   }
 }
 

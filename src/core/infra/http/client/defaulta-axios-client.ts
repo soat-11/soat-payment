@@ -4,7 +4,7 @@ import {
   GetParams,
   PostMethod,
 } from '@core/infra/http/client/http-client';
-import { AxiosInstance } from 'axios';
+import { AxiosInstance, isAxiosError } from 'axios';
 
 export class DefaultAxiosClient implements GetMethod, PostMethod {
   constructor(private readonly client: AxiosInstance) {}
@@ -23,6 +23,14 @@ export class DefaultAxiosClient implements GetMethod, PostMethod {
         data: response.data,
       };
     } catch (error: any) {
+      if (isAxiosError(error)) {
+        return {
+          headers: error.response?.headers as Record<string, string>,
+          status: error.response?.status ?? 500,
+          data: error.response?.data,
+        };
+      }
+
       return {
         headers: error.response.headers,
         status: error.response.status,
