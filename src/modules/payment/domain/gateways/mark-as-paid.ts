@@ -1,6 +1,7 @@
-import { Result } from "@core/domain/result";
-
+import { Result } from '@core/domain/result';
 
 export interface MarkAsPaidGateway<T extends object> {
-    markAsPaid(paymentReference: string, body: T): Promise<Result<void>>;
+  markAsPaid(paymentReference: string, body: T): Promise<Result<void>>;
 }
+
+export const MarkAsPaidGateway = Symbol.for('MarkAsPaidGateway');

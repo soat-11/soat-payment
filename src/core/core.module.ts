@@ -24,7 +24,7 @@ import axios from 'axios';
     {
       provide: HttpClient,
       useFactory: () => new DefaultAxiosClient(axios),
-    }
+    },
   ],
   exports: [AbstractLoggerService, HttpClient],
 })

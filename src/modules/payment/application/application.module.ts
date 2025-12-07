@@ -98,6 +98,6 @@ import { CreatePaymentGateway } from '@payment/domain/gateways/create-payment.ga
       ],
     },
   ],
-  exports: [CreatePaymentUseCase],
+  exports: [CreatePaymentUseCase, 'DomainEventDispatcher', PaymentInfraModule],
 })
 export class PaymentApplicationModule {}

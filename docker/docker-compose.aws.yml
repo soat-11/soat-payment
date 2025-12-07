@@ -39,6 +39,8 @@ services:
         aws --endpoint-url=http://localstack:4566 sqs create-queue --queue-name create-payment-queue
         echo "Criando fila SQS: payment-paid-queue"
         aws --endpoint-url=http://localstack:4566 sqs create-queue --queue-name payment-paid-queue
+        echo "Criando fila SQS: mercado-pago-mark-as-paid-queue"
+        aws --endpoint-url=http://localstack:4566 sqs create-queue --queue-name mercado-pago-mark-as-paid-queue
         echo "Filas criadas:"
         aws --endpoint-url=http://localstack:4566 sqs list-queues
     depends_on:
