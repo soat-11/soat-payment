@@ -4,8 +4,6 @@ export class SystemDateImpl implements SystemDateDomainService {
   private fixedDate: Date | null = null;
 
   constructor(date?: Date) {
-    // Se uma data for passada, usa como data fixa (para testes)
-    // Se não, now() retornará sempre a data atual UTC
     if (date) {
       this.fixedDate = SystemDateImpl.toUTC(date);
     }
@@ -20,8 +18,6 @@ export class SystemDateImpl implements SystemDateDomainService {
   }
 
   now(): Date {
-    // Se tem data fixa (modo teste), retorna ela
-    // Senão, retorna a data atual UTC
     return this.fixedDate ?? SystemDateImpl.nowUTC();
   }
 

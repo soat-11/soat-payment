@@ -1,16 +1,28 @@
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import {
+  BadRequestException,
   Body,
   Controller,
+  Headers,
   HttpCode,
   HttpStatus,
   Inject,
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiHeader,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ProcessPaymentDTOSchemaRequest } from '@payment/infra/acl/payments-gateway/mercado-pago/dtos/process-payment.dto';
 import { SqsMercadoPagoMarkAsPaidPublish } from '@payment/infra/acl/payments-gateway/mercado-pago/publishers/mercado-pago-mark-as-paid.publish';
+import {
+  PaymentSignature,
+  PaymentSignature as PaymentSignatureType,
+} from '@payment/infra/acl/payments-gateway/mercado-pago/signature/payment-signature';
 
 @ApiTags('Webhooks')
 @Controller('webhooks/mercado-pago')
@@ -18,6 +30,8 @@ export class MercadoPagoWebhookController {
   constructor(
     @Inject(SqsMercadoPagoMarkAsPaidPublish)
     private readonly markAsPaidPublish: SqsMercadoPagoMarkAsPaidPublish,
+    @Inject(PaymentSignature)
+    private readonly signature: PaymentSignatureType,
     private readonly logger: AbstractLoggerService,
   ) {}
 
@@ -41,9 +55,23 @@ export class MercadoPagoWebhookController {
     required: false,
     type: String,
   })
+  @ApiHeader({
+    name: 'x-signature',
+    description: 'Assinatura HMAC do Mercado Pago para validação',
+    required: false,
+  })
+  @ApiHeader({
+    name: 'x-request-id',
+    description: 'ID da requisição do Mercado Pago',
+    required: false,
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Webhook recebido e enfileirado com sucesso',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Assinatura inválida',
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -52,6 +80,8 @@ export class MercadoPagoWebhookController {
   async handleWebhook(
     @Query('data.id') dataId: string,
     @Query('type') type: string,
+    @Headers('x-signature') xSignature: string,
+    @Headers('x-request-id') xRequestId: string,
     @Body() body: ProcessPaymentDTOSchemaRequest,
   ): Promise<{ success: boolean }> {
     this.logger.log('Processing Mercado Pago webhook', {
@@ -60,6 +90,24 @@ export class MercadoPagoWebhookController {
     const paymentReference = dataId || body?.data?.id;
 
     this.logger.log('Payment reference', {
+      paymentReference,
+    });
+
+    const isValid = await this.signature.execute({
+      xSignature,
+      xRequestId,
+      data: paymentReference || '',
+    });
+
+    if (!isValid) {
+      this.logger.warn('Invalid webhook signature', {
+        paymentReference,
+        xRequestId,
+      });
+      throw new BadRequestException('Invalid signature');
+    }
+
+    this.logger.log('Webhook signature validated successfully', {
       paymentReference,
     });
 
