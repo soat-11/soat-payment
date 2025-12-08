@@ -47,6 +47,7 @@ export const CreateQRCodeMercadoPagoRequestSchema = z.object({
 });
 
 export const CreateQRCodeMercadoPagoResponseSchema = z.object({
+  id: z.string().min(1, 'O ID do pedido do Mercado Pago é obrigatório'),
   external_reference: z.string(),
   expiration_time: z.string(),
   type_response: z.object({

@@ -45,6 +45,11 @@ export abstract class SqsPublish<T extends Record<string, unknown>>
   }
 
   async publish(input: T): Promise<void> {
+    this.logger.log('Publishing message', {
+      resource: this.constructor.name,
+      queueUrl: this.queueUrl,
+      input,
+    });
     const message = this.stringifyMessage(input);
     const messageSizeBytes = Buffer.byteLength(message, 'utf-8');
 
@@ -82,4 +87,3 @@ export abstract class SqsPublish<T extends Record<string, unknown>>
     }
   }
 }
-

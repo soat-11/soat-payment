@@ -1,4 +1,5 @@
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
+import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { faker } from '@faker-js/faker';
 import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
@@ -12,10 +13,11 @@ import { PaymentEntity } from '../payment.entity';
 
 describe('PaymentEntity', () => {
   const createPayment = (amount: number) => {
+    const now = SystemDateImpl.nowUTC();
     return PaymentEntity.create({
       amount,
       type: PaymentType.PIX,
-      expiresAt: new Date(Date.now() + 3600 * 1000),
+      expiresAt: new Date(now.getTime() + 3600 * 1000),
       idempotencyKey: faker.string.uuid(),
       sessionId: faker.string.uuid(),
     });
@@ -46,11 +48,12 @@ describe('PaymentEntity', () => {
 
     describe('Failure', () => {
       it('should throw an error when amount is negative', () => {
+        const now = SystemDateImpl.nowUTC();
         expect(() =>
           PaymentEntity.create({
             amount: -50,
             type: PaymentType.PIX,
-            expiresAt: new Date(Date.now() + 3600 * 1000),
+            expiresAt: new Date(now.getTime() + 3600 * 1000),
             idempotencyKey: faker.string.uuid(),
             sessionId: faker.string.uuid(),
           }),
@@ -58,11 +61,12 @@ describe('PaymentEntity', () => {
       });
 
       it('should throw an error when amount is zero', () => {
+        const now = SystemDateImpl.nowUTC();
         expect(() =>
           PaymentEntity.create({
             amount: 0,
             type: PaymentType.PIX,
-            expiresAt: new Date(Date.now() + 3600 * 1000),
+            expiresAt: new Date(now.getTime() + 3600 * 1000),
             idempotencyKey: faker.string.uuid(),
             sessionId: faker.string.uuid(),
           }),
@@ -75,7 +79,7 @@ describe('PaymentEntity', () => {
     describe('Success', () => {
       it('should cancel a payment', () => {
         const payment = createPayment(100);
-        const result = payment.cancel(new Date());
+        const result = payment.cancel(SystemDateImpl.nowUTC());
 
         expect(result.isSuccess).toBe(true);
         expect(payment.status.value).toBe(PaymentStatus.CANCELED);
@@ -85,9 +89,9 @@ describe('PaymentEntity', () => {
     describe('Failure', () => {
       it('should return error when payment is already cancelled', () => {
         const payment = createPayment(100);
-        payment.cancel(new Date());
+        payment.cancel(SystemDateImpl.nowUTC());
 
-        const result = payment.cancel(new Date());
+        const result = payment.cancel(SystemDateImpl.nowUTC());
 
         expect(result.isFailure).toBe(true);
         expect(result.error).toBeInstanceOf(PaymentAlreadyCanceledException);
@@ -184,7 +188,7 @@ describe('PaymentEntity', () => {
           provider: PaymentProviders.MERCADO_PAGO,
         });
 
-        const result = payment.paid(new Date());
+        const result = payment.paid(SystemDateImpl.nowUTC());
 
         expect(result.isSuccess).toBe(true);
         expect(payment.status.value).toBe(PaymentStatus.PAID);
@@ -200,9 +204,9 @@ describe('PaymentEntity', () => {
           provider: PaymentProviders.MERCADO_PAGO,
         });
 
-        payment.paid(new Date());
+        payment.paid(SystemDateImpl.nowUTC());
 
-        const result = payment.paid(new Date());
+        const result = payment.paid(SystemDateImpl.nowUTC());
 
         expect(result.isFailure).toBe(true);
         expect(result.error).toBeInstanceOf(DomainBusinessException);
@@ -233,7 +237,7 @@ describe('PaymentEntity', () => {
       it('should return error when payment provider is not set', () => {
         const payment = createPayment(100);
 
-        const result = payment.paid(new Date());
+        const result = payment.paid(SystemDateImpl.nowUTC());
 
         expect(result.isFailure).toBe(true);
         expect(result.error).toBeInstanceOf(DomainBusinessException);
@@ -258,7 +262,7 @@ describe('PaymentEntity', () => {
           provider: PaymentProviders.MERCADO_PAGO,
         });
 
-        const result = payment.paid(new Date());
+        const result = payment.paid(SystemDateImpl.nowUTC());
 
         expect(result.isSuccess).toBe(true);
         expect(payment.domainEvents).toHaveLength(2);
@@ -271,11 +275,12 @@ describe('PaymentEntity', () => {
   describe('Persistence', () => {
     describe('Success', () => {
       it('should create a payment from persistence', () => {
+        const now = SystemDateImpl.nowUTC();
         const payment = PaymentEntity.fromPersistence(UniqueEntityID.create(), {
           amount: 150,
           type: PaymentType.PIX,
           status: PaymentStatus.PAID,
-          expiresAt: new Date(Date.now() + 3600 * 1000),
+          expiresAt: new Date(now.getTime() + 3600 * 1000),
           idempotencyKey: faker.string.uuid(),
           sessionId: faker.string.uuid(),
         });
@@ -286,12 +291,13 @@ describe('PaymentEntity', () => {
       });
 
       it('should reconstruct payment with correct type', () => {
+        const now = SystemDateImpl.nowUTC();
         const id = UniqueEntityID.create();
         const payment = PaymentEntity.fromPersistence(id, {
           amount: 99.99,
           type: PaymentType.PIX,
           status: PaymentStatus.PENDING,
-          expiresAt: new Date(Date.now() + 3600 * 1000),
+          expiresAt: new Date(now.getTime() + 3600 * 1000),
           idempotencyKey: faker.string.uuid(),
           sessionId: faker.string.uuid(),
         });

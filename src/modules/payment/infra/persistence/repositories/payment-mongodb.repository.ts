@@ -230,6 +230,77 @@ export class PaymentMongoDBRepositoryImpl implements PaymentRepository {
     }
   }
 
+  async findByExternalPaymentId(
+    externalPaymentId: string,
+  ): Promise<PaymentEntity | null> {
+    try {
+      const paymentOrm = await this.paymentMongoRepository.findOne({
+        where: { externalPaymentId: externalPaymentId },
+      });
+
+      if (!paymentOrm) {
+        this.logger.log('Payment not found by external payment ID', {
+          externalPaymentId,
+        });
+        return null;
+      }
+
+      const paymentResult = this.paymentMapper.toDomain(paymentOrm);
+      if (paymentResult.isFailure) {
+        this.logger.error('Error mapping payment to domain', {
+          error: paymentResult.error,
+        });
+        throw paymentResult.error;
+      }
+
+      const payment = paymentResult.value;
+
+      const detailRepositoryResult = this.detailMapperFactory.getRepository(
+        payment.type.value,
+      );
+
+      if (detailRepositoryResult.isSuccess) {
+        const detailRepository = detailRepositoryResult.value;
+
+        this.logger.log('Loading payment detail', {
+          paymentId: payment.id.value,
+          type: payment.type.value,
+        });
+
+        const detailOrm = await detailRepository.findOne({
+          where: { paymentId: payment.id },
+        });
+
+        if (detailOrm) {
+          const detailResult = this.detailMapperFactory.toDomain(
+            detailOrm,
+            payment.type.value,
+          );
+
+          if (detailResult.isFailure) {
+            this.logger.error('Error mapping payment detail to domain', {
+              error: detailResult.error,
+            });
+            throw detailResult.error;
+          }
+
+          payment.addPaymentDetail(detailResult.value);
+        }
+      }
+
+      return payment;
+    } catch (error) {
+      if (error instanceof Error) {
+        this.logger.error('Error finding payment by external payment ID', {
+          message: error.message,
+          trace: error.stack,
+        });
+        throw error;
+      }
+      throw new DomainPersistenceException('Erro ao buscar pagamento');
+    }
+  }
+
   async update(payment: PaymentEntity): Promise<void> {
     try {
       await this.paymentMongoRepository.update(

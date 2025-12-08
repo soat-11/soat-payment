@@ -34,7 +34,6 @@ describe('PromiseUtils', () => {
         executeAllOrFail([slowPromise, fastFailingPromise]),
       ).rejects.toThrow('Fast failure');
 
-      // Ensure slow promise completed before rejection was thrown
       expect(completionOrder).toEqual(['fast-fail', 'slow']);
     });
 

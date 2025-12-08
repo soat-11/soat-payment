@@ -1,3 +1,4 @@
+import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { PinoLoggerService } from '@core/infra/logger/pino-logger';
 import { CancelPaymentUseCaseImpl } from '@payment/application/use-cases/cancel-payment/cancel-payment-impl.use-case';
@@ -69,9 +70,10 @@ describe('CancelPaymentUseCase - Integration Test', () => {
 
   describe('Success', () => {
     it('should cancel a payment', async () => {
+      const now = SystemDateImpl.nowUTC();
       const mockedPayment = PaymentEntity.create({
         amount: 100,
-        expiresAt: new Date(Date.now() + 1000 * 60 * 10),
+        expiresAt: new Date(now.getTime() + 1000 * 60 * 10),
         idempotencyKey: UniqueEntityID.create().value,
         sessionId: UniqueEntityID.create().value,
         type: PaymentType.PIX,
@@ -119,9 +121,10 @@ describe('CancelPaymentUseCase - Integration Test', () => {
     });
 
     it('should return error if the payment is already canceled', async () => {
+      const now = SystemDateImpl.nowUTC();
       const mockedPayment = PaymentEntity.create({
         amount: 100,
-        expiresAt: new Date(Date.now() + 1000 * 60 * 10),
+        expiresAt: new Date(now.getTime() + 1000 * 60 * 10),
         idempotencyKey: UniqueEntityID.create().value,
         sessionId: UniqueEntityID.create().value,
         type: PaymentType.PIX,

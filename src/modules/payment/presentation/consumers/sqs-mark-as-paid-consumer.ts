@@ -26,8 +26,16 @@ export class MercadoPagoMarkAsPaidConsumer extends SqsConsumer<MercadoPagoMarkAs
   ): Promise<void> {
     this.logger.log('Processing Mercado Pago mark as paid message', {
       paymentReference: payload.paymentReference,
-      action: payload.webhookPayload.action,
+      action: payload.webhookPayload?.action,
+      payload: JSON.stringify(payload),
     });
+
+    if (!payload.paymentReference) {
+      this.logger.warn('Ignoring message without paymentReference', {
+        payload,
+      });
+      return;
+    }
 
     const result = await this.markAsPaidGateway.markAsPaid(
       payload.paymentReference,
@@ -41,10 +49,15 @@ export class MercadoPagoMarkAsPaidConsumer extends SqsConsumer<MercadoPagoMarkAs
       return;
     }
 
+    const errorMessage = result.error?.message ?? 'Unknown error';
+    const errorType = result.error?.constructor?.name ?? 'UnknownError';
+
     this.logger.error('Failed to mark payment as paid', {
       paymentReference: payload.paymentReference,
-      error: result.error.message,
-      errorType: result.error.constructor.name,
+      error: errorMessage,
+      errorType: errorType,
     });
+
+    return;
   }
 }

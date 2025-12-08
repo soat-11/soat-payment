@@ -1,4 +1,3 @@
-// Mock uuid module to avoid ESM issues in Jest
 jest.mock('uuid', () => ({
   validate: (uuid: string) => {
     const uuidRegex =

@@ -1,4 +1,5 @@
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
+import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
 import { DomainEventDispatcherImpl } from '@core/events/domain-event-dispatcher-impl';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
@@ -26,9 +27,10 @@ describe('MarkAsPaidGatewayImpl', () => {
     externalReference: string;
     provider: PaymentProvider;
   }) => {
+    const now = SystemDateImpl.nowUTC();
     return PaymentEntity.create({
       amount: 100,
-      expiresAt: new Date(new Date().getTime() + 10 * 60 * 1000),
+      expiresAt: new Date(now.getTime() + 10 * 60 * 1000),
       idempotencyKey: externalReference,
       sessionId: faker.string.uuid(),
       type: PaymentType.PIX,
@@ -51,7 +53,7 @@ describe('MarkAsPaidGatewayImpl', () => {
     },
     api_version: '1.0',
     application_id: faker.string.uuid(),
-    date_created: new Date().toISOString(),
+    date_created: SystemDateImpl.nowUTC().toISOString(),
     id: '123456789',
     live_mode: true,
     type: 'payment',
@@ -61,6 +63,7 @@ describe('MarkAsPaidGatewayImpl', () => {
   beforeEach(() => {
     repository = {
       findByIdempotencyKey: jest.fn(),
+      findByExternalPaymentId: jest.fn(),
       update: jest.fn(),
       save: jest.fn(),
       findById: jest.fn(),
@@ -73,49 +76,51 @@ describe('MarkAsPaidGatewayImpl', () => {
   });
 
   describe('Success', () => {
-    it('Should process payment', async () => {
-      const externalReference = faker.string.uuid();
+    it('Should process payment when found by externalPaymentId', async () => {
+      const externalPaymentId = faker.string.uuid();
+      const idempotencyKey = faker.string.uuid();
       const provider = PaymentProvider.create({
-        externalPaymentId: externalReference,
+        externalPaymentId: externalPaymentId,
         provider: PaymentProviders.MERCADO_PAGO,
       });
 
       const result: PaymentEntity = paymentEntityFactory({
-        externalReference,
+        externalReference: idempotencyKey,
         provider,
       });
 
-      jest.spyOn(repository, 'findByIdempotencyKey').mockResolvedValue(result);
+      jest.spyOn(repository, 'findByExternalPaymentId').mockResolvedValue(result);
 
       const eventsSpy = jest.spyOn(dispatcher, 'dispatch');
 
       const response = await useCase.markAsPaid(
-        externalReference,
+        externalPaymentId,
         mercadoPagoRequest,
       );
 
       expect(response.isSuccess).toBeTruthy();
-
+      expect(repository.findByExternalPaymentId).toHaveBeenCalledWith(externalPaymentId);
       expect(eventsSpy).toHaveBeenCalled();
     });
   });
 
   describe('Failure', () => {
     it('Should not process payment when action is wrong', async () => {
-      const externalReference = faker.string.uuid();
+      const externalPaymentId = faker.string.uuid();
+      const idempotencyKey = faker.string.uuid();
       const provider = PaymentProvider.create({
-        externalPaymentId: externalReference,
+        externalPaymentId: externalPaymentId,
         provider: PaymentProviders.MERCADO_PAGO,
       });
 
       const result: PaymentEntity = paymentEntityFactory({
-        externalReference,
+        externalReference: idempotencyKey,
         provider,
       });
 
-      jest.spyOn(repository, 'findByIdempotencyKey').mockResolvedValue(result);
+      jest.spyOn(repository, 'findByExternalPaymentId').mockResolvedValue(result);
 
-      const response = await useCase.markAsPaid(externalReference, {
+      const response = await useCase.markAsPaid(externalPaymentId, {
         ...mercadoPagoRequest,
         action: 'payment.te',
       });
@@ -123,6 +128,19 @@ describe('MarkAsPaidGatewayImpl', () => {
       expect(response.isFailure).toBeTruthy();
       expect(response.error).toStrictEqual(
         new DomainBusinessException('Invalid action'),
+      );
+    });
+
+    it('Should not process payment when payment not found', async () => {
+      const externalPaymentId = faker.string.uuid();
+
+      jest.spyOn(repository, 'findByExternalPaymentId').mockResolvedValue(null);
+
+      const response = await useCase.markAsPaid(externalPaymentId, mercadoPagoRequest);
+
+      expect(response.isFailure).toBeTruthy();
+      expect(response.error).toStrictEqual(
+        new DomainBusinessException('Payment not found'),
       );
     });
   });

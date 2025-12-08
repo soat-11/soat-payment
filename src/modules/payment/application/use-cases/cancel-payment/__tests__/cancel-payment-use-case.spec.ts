@@ -1,3 +1,4 @@
+import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { CancelPaymentUseCaseImpl } from '@payment/application/use-cases/cancel-payment/cancel-payment-impl.use-case';
 import { PaymentEntity } from '@payment/domain/entities/payment.entity';
@@ -16,10 +17,11 @@ describe('CancelPaymentUseCase - Unit Test', () => {
   let paymentRepository: FakePaymentRepository;
   let logger: FakeLogger;
 
-  const createPayment = () =>
-    PaymentEntity.create({
+  const createPayment = () => {
+    const now = SystemDateImpl.nowUTC();
+    return PaymentEntity.create({
       amount: 100,
-      expiresAt: new Date(Date.now() + 1000 * 60 * 10),
+      expiresAt: new Date(now.getTime() + 1000 * 60 * 10),
       idempotencyKey: UniqueEntityID.create().value,
       sessionId: UniqueEntityID.create().value,
       type: PaymentType.PIX,
@@ -33,16 +35,19 @@ describe('CancelPaymentUseCase - Unit Test', () => {
           qrCode: 'qr-code-123',
         }),
       );
+  };
 
-  const createPaymentWithStatus = (status: PaymentStatus) =>
-    PaymentEntity.fromPersistence(UniqueEntityID.create(), {
+  const createPaymentWithStatus = (status: PaymentStatus) => {
+    const now = SystemDateImpl.nowUTC();
+    return PaymentEntity.fromPersistence(UniqueEntityID.create(), {
       amount: 100,
-      expiresAt: new Date(Date.now() + 1000 * 60 * 10),
+      expiresAt: new Date(now.getTime() + 1000 * 60 * 10),
       idempotencyKey: UniqueEntityID.create().value,
       sessionId: UniqueEntityID.create().value,
       type: PaymentType.PIX,
       status,
     });
+  };
 
   beforeEach(() => {
     paymentRepository = new FakePaymentRepository();

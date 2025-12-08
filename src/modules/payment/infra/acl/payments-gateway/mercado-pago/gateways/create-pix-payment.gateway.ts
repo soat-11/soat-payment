@@ -3,6 +3,7 @@ import {
   DomainExceptionGeneric,
 } from '@core/domain/exceptions/domain.exception';
 import { Result } from '@core/domain/result';
+import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import {
   HttpClientResponseUtils,
   PostMethod,
@@ -33,7 +34,7 @@ export class CreatePixPaymentGatewayImpl implements CreatePaymentGateway {
 
   private toIsoDuration(
     expiration: Date,
-    now: Date = new Date(),
+    now: Date = SystemDateImpl.nowUTC(),
   ): { duration: string; isValid: boolean; error?: string } {
     const diffMs = expiration.getTime() - now.getTime();
 
@@ -187,10 +188,13 @@ export class CreatePixPaymentGatewayImpl implements CreatePaymentGateway {
       );
     }
 
-    this.logger.log('Successfully created payment');
+    this.logger.log('Successfully created payment', {
+      externalPaymentId: responseValidation.data.id,
+    });
 
     return Result.ok({
       qrCode: responseValidation.data.type_response.qr_data,
+      externalPaymentId: responseValidation.data.id,
     });
   }
 }

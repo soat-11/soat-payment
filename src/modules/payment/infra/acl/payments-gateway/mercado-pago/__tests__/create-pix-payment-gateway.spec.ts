@@ -1,4 +1,5 @@
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
+import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import {
   DefaultHttpClientResponse,
   PostMethod,
@@ -16,6 +17,7 @@ describe('CreatePixPaymentGateway', () => {
     {
       status: 200,
       data: {
+        id: 'mercado-pago-order-id-123',
         expiration_time: '2025-11-20T16:04:55-03:00',
         external_reference: '123',
         message: '123',
@@ -39,7 +41,8 @@ describe('CreatePixPaymentGateway', () => {
 
   describe('Sucesso', () => {
     it('deve criar um pagamento com expiração de 10 minutos', async () => {
-      const tenMinutesFromNow = new Date(Date.now() + 10 * 60 * 1000);
+      const now = SystemDateImpl.nowUTC();
+      const tenMinutesFromNow = new Date(now.getTime() + 10 * 60 * 1000);
 
       const result = await gateway.createPayment({
         amount: 10,
@@ -53,10 +56,12 @@ describe('CreatePixPaymentGateway', () => {
       expect(result.isSuccess).toBe(true);
       expect(result.value.qrCode).toBeDefined();
       expect(typeof result.value.qrCode).toBe('string');
+      expect(result.value.externalPaymentId).toBe('mercado-pago-order-id-123');
     });
 
     it('deve criar um pagamento com expiração de 1 hora', async () => {
-      const oneHourFromNow = new Date(Date.now() + 60 * 60 * 1000);
+      const now = SystemDateImpl.nowUTC();
+      const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
 
       const result = await gateway.createPayment({
         amount: 100,
@@ -71,7 +76,8 @@ describe('CreatePixPaymentGateway', () => {
     });
 
     it('deve criar um pagamento com expiração de 5 minutos', async () => {
-      const fiveMinutesFromNow = new Date(Date.now() + 5 * 60 * 1000);
+      const now = SystemDateImpl.nowUTC();
+      const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
 
       const result = await gateway.createPayment({
         amount: 50,
@@ -88,7 +94,8 @@ describe('CreatePixPaymentGateway', () => {
 
   describe('Validação de expiration_time', () => {
     it('deve falhar quando expiração está no passado', async () => {
-      const pastDate = new Date(Date.now() - 10 * 60 * 1000); // 10 minutos atrás
+      const now = SystemDateImpl.nowUTC();
+      const pastDate = new Date(now.getTime() - 10 * 60 * 1000); // 10 minutos atrás
 
       const result = await gateway.createPayment({
         amount: 10,
@@ -105,7 +112,8 @@ describe('CreatePixPaymentGateway', () => {
     });
 
     it('deve falhar quando expiração é menor que 1 minuto', async () => {
-      const thirtySecondsFromNow = new Date(Date.now() + 30 * 1000);
+      const now = SystemDateImpl.nowUTC();
+      const thirtySecondsFromNow = new Date(now.getTime() + 30 * 1000);
 
       const result = await gateway.createPayment({
         amount: 10,
@@ -124,7 +132,8 @@ describe('CreatePixPaymentGateway', () => {
 
   describe('Formato ISO 8601 Duration', () => {
     it('deve gerar P0DT10M para 10 minutos', async () => {
-      const tenMinutesFromNow = new Date(Date.now() + 10 * 60 * 1000);
+      const now = SystemDateImpl.nowUTC();
+      const tenMinutesFromNow = new Date(now.getTime() + 10 * 60 * 1000);
 
       await gateway.createPayment({
         amount: 10,
@@ -145,7 +154,8 @@ describe('CreatePixPaymentGateway', () => {
     });
 
     it('deve gerar P0DT1H para 1 hora', async () => {
-      const oneHourFromNow = new Date(Date.now() + 60 * 60 * 1000);
+      const now = SystemDateImpl.nowUTC();
+      const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
 
       await gateway.createPayment({
         amount: 10,
@@ -166,7 +176,8 @@ describe('CreatePixPaymentGateway', () => {
     });
 
     it('deve gerar P0DT1H30M para 1 hora e 30 minutos', async () => {
-      const oneHourThirtyMinutes = new Date(Date.now() + 90 * 60 * 1000);
+      const now = SystemDateImpl.nowUTC();
+      const oneHourThirtyMinutes = new Date(now.getTime() + 90 * 60 * 1000);
 
       await gateway.createPayment({
         amount: 10,
@@ -186,4 +197,4 @@ describe('CreatePixPaymentGateway', () => {
       );
     });
   });
-})
+});

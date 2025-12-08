@@ -1,4 +1,9 @@
-import { Message, SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
+import {
+  DeleteMessageCommand,
+  Message,
+  SendMessageCommand,
+  SQSClient,
+} from '@aws-sdk/client-sqs';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Consumer } from 'sqs-consumer';
@@ -18,7 +23,7 @@ export type SqsConsumerOptions = {
 const DEFAULT_CONSUMER_OPTIONS: Required<SqsConsumerOptions> = {
   batchSize: 1,
   waitTimeSeconds: 20,
-  visibilityTimeout: 30,
+  visibilityTimeout: 60,
 };
 
 export type DlqMessageContext<T> = {
@@ -193,14 +198,13 @@ export abstract class SqsConsumer<TPayload = unknown>
     });
 
     this.consumer.on('message_processed', (message) => {
-      this.logger.log('Message processed and deleted', {
+      this.logger.log('Message processed and DELETED from queue', {
         resource: this.constructor.name,
         messageId: message.MessageId,
         receiptHandle: message.ReceiptHandle?.substring(0, 50),
       });
     });
 
-    // Debug: evento disparado quando a resposta de deleção é recebida
     this.consumer.on('response_processed' as never, () => {
       this.logger.log('Delete response received from SQS', {
         resource: this.constructor.name,
@@ -288,6 +292,14 @@ export abstract class SqsConsumer<TPayload = unknown>
     }
   }
 
+  protected async deleteMessage(receiptHandle: string) {
+    const command = new DeleteMessageCommand({
+      QueueUrl: this.queueUrl,
+      ReceiptHandle: receiptHandle,
+    });
+    await this.client.send(command);
+  }
+
   private async processMessage(message: Message): Promise<void> {
     if (!this.isValidMessage(message)) {
       this.logger.error('Invalid message format', {
@@ -318,6 +330,8 @@ export abstract class SqsConsumer<TPayload = unknown>
         resource: this.constructor.name,
         messageId: message.MessageId,
       });
+
+      await this.deleteMessage(message.ReceiptHandle);
     } catch (error) {
       this.logger.error('Error in handleMessage', {
         resource: this.constructor.name,

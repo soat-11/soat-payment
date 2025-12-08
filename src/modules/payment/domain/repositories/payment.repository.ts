@@ -8,6 +8,9 @@ export interface PaymentRepository {
   findByIdempotencyKey(
     idempotencyKey: IdempotencyKeyVO,
   ): Promise<PaymentEntity | null>;
+  findByExternalPaymentId(
+    externalPaymentId: string,
+  ): Promise<PaymentEntity | null>;
   update(payment: PaymentEntity): Promise<void>;
 }
 

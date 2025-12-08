@@ -1,5 +1,6 @@
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
 import { Result } from '@core/domain/result';
+import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { PaymentNotFoundException } from '@payment/domain/exceptions/payment.exception';
@@ -30,7 +31,7 @@ export class CancelPaymentGatewayImpl implements CancelPaymentGateway {
       paymentId: paymentId.toString(),
     });
 
-    const cancelResult = payment.cancel(new Date());
+    const cancelResult = payment.cancel(SystemDateImpl.nowUTC());
     if (cancelResult.isFailure) {
       this.logger.error('Error cancelling payment', {
         error: cancelResult.error.message,

@@ -3,6 +3,7 @@ import { DataSource, MongoRepository } from 'typeorm';
 
 import { CreatePaymentUseCaseImpl } from '@payment/application/use-cases/create-payment/create-payment-impl.use-case';
 
+import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
 import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 import { PaymentMapper } from '@payment/infra/persistence/mapper/payment.mapper';
@@ -118,13 +119,14 @@ describe('CreatePaymentUseCase - Integration Test', () => {
         return Promise.resolve(
           Result.ok({
             qrCode: 'qrCode-teste',
+            externalPaymentId: 'mercado-pago-order-id-123',
           }),
         );
       },
     };
 
     useCase = new CreatePaymentUseCaseImpl({
-      paymentFactory: new PaymentFactoryImpl(new SystemDateImpl(new Date())),
+      paymentFactory: new PaymentFactoryImpl(new SystemDateImpl(SystemDateImpl.nowUTC())),
       eventDispatcher: domainEventDispatcher,
       logger: new PinoLoggerService(),
       paymentRepository,
@@ -165,6 +167,23 @@ describe('CreatePaymentUseCase - Integration Test', () => {
       expect(result.value.paymentId).toBeDefined();
     });
 
+    it('should create a payment with paymentProvider set to Mercado Pago', async () => {
+      const input: CreatePaymentUseCaseInput = {
+        idempotencyKey: faker.string.uuid(),
+        sessionId: faker.string.uuid(),
+      };
+
+      const result = await useCase.execute(input);
+
+      expect(result.isSuccess).toBe(true);
+
+      const payments = await mongoRepository.find();
+
+      expect(payments).toHaveLength(1);
+      expect(payments[0].provider).toBe(PaymentProviders.MERCADO_PAGO);
+      expect(payments[0].externalPaymentId).toBe('mercado-pago-order-id-123');
+    });
+
     it('should create a payment with domain ID preserved', async () => {
       const input: CreatePaymentUseCaseInput = {
         idempotencyKey: faker.string.uuid(),
@@ -176,6 +195,7 @@ describe('CreatePaymentUseCase - Integration Test', () => {
         .mockResolvedValue(
           Result.ok({
             qrCode: 'qrCode-teste',
+            externalPaymentId: 'mercado-pago-order-id-123',
           }),
         );
 
@@ -207,6 +227,7 @@ describe('CreatePaymentUseCase - Integration Test', () => {
       jest.spyOn(createPaymentGateway, 'createPayment').mockResolvedValue(
         Result.ok({
           qrCode: 'qrCode-teste',
+          externalPaymentId: 'mercado-pago-order-id-123',
         }),
       );
 

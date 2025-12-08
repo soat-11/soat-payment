@@ -9,6 +9,7 @@ import {
   type CreatePaymentUseCaseOutput,
 } from '@payment/application/use-cases/create-payment/create-payment.use-case';
 
+import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 
 import { DomainExceptionGeneric } from '@core/domain/exceptions/domain.exception';
@@ -100,6 +101,11 @@ export class CreatePaymentUseCaseImpl implements CreatePaymentUseCase {
         });
         return Result.fail(createPaymentGatewayResult.error);
       }
+
+      payment.addPaymentProvider({
+        externalPaymentId: createPaymentGatewayResult.value.externalPaymentId,
+        provider: PaymentProviders.MERCADO_PAGO,
+      });
 
       this.deps.logger.log('Creating QR Code', {
         paymentId: createPaymentGatewayResult.value.qrCode,

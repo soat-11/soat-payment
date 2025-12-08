@@ -1,10 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { Controller, Get, HttpException, HttpStatus, INestApplication, Module } from '@nestjs/common';
-import { HttpAdapterHost } from '@nestjs/core';
-import request from 'supertest';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
+import {
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  INestApplication,
+  Module,
+} from '@nestjs/common';
+import { HttpAdapterHost } from '@nestjs/core';
+import { Test, TestingModule } from '@nestjs/testing';
+import request from 'supertest';
 import { GlobalExceptionFilter } from '../global-exception.filter';
-
 
 @Controller('test')
 class TestController {
@@ -23,7 +29,6 @@ const mockLogger = {
   error: jest.fn(),
   warn: jest.fn(),
 };
-
 
 @Module({
   controllers: [TestController],
@@ -56,7 +61,7 @@ describe('GlobalExceptionFilter (Integration)', () => {
   });
 
   afterEach(async () => {
-    await app.close()
+    await app.close();
   });
 
   it('should catch HttpException, return correct status and log as warn', async () => {
@@ -64,16 +69,16 @@ describe('GlobalExceptionFilter (Integration)', () => {
       .get('/test/forbidden')
       .expect(403);
 
-    // Verifica Corpo da Resposta
     expect(response.body).toMatchObject({
       statusCode: 403,
       message: 'Forbidden Access',
       path: '/test/forbidden',
     });
 
-    // Verifica Log (Warn para erros 4xx/conhecidos)
     expect(mockLogger.warn).toHaveBeenCalledWith(
-      expect.stringContaining('Global Exception Filter (Handled): Forbidden Access'),
+      expect.stringContaining(
+        'Global Exception Filter (Handled): Forbidden Access',
+      ),
       expect.objectContaining({
         statusCode: 403,
         context: 'GlobalExceptionFilter',
@@ -86,14 +91,12 @@ describe('GlobalExceptionFilter (Integration)', () => {
       .get('/test/error')
       .expect(500);
 
-    // Verifica Corpo da Resposta
     expect(response.body).toMatchObject({
       statusCode: 500,
       message: 'Internal server error',
       path: '/test/error',
     });
 
-    // Verifica Log (Error para erros 500/desconhecidos)
     expect(mockLogger.error).toHaveBeenCalledWith(
       expect.stringContaining('Global Exception Filter: Internal server error'),
       expect.objectContaining({

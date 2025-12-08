@@ -1,11 +1,9 @@
+import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
 import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 import fc from 'fast-check';
 
-/**
- * Arbitrary para todos os tipos de pagamento
- */
 export const paymentTypeArb = fc.constantFrom(...Object.values(PaymentType));
 
 /**
@@ -43,19 +41,19 @@ export const validAmountArb = fc.integer({ min: 1, max: 1_000_000_000 });
 export const invalidAmountArb = fc.integer({ max: 0 });
 
 /**
- * Arbitrary para datas futuras (até 1 ano)
+ * Arbitrary para datas futuras (até 1 ano) - Sempre em UTC
  */
 export const futureDateArb = fc.date({
-  min: new Date(),
-  max: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
+  min: SystemDateImpl.nowUTC(),
+  max: new Date(SystemDateImpl.nowUTC().getTime() + 1000 * 60 * 60 * 24 * 365),
 });
 
 /**
- * Arbitrary para datas passadas (desde 2020)
+ * Arbitrary para datas passadas (desde 2020) - Sempre em UTC
  */
 export const pastDateArb = fc.date({
-  min: new Date('2020-01-01'),
-  max: new Date(),
+  min: new Date('2020-01-01T00:00:00.000Z'),
+  max: SystemDateImpl.nowUTC(),
 });
 
 /**
@@ -108,8 +106,6 @@ export const paymentProviderPropsArb = fc.record({
   provider: paymentProviderArb,
   externalPaymentId: externalPaymentIdArb,
 });
-
-// Helper functions
 
 function isValidUUID(str: string): boolean {
   const uuidRegex =

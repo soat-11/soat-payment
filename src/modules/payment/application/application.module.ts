@@ -33,7 +33,8 @@ import { CreatePaymentGateway } from '@payment/domain/gateways/create-payment.ga
     {
       provide: 'SystemDateDomainService',
       useFactory: () => {
-        return new SystemDateImpl(new Date());
+        // Sem data fixa = now() sempre retorna a data atual UTC
+        return new SystemDateImpl();
       },
     },
     {

@@ -1,10 +1,10 @@
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
 import { Result } from '@core/domain/result';
+import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { MarkAsPaidGateway } from '@payment/domain/gateways/mark-as-paid';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
-import { IdempotencyKeyVO } from '@payment/domain/value-objects/idempotency-key.vo';
 import { ProcessPaymentDTOSchemaRequest } from '@payment/infra/acl/payments-gateway/mercado-pago/dtos/process-payment.dto';
 
 export class MarkAsPaidGatewayImpl
@@ -20,35 +20,38 @@ export class MarkAsPaidGatewayImpl
     paymentReference: string,
     body: ProcessPaymentDTOSchemaRequest,
   ): Promise<Result<void>> {
-    if (body.action !== 'payment.created') {
+    const validActions = ['payment.created', 'payment.updated'];
+    const action = body?.action;
+
+    if (!action || !validActions.includes(action)) {
       this.logger.error('Invalid action', {
-        action: body.action,
+        request: body,
         paymentReference,
+        action,
+        validActions,
       });
       return Result.fail(new DomainBusinessException('Invalid action'));
     }
 
-    const idempotencyKey = IdempotencyKeyVO.create(paymentReference);
-
-    if (!idempotencyKey) {
-      this.logger.error('Invalid idempotency key', {
+    if (!paymentReference || paymentReference.trim() === '') {
+      this.logger.error('Invalid payment reference', {
         paymentReference,
       });
       return Result.fail(
-        new DomainBusinessException('Invalid idempotency key'),
+        new DomainBusinessException('Invalid payment reference'),
       );
     }
 
     const payment =
-      await this.repository.findByIdempotencyKey(idempotencyKey);
+      await this.repository.findByExternalPaymentId(paymentReference);
     if (!payment) {
-      this.logger.error('Payment not found', {
+      this.logger.error('Payment not found by external payment ID', {
         paymentReference,
       });
       return Result.fail(new DomainBusinessException('Payment not found'));
     }
 
-    const paidResult = payment.paid(new Date());
+    const paidResult = payment.paid(SystemDateImpl.nowUTC());
     if (paidResult.isFailure) {
       this.logger.error('Error marking payment as paid', {
         paymentReference,

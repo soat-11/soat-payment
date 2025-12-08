@@ -1,13 +1,14 @@
+import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import {
   Body,
   Controller,
   HttpCode,
   HttpStatus,
   Inject,
-  Param,
   Post,
+  Query,
 } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ProcessPaymentDTOSchemaRequest } from '@payment/infra/acl/payments-gateway/mercado-pago/dtos/process-payment.dto';
 import { SqsMercadoPagoMarkAsPaidPublish } from '@payment/infra/acl/payments-gateway/mercado-pago/publishers/mercado-pago-mark-as-paid.publish';
 
@@ -17,9 +18,10 @@ export class MercadoPagoWebhookController {
   constructor(
     @Inject(SqsMercadoPagoMarkAsPaidPublish)
     private readonly markAsPaidPublish: SqsMercadoPagoMarkAsPaidPublish,
+    private readonly logger: AbstractLoggerService,
   ) {}
 
-  @Post(':paymentReference')
+  @Post()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Processa webhook de pagamento do Mercado Pago',
@@ -27,9 +29,16 @@ export class MercadoPagoWebhookController {
       'Endpoint para receber notificações de pagamento do Mercado Pago. ' +
       'A mensagem é validada e enviada para uma fila SQS para processamento assíncrono.',
   })
-  @ApiParam({
-    name: 'paymentReference',
-    description: 'Referência do pagamento (idempotency key)',
+  @ApiQuery({
+    name: 'data.id',
+    description: 'ID do pagamento (enviado pelo Mercado Pago)',
+    required: false,
+    type: String,
+  })
+  @ApiQuery({
+    name: 'type',
+    description: 'Tipo do evento (ex: payment, order)',
+    required: false,
     type: String,
   })
   @ApiResponse({
@@ -41,12 +50,36 @@ export class MercadoPagoWebhookController {
     description: 'Erro ao enfileirar a mensagem',
   })
   async handleWebhook(
-    @Param('paymentReference') paymentReference: string,
+    @Query('data.id') dataId: string,
+    @Query('type') type: string,
     @Body() body: ProcessPaymentDTOSchemaRequest,
   ): Promise<{ success: boolean }> {
+    this.logger.log('Processing Mercado Pago webhook', {
+      payload: JSON.stringify({ dataId, type, body }),
+    });
+    const paymentReference = dataId || body?.data?.id;
+
+    this.logger.log('Payment reference', {
+      paymentReference,
+    });
+
+    if (!paymentReference) {
+      this.logger.log('No payment reference found', {
+        dataId,
+        type,
+        body,
+      });
+      return { success: true };
+    }
+
     await this.markAsPaidPublish.publish({
       paymentReference,
-      webhookPayload: body,
+      webhookPayload: {
+        ...body,
+        action: body?.action,
+        data: { id: paymentReference },
+        type: body?.type || type,
+      },
     });
 
     return { success: true };

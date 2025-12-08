@@ -1,5 +1,6 @@
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
 import { Result } from '@core/domain/result';
+import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import {
   CancelPaymentUseCase,
@@ -29,7 +30,7 @@ export class CancelPaymentUseCaseImpl implements CancelPaymentUseCase {
       return Result.fail(new PaymentNotFoundException(input.paymentId));
     }
 
-    const cancelResult = payment.cancel(new Date());
+    const cancelResult = payment.cancel(SystemDateImpl.nowUTC());
 
     if (cancelResult.isFailure) {
       this.logger.log('Erro ao cancelar pagamento', {

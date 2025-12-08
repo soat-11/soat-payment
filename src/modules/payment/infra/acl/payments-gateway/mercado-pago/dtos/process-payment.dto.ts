@@ -1,58 +1,84 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsBoolean,
+  IsNumber,
+  IsObject,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class ProcessPaymentDTOSchemaRequest {
-   @ApiProperty({
-    description: "Action",
-    example: "payment.created",
+  @ApiProperty({
+    description:
+      "Action (REQUIRED: must be 'payment.created' or 'payment.updated' to mark payment as paid)",
+    example: 'payment.created',
   })
-  action: string;
+  @IsString()
+  @IsOptional()
+  action?: string;
 
   @ApiProperty({
-    description: "API version",
-    example: "2023-10-17",
+    description: 'API version',
+    example: 'v1',
   })
-  api_version: string;
+  @IsString()
+  @IsOptional()
+  api_version?: string;
 
   @ApiProperty({
-    description: "Application ID",
-    example: "app_1234567890",
+    description: 'Application ID',
+    example: 'app_1234567890',
   })
-  application_id: string;
+  @IsString()
+  @IsOptional()
+  application_id?: string;
 
   @ApiProperty({
-    description: "Date created",
-    example: "2023-10-17T12:34:56Z",
+    description: 'Date created',
+    example: '2023-10-17T12:34:56Z',
   })
-  date_created: string;
+  @IsString()
+  @IsOptional()
+  date_created?: string;
 
   @ApiProperty({
-    description: "ID",
-    example: "evt_1234567890",
+    description: 'ID',
+    example: 'evt_1234567890',
   })
-  id: string;
+  @IsString()
+  @IsOptional()
+  id?: string;
 
   @ApiProperty({
-    description: "Live mode",
+    description: 'Live mode',
     example: true,
   })
-  live_mode: boolean;
+  @IsBoolean()
+  @IsOptional()
+  live_mode?: boolean;
 
   @ApiProperty({
-    description: "Type",
-    example: "payment.succeeded",
+    description: 'Type',
+    example: 'payment',
   })
-  type: string;
+  @IsString()
+  @IsOptional()
+  type?: string;
 
   @ApiProperty({
-    description: "User ID",
+    description: 'User ID',
     example: 123456,
   })
-  user_id: number;
+  @IsNumber()
+  @IsOptional()
+  user_id?: number;
 
   @ApiProperty({
-    description: "Data",
+    description: 'Data',
     type: Object,
-    example: { id: "data_1234567890" },
+    example: { id: 'data_1234567890' },
   })
-  data: { id: string };
+  @IsObject()
+  @IsOptional()
+  data?: { id: string };
 }

@@ -26,6 +26,7 @@ export const isPixCreatePaymentType = (
 
 export type PixCreatePaymentResponseType = {
   qrCode: string;
+  externalPaymentId: string;
 };
 
 export type CreateAnyPaymentResponse = PixCreatePaymentResponseType;
