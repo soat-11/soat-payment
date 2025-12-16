@@ -24,7 +24,7 @@ services:
       AWS_SECRET_ACCESS_KEY: test
       AWS_SQS_CREATE_PAYMENT_QUEUE_URL: http://localstack:4566/000000000000/create-payment-queue
       AWS_SQS_PAYMENT_PAID_QUEUE_URL: http://localstack:4566/000000000000/payment-paid-queue
-      AWS_SQS_MERCADO_PAGO_MARK_AS_PAID_QUEUE_URL: http://localstack:4566/000000000000/mercado-pago-mark-as-paid-queue
+      AWS_SQS_MERCADO_PAGO_PROCESS_PAYMENT_QUEUE_URL: http://localstack:4566/000000000000/mercado-pago-process-payment-queue
     volumes:
       - ..:/app
     command: yarn start:dev

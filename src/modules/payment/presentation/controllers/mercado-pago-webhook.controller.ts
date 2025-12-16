@@ -18,7 +18,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ProcessPaymentDTOSchemaRequest } from '@payment/infra/acl/payments-gateway/mercado-pago/dtos/process-payment.dto';
-import { SqsMercadoPagoMarkAsPaidPublish } from '@payment/infra/acl/payments-gateway/mercado-pago/publishers/mercado-pago-mark-as-paid.publish';
+import { SqsMercadoPagoProcessPaymentPublish } from '@payment/infra/acl/payments-gateway/mercado-pago/publishers/mercado-pago-mark-as-paid.publish';
 import {
   PaymentSignature,
   PaymentSignature as PaymentSignatureType,
@@ -28,8 +28,8 @@ import {
 @Controller('webhooks/mercado-pago')
 export class MercadoPagoWebhookController {
   constructor(
-    @Inject(SqsMercadoPagoMarkAsPaidPublish)
-    private readonly markAsPaidPublish: SqsMercadoPagoMarkAsPaidPublish,
+    @Inject(SqsMercadoPagoProcessPaymentPublish)
+    private readonly processPaymentPublish: SqsMercadoPagoProcessPaymentPublish,
     @Inject(PaymentSignature)
     private readonly signature: PaymentSignatureType,
     private readonly logger: AbstractLoggerService,
@@ -120,12 +120,15 @@ export class MercadoPagoWebhookController {
       return { success: true };
     }
 
-    await this.markAsPaidPublish.publish({
+    await this.processPaymentPublish.publish({
       paymentReference,
       webhookPayload: {
         ...body,
         action: body?.action,
-        data: { id: paymentReference },
+        data: {
+          ...body?.data,
+          id: body?.data?.id || paymentReference,
+        },
         type: body?.type || type,
       },
     });

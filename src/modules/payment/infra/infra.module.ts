@@ -14,7 +14,6 @@ import { CartGateway } from '@payment/domain/gateways/cart.gateway';
 import { CreatePaymentGateway } from '@payment/domain/gateways/create-payment.gateway';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 import { CreatePixPaymentGatewayImpl } from './acl/payments-gateway/mercado-pago/gateways/create-pix-payment.gateway';
-import { PaymentPaidConsumer } from './consumers/payment-paid.consumer';
 import { HttpCartGateway } from './gateways/http-cart.gateway';
 import { PaymentDetailMapperFactory } from './persistence/mapper/payment-detail-mapper.factory';
 import { PixDetailMapper } from './persistence/mapper/pix-detail.mapper';
@@ -74,7 +73,7 @@ import { PixDetailMapper } from './persistence/mapper/pix-detail.mapper';
       },
       inject: [HttpClient, AbstractLoggerService],
     },
-    PaymentPaidConsumer,
+    // PaymentPaidConsumer,
   ],
   exports: [
     PaymentRepository,

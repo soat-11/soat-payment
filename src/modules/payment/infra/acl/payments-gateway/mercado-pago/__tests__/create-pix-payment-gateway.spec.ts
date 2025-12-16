@@ -131,7 +131,7 @@ describe('CreatePixPaymentGateway', () => {
   });
 
   describe('Formato ISO 8601 Duration', () => {
-    it('deve gerar P0DT10M para 10 minutos', async () => {
+    it('deve gerar PT10M para 10 minutos', async () => {
       const now = SystemDateImpl.nowUTC();
       const tenMinutesFromNow = new Date(now.getTime() + 10 * 60 * 1000);
 
@@ -147,13 +147,13 @@ describe('CreatePixPaymentGateway', () => {
       expect(client.post).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          expiration_time: expect.stringMatching(/^P0DT\d+M$/),
+          expiration_time: expect.stringMatching(/^PT\d+M$/),
         }),
         expect.any(Object),
       );
     });
 
-    it('deve gerar P0DT1H para 1 hora', async () => {
+    it('deve gerar PT1H para 1 hora', async () => {
       const now = SystemDateImpl.nowUTC();
       const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
 
@@ -169,13 +169,13 @@ describe('CreatePixPaymentGateway', () => {
       expect(client.post).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          expiration_time: expect.stringMatching(/^P0DT1H$/),
+          expiration_time: expect.stringMatching(/^PT1H$/),
         }),
         expect.any(Object),
       );
     });
 
-    it('deve gerar P0DT1H30M para 1 hora e 30 minutos', async () => {
+    it('deve gerar PT1H30M para 1 hora e 30 minutos', async () => {
       const now = SystemDateImpl.nowUTC();
       const oneHourThirtyMinutes = new Date(now.getTime() + 90 * 60 * 1000);
 
@@ -191,7 +191,7 @@ describe('CreatePixPaymentGateway', () => {
       expect(client.post).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          expiration_time: expect.stringMatching(/^P0DT1H30M$/),
+          expiration_time: expect.stringMatching(/^PT1H30M$/),
         }),
         expect.any(Object),
       );

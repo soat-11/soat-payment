@@ -7,17 +7,22 @@ import { CreatePaymentUseCase } from '@payment/application/use-cases/create-paym
 import { MarkAsPaidGateway } from '@payment/domain/gateways/mark-as-paid';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 import { MarkAsPaidGatewayImpl } from '@payment/infra/acl/payments-gateway/mercado-pago/gateways/mark-as-paid.gateway';
-import { SqsMercadoPagoMarkAsPaidPublish } from '@payment/infra/acl/payments-gateway/mercado-pago/publishers/mercado-pago-mark-as-paid.publish';
+import { SqsMercadoPagoProcessPaymentPublish } from '@payment/infra/acl/payments-gateway/mercado-pago/publishers/mercado-pago-mark-as-paid.publish';
 import { HMACMercadoPagoSignature } from '@payment/infra/acl/payments-gateway/mercado-pago/signature/mercado-pago-signature';
 import { PaymentSignature } from '@payment/infra/acl/payments-gateway/mercado-pago/signature/payment-signature';
 import { CreatePaymentConsumer } from '@payment/presentation/consumers/sqs-create-payment-consumer';
-import { MercadoPagoMarkAsPaidConsumer } from '@payment/presentation/consumers/sqs-mark-as-paid-consumer';
+import { MercadoPagoProcessPaymentConsumer } from '@payment/presentation/consumers/sqs-process-payment-consumer';
+import { MercadoPagoTestController } from '@payment/presentation/controllers/mercado-pago-test.controller';
 import { MercadoPagoWebhookController } from '@payment/presentation/controllers/mercado-pago-webhook.controller';
 import { PaymentDocsController } from '@payment/presentation/controllers/payment-docs.controller';
 
 @Module({
   imports: [PaymentApplicationModule],
-  controllers: [PaymentDocsController, MercadoPagoWebhookController],
+  controllers: [
+    PaymentDocsController,
+    MercadoPagoWebhookController,
+    MercadoPagoTestController,
+  ],
   providers: [
     {
       provide: PaymentSignature,
@@ -34,9 +39,9 @@ import { PaymentDocsController } from '@payment/presentation/controllers/payment
       inject: [AbstractLoggerService, CreatePaymentUseCase],
     },
     {
-      provide: SqsMercadoPagoMarkAsPaidPublish,
+      provide: SqsMercadoPagoProcessPaymentPublish,
       useFactory: (logger: AbstractLoggerService) => {
-        return new SqsMercadoPagoMarkAsPaidPublish(logger);
+        return new SqsMercadoPagoProcessPaymentPublish(logger);
       },
       inject: [AbstractLoggerService],
     },
@@ -56,12 +61,12 @@ import { PaymentDocsController } from '@payment/presentation/controllers/payment
       ],
     },
     {
-      provide: MercadoPagoMarkAsPaidConsumer,
+      provide: MercadoPagoProcessPaymentConsumer,
       useFactory: (
         logger: AbstractLoggerService,
         markAsPaidGateway: MarkAsPaidGatewayImpl,
       ) => {
-        return new MercadoPagoMarkAsPaidConsumer(logger, markAsPaidGateway);
+        return new MercadoPagoProcessPaymentConsumer(logger, markAsPaidGateway);
       },
       inject: [AbstractLoggerService, MarkAsPaidGateway],
     },

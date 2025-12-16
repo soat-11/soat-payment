@@ -1,7 +1,6 @@
 import { ProcessPaymentDTOSchemaRequest } from './process-payment.dto';
 
-export type MercadoPagoMarkAsPaidQueueMessage = {
+export type MercadoPagoProcessPaymentQueueMessage = {
   paymentReference: string;
   webhookPayload: ProcessPaymentDTOSchemaRequest;
 };
-

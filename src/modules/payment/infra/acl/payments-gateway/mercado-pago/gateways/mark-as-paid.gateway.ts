@@ -20,18 +20,7 @@ export class MarkAsPaidGatewayImpl
     paymentReference: string,
     body: ProcessPaymentDTOSchemaRequest,
   ): Promise<Result<void>> {
-    const validActions = ['payment.created', 'payment.updated'];
     const action = body?.action;
-
-    if (!action || !validActions.includes(action)) {
-      this.logger.error('Invalid action', {
-        request: body,
-        paymentReference,
-        action,
-        validActions,
-      });
-      return Result.fail(new DomainBusinessException('Invalid action'));
-    }
 
     if (!paymentReference || paymentReference.trim() === '') {
       this.logger.error('Invalid payment reference', {

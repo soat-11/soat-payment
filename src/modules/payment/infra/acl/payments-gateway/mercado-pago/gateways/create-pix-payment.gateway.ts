@@ -63,7 +63,10 @@ export class CreatePixPaymentGatewayImpl implements CreatePaymentGateway {
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
 
-    let duration = `P${days}DT`;
+    // Formato ISO 8601 duration: PT16M ou P1DT2H30M
+    let duration = 'P';
+    if (days > 0) duration += `${days}D`;
+    duration += 'T';
     if (hours) duration += `${hours}H`;
     if (minutes) duration += `${minutes}M`;
     if (seconds || (!hours && !minutes)) duration += `${seconds}S`;
@@ -143,6 +146,7 @@ export class CreatePixPaymentGatewayImpl implements CreatePaymentGateway {
     this.logger.log('Sending request to MercadoPago', {
       payload: validationResult.data,
     });
+    console.log('testesds', process.env.MERCADO_PAGO_PAYMENT_ACCESS_TOKEN);
     const response = await this.client.post<
       CreateQRCodeMercadoPagoRequest,
       CreateQRCodeMercadoPagoResponse
