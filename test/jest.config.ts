@@ -19,8 +19,6 @@ const config: Config.InitialOptions = {
   },
   collectCoverageFrom: [
     'src/**/*.ts',
-    '!src/**/infra/consumers/**',
-    '!src/core/infra/http/transformers/**',
     '!src/**/*.test.ts',
     '!src/**/__tests__/**',
     '!src/main.ts',
@@ -30,16 +28,34 @@ const config: Config.InitialOptions = {
     '!src/**/*.interface.ts',
     '!src/**/*.type.ts',
     '!src/**/*.enum.ts',
-    '!src/core/infra/instrumentation/**',
-    '!src/**/controllers/**',
-    '!src/**/filters/**',
-
-    '!src/**/docs/**',
-
     '!src/**/*.decorator.ts',
     '!test/**',
+
+    // Interfaces e Symbols de domínio
     '!src/**/application/strategies/payment-processing.strategy.ts',
     '!src/**/application/use-cases/*/*.use-case.ts',
+    '!src/**/domain/gateways/*.ts',
+    '!src/**/domain/repositories/*.ts',
+    '!src/**/domain/factories/*.ts',
+
+    // Infraestrutura core (abstrações, HTTP, SQS, database)
+    '!src/core/domain/mapper/**',
+    '!src/core/infra/http/**',
+    '!src/core/infra/sqs/**',
+    '!src/core/infra/database/**',
+    '!src/core/infra/instrumentation/**',
+    '!src/core/infra/middleware/**',
+
+    // Controllers, consumers, filters, docs
+    '!src/**/controllers/**',
+    '!src/**/filters/**',
+    '!src/**/docs/**',
+
+    // Persistência e ACL signatures
+    '!src/**/infra/persistence/**',
+    '!src/**/infra/gateways/**',
+    '!src/**/infra/consumers/**',
+    '!src/**/signature/payment-signature.ts',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'text-summary', 'lcov', 'html'],
