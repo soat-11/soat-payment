@@ -83,7 +83,7 @@ export abstract class SqsConsumer<TPayload = unknown>
     }
   }
 
-  onModuleDestroy() {
+  async onModuleDestroy() {
     this.stop();
   }
 
@@ -245,7 +245,7 @@ export abstract class SqsConsumer<TPayload = unknown>
     this.consumer.start();
   }
 
-  protected stop(): void {
+  protected async stop(): Promise<void> {
     if (!this.consumer) {
       return;
     }
@@ -259,6 +259,14 @@ export abstract class SqsConsumer<TPayload = unknown>
 
     this._isRunning = false;
     this.consumer.stop();
+
+    await new Promise((resolve) => {
+      this.consumer?.once('stopped', resolve);
+    });
+
+    this.logger.log('Consumer stopped', {
+      resource: this.constructor.name,
+    });
   }
 
   protected get isRunning(): boolean {

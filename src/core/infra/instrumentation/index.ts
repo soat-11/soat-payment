@@ -45,21 +45,21 @@ export class InstrumentationService {
         this.initialize();
       }
       await this.sdk.start();
-      console.log('✅ OpenTelemetry started → Logs/Traces/Metrics enabled');
+      console.log('OpenTelemetry started → Logs/Traces/Metrics enabled');
     } catch (error) {
-      console.warn('⚠️  OpenTelemetry failed to start - Logs only in console');
+      console.warn('OpenTelemetry failed to start - Logs only in console');
     }
   }
 
   static async shutdown() {
     if (this.sdk) {
       await this.sdk.shutdown();
-      console.log('🛑 OpenTelemetry SDK shutdown');
+      console.log('OpenTelemetry SDK shutdown');
     }
   }
 }
 
 InstrumentationService.initialize();
 InstrumentationService.start().catch((error) => {
-  console.error('❌ Failed to start OpenTelemetry:', error);
+  console.error('Failed to start OpenTelemetry:', error);
 });

@@ -1,5 +1,10 @@
 import { SystemDateDomainService } from '@core/domain/service/system-date.service';
 import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
+import {
+  GetMethod,
+  HttpClient,
+  PostMethod,
+} from '@core/infra/http/client/http-client';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { Module } from '@nestjs/common';
 
@@ -18,12 +23,15 @@ import { PaymentProcessorUseCase } from '@payment/application/use-cases/payment-
 import { RefundPaymentUseCaseImpl } from '@payment/application/use-cases/refund-payment/refund-payment-impl.use-case';
 import { RefundPaymentUseCase } from '@payment/application/use-cases/refund-payment/refund-payment.use-case';
 import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
+import { CancelPaymentGateway } from '@payment/domain/gateways/cancel-payment.gateway';
 import { MarkAsPaidGateway } from '@payment/domain/gateways/mark-as-paid';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 import { MarkAsPaidGatewayImpl } from '@payment/infra/acl/payments-gateway/mercado-pago/gateways/mark-as-paid.gateway';
+import { MercadoPagoCancelPaymentGatewayImpl } from '@payment/infra/acl/payments-gateway/mercado-pago/gateways/mercado-pago-cancel-payment.gateway';
 import { SqsMercadoPagoProcessPaymentPublish } from '@payment/infra/acl/payments-gateway/mercado-pago/publishers/mercado-pago-mark-as-paid.publish';
 import { HMACMercadoPagoSignature } from '@payment/infra/acl/payments-gateway/mercado-pago/signature/mercado-pago-signature';
 import { PaymentSignature } from '@payment/infra/acl/payments-gateway/mercado-pago/signature/payment-signature';
+import { CancelPaymentConsumer } from '@payment/presentation/consumers/sqs-cancel-payment-consumer';
 import { CreatePaymentConsumer } from '@payment/presentation/consumers/sqs-create-payment-consumer';
 import { MercadoPagoProcessPaymentConsumer } from '@payment/presentation/consumers/sqs-process-payment-consumer';
 import { MercadoPagoTestController } from '@payment/presentation/controllers/mercado-pago-test.controller';
@@ -144,6 +152,26 @@ import { PaymentDocsController } from '@payment/presentation/controllers/payment
         );
       },
       inject: [AbstractLoggerService, PaymentProcessorUseCase],
+    },
+    {
+      provide: CancelPaymentGateway,
+      useFactory: (
+        httpClient: GetMethod & PostMethod,
+        logger: AbstractLoggerService,
+      ) => {
+        return new MercadoPagoCancelPaymentGatewayImpl(httpClient, logger);
+      },
+      inject: [HttpClient, AbstractLoggerService],
+    },
+    {
+      provide: CancelPaymentConsumer,
+      useFactory: (
+        logger: AbstractLoggerService,
+        cancelPaymentGateway: CancelPaymentGateway,
+      ) => {
+        return new CancelPaymentConsumer(logger, cancelPaymentGateway);
+      },
+      inject: [AbstractLoggerService, CancelPaymentGateway],
     },
   ],
 })

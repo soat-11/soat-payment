@@ -146,7 +146,7 @@ export class CreatePixPaymentGatewayImpl implements CreatePaymentGateway {
     this.logger.log('Sending request to MercadoPago', {
       payload: validationResult.data,
     });
-    console.log('testesds', process.env.MERCADO_PAGO_PAYMENT_ACCESS_TOKEN);
+
     const response = await this.client.post<
       CreateQRCodeMercadoPagoRequest,
       CreateQRCodeMercadoPagoResponse

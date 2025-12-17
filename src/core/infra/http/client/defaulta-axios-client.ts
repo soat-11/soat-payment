@@ -50,6 +50,7 @@ export class DefaultAxiosClient implements GetMethod, PostMethod {
     try {
       const response = await this.client.get<TReturn>(url, {
         params: params.queryParams,
+        headers: params.headers,
       });
 
       return {
