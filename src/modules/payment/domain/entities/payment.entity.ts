@@ -9,6 +9,7 @@ import { PaymentStatusVO } from '@payment/domain/value-objects/payment-status.vo
 import {
   PaymentAlreadyCanceledException,
   PaymentAlreadyPaidException,
+  PaymentAlreadyRefundedException,
   PaymentDetailInvalidException,
   PaymentExpiredException,
   PaymentProviderNotProvidedException,
@@ -45,7 +46,7 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
   public sessionId: SessionIdVO;
   public expiresAt: Date;
   public canceledAt: Date | null = null;
-
+  public refundedAt: Date | null = null;
   private constructor(
     readonly id: UniqueEntityID,
     public amount: PaymentAmountVO,
@@ -153,7 +154,16 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
 
     this.status = PaymentStatusVO.create(PaymentStatus.CANCELED);
     this.canceledAt = currentDate;
-    // this.addDomainEvent(new PaymentCanceledEvent(this));
+    return Result.ok();
+  }
+
+  refund(currentDate: Date): Result<void, DomainBusinessException> {
+    if (this.status.value === PaymentStatus.REFUNDED) {
+      return Result.fail(new PaymentAlreadyRefundedException());
+    }
+
+    this.status = PaymentStatusVO.create(PaymentStatus.REFUNDED);
+    this.refundedAt = currentDate;
     return Result.ok();
   }
 }

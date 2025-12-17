@@ -5,23 +5,15 @@ import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { MarkAsPaidGateway } from '@payment/domain/gateways/mark-as-paid';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
-import { ProcessPaymentDTOSchemaRequest } from '@payment/infra/acl/payments-gateway/mercado-pago/dtos/process-payment.dto';
 
-export class MarkAsPaidGatewayImpl
-  implements MarkAsPaidGateway<ProcessPaymentDTOSchemaRequest>
-{
+export class MarkAsPaidGatewayImpl implements MarkAsPaidGateway {
   constructor(
     private readonly repository: PaymentRepository,
     private readonly logger: AbstractLoggerService,
     private readonly dispatcher: DomainEventDispatcher,
   ) {}
 
-  async markAsPaid(
-    paymentReference: string,
-    body: ProcessPaymentDTOSchemaRequest,
-  ): Promise<Result<void>> {
-    const action = body?.action;
-
+  async markAsPaid(paymentReference: string): Promise<Result<void>> {
     if (!paymentReference || paymentReference.trim() === '') {
       this.logger.error('Invalid payment reference', {
         paymentReference,

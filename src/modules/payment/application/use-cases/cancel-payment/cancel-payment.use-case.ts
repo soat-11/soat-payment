@@ -1,9 +1,8 @@
 import { DomainException } from '@core/domain/exceptions/domain.exception';
 import { Result } from '@core/domain/result';
-import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 
 export type CancelPaymentUseCaseInput = {
-  readonly paymentId: UniqueEntityID;
+  readonly paymentReference: string;
 };
 
 export type CancelPaymentUseCaseOutput = {

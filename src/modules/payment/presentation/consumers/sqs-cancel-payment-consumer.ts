@@ -1,4 +1,3 @@
-import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { SqsConsumer } from '@core/infra/sqs/sqs-consumer';
 import { Injectable } from '@nestjs/common';
@@ -6,7 +5,7 @@ import { CancelPaymentUseCase } from '@payment/application/use-cases/cancel-paym
 import { PaymentAlreadyCanceledException } from '@payment/domain/exceptions/payment.exception';
 
 export type CancelPaymentConsumerPayload = {
-  paymentId: string;
+  paymentReference: string;
 };
 
 @Injectable()
@@ -19,32 +18,32 @@ export class CancelPaymentConsumer extends SqsConsumer<CancelPaymentConsumerPayl
   }
 
   async handleMessage(payload: CancelPaymentConsumerPayload): Promise<void> {
-    this.logger.log('Cancelling payment', {
-      paymentId: payload.paymentId,
+    this.logger.log('Cancelling external payment', {
+      paymentReference: payload.paymentReference,
     });
 
     const result = await this.cancelPaymentUseCase.execute({
-      paymentId: UniqueEntityID.create(payload.paymentId),
+      paymentReference: payload.paymentReference,
     });
 
     if (result.isFailure) {
       if (result.error instanceof PaymentAlreadyCanceledException) {
-        this.logger.log('Payment already canceled, treating as success', {
-          paymentId: payload.paymentId,
-        });
+        this.logger.log(
+          'External payment already canceled, treating as success',
+          {
+            paymentReference: payload.paymentReference,
+          },
+        );
         return;
       }
-
-      this.logger.error('Failed to cancel payment', {
+      this.logger.error('Failed to cancel external payment', {
+        paymentReference: payload.paymentReference,
         error: result.error.message,
-        paymentId: payload.paymentId,
       });
       throw result.error;
     }
-
-    this.logger.log('Payment canceled', {
-      paymentId: payload.paymentId,
-      canceledAt: result.value.canceledAt,
+    this.logger.log('External payment canceled', {
+      paymentReference: payload.paymentReference,
     });
   }
 }

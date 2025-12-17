@@ -1,9 +1,16 @@
+import { SystemDateDomainService } from '@core/domain/service/system-date.service';
 import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { Module } from '@nestjs/common';
 
 import { PaymentApplicationModule } from '@payment/application/application.module';
+import { CancelPaymentUseCaseImpl } from '@payment/application/use-cases/cancel-payment/cancel-payment-impl.use-case';
+import { CancelPaymentUseCase } from '@payment/application/use-cases/cancel-payment/cancel-payment.use-case';
 import { CreatePaymentUseCase } from '@payment/application/use-cases/create-payment/create-payment.use-case';
+import { PaymentProcessorUseCaseImpl } from '@payment/application/use-cases/payment-processor/payment-processor-impl.use-case';
+import { PaymentProcessorUseCase } from '@payment/application/use-cases/payment-processor/payment-processor.use-case';
+import { RefundPaymentUseCaseImpl } from '@payment/application/use-cases/refund-payment/refund-payment-impl.use-case';
+import { RefundPaymentUseCase } from '@payment/application/use-cases/refund-payment/refund-payment.use-case';
 import { MarkAsPaidGateway } from '@payment/domain/gateways/mark-as-paid';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 import { MarkAsPaidGatewayImpl } from '@payment/infra/acl/payments-gateway/mercado-pago/gateways/mark-as-paid.gateway';
@@ -39,6 +46,58 @@ import { PaymentDocsController } from '@payment/presentation/controllers/payment
       inject: [AbstractLoggerService, CreatePaymentUseCase],
     },
     {
+      provide: CancelPaymentUseCase,
+      useFactory: (
+        logger: AbstractLoggerService,
+        repository: PaymentRepository,
+        systemDate: SystemDateDomainService,
+      ) => {
+        return new CancelPaymentUseCaseImpl(repository, logger, systemDate);
+      },
+      inject: [
+        AbstractLoggerService,
+        PaymentRepository,
+        SystemDateDomainService,
+      ],
+    },
+    {
+      provide: RefundPaymentUseCase,
+      useFactory: (
+        logger: AbstractLoggerService,
+        repository: PaymentRepository,
+        systemDate: SystemDateDomainService,
+      ) => {
+        return new RefundPaymentUseCaseImpl(repository, logger, systemDate);
+      },
+      inject: [
+        AbstractLoggerService,
+        PaymentRepository,
+        SystemDateDomainService,
+      ],
+    },
+    {
+      provide: PaymentProcessorUseCase,
+      useFactory: (
+        logger: AbstractLoggerService,
+        markAsPaidGateway: MarkAsPaidGateway,
+        cancelPaymentUseCase: CancelPaymentUseCase,
+        refundPaymentUseCase: RefundPaymentUseCase,
+      ) => {
+        return new PaymentProcessorUseCaseImpl(
+          markAsPaidGateway,
+          cancelPaymentUseCase,
+          refundPaymentUseCase,
+          logger,
+        );
+      },
+      inject: [
+        AbstractLoggerService,
+        MarkAsPaidGateway,
+        CancelPaymentUseCase,
+        RefundPaymentUseCase,
+      ],
+    },
+    {
       provide: SqsMercadoPagoProcessPaymentPublish,
       useFactory: (logger: AbstractLoggerService) => {
         return new SqsMercadoPagoProcessPaymentPublish(logger);
@@ -60,15 +119,19 @@ import { PaymentDocsController } from '@payment/presentation/controllers/payment
         'DomainEventDispatcher',
       ],
     },
+
     {
       provide: MercadoPagoProcessPaymentConsumer,
       useFactory: (
         logger: AbstractLoggerService,
-        markAsPaidGateway: MarkAsPaidGatewayImpl,
+        paymentProcessorUseCase: PaymentProcessorUseCase,
       ) => {
-        return new MercadoPagoProcessPaymentConsumer(logger, markAsPaidGateway);
+        return new MercadoPagoProcessPaymentConsumer(
+          logger,
+          paymentProcessorUseCase,
+        );
       },
-      inject: [AbstractLoggerService, MarkAsPaidGateway],
+      inject: [AbstractLoggerService, PaymentProcessorUseCase],
     },
   ],
 })

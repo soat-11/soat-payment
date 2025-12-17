@@ -1,3 +1,5 @@
+import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
+import { SystemDateDomainService } from '@core/domain/service/system-date.service';
 import { DefaultAxiosClient } from '@core/infra/http/client/defaulta-axios-client';
 import { HttpClient } from '@core/infra/http/client/http-client';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
@@ -25,7 +27,11 @@ import axios from 'axios';
       provide: HttpClient,
       useFactory: () => new DefaultAxiosClient(axios),
     },
+    {
+      provide: SystemDateDomainService,
+      useFactory: () => new SystemDateImpl(),
+    },
   ],
-  exports: [AbstractLoggerService, HttpClient],
+  exports: [AbstractLoggerService, HttpClient, SystemDateDomainService],
 })
 export class CoreModule {}

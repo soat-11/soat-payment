@@ -16,6 +16,9 @@ export class SystemDateImpl implements SystemDateDomainService {
   static nowUTC(): Date {
     return new Date(new Date().toISOString());
   }
+  nowUTC(): Date {
+    return new Date(new Date().toISOString());
+  }
 
   now(): Date {
     return this.fixedDate ?? SystemDateImpl.nowUTC();

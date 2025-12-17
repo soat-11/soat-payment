@@ -2,7 +2,6 @@ import {
   DomainBusinessException,
   DomainConflictException,
 } from '@core/domain/exceptions/domain.exception';
-import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
 import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
@@ -101,7 +100,13 @@ export class PaymentCannotBeCanceledException extends DomainBusinessException {
 }
 
 export class PaymentNotFoundException extends DomainBusinessException {
-  constructor(paymentId: UniqueEntityID) {
+  constructor(paymentId: string) {
     super(`Pagamento não encontrado: ${paymentId}`);
+  }
+}
+
+export class PaymentAlreadyRefundedException extends DomainBusinessException {
+  constructor() {
+    super('Pagamento já está reembolsado');
   }
 }
