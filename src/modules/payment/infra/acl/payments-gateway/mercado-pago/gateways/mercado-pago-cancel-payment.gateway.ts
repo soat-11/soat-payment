@@ -28,19 +28,6 @@ const CANCELABLE_STATUSES: MercadoPagoOrderStatus[] = [
 ];
 const REFUNDABLE_STATUSES: MercadoPagoOrderStatus[] = ['paid', 'processed'];
 
-/**
- * Gateway para cancelar/reembolsar orders no Mercado Pago
- *
- * Fluxo:
- * 1. Consulta status da order via GET /v1/orders/{order_id}
- * 2. Se status for 'created' ou 'action_required' -> POST /cancel
- * 3. Se status for 'paid' ou 'processed' -> POST /refund
- * 4. Se status for outro -> retorna erro (DomainBusinessException)
- *
- * Nota: Este gateway NÃO atualiza o status interno do pagamento.
- * O Mercado Pago enviará um webhook que será processado pelo
- * process-payment-consumer para atualizar o status interno.
- */
 export class MercadoPagoCancelPaymentGatewayImpl
   implements CancelPaymentGateway
 {

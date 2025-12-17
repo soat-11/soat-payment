@@ -46,11 +46,10 @@ export class CreatePixPaymentGatewayImpl implements CreatePaymentGateway {
       };
     }
 
-    const totalSeconds = Math.floor(diffMs / 1000);
-    const minimumSeconds =
-      CreatePixPaymentGatewayImpl.MINIMUM_EXPIRATION_MINUTES * 60;
+    const minimumMs =
+      CreatePixPaymentGatewayImpl.MINIMUM_EXPIRATION_MINUTES * 60 * 1000;
 
-    if (totalSeconds < minimumSeconds) {
+    if (diffMs < minimumMs) {
       return {
         duration: '',
         isValid: false,
@@ -58,18 +57,19 @@ export class CreatePixPaymentGatewayImpl implements CreatePaymentGateway {
       };
     }
 
-    const days = Math.floor(totalSeconds / 86400);
-    const hours = Math.floor((totalSeconds % 86400) / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
+    const totalMinutes = Math.ceil(diffMs / 60000);
 
-    // Formato ISO 8601 duration: PT16M ou P1DT2H30M
+    const days = Math.floor(totalMinutes / 1440);
+    const hours = Math.floor((totalMinutes % 1440) / 60);
+    const minutes = totalMinutes % 60;
+
     let duration = 'P';
     if (days > 0) duration += `${days}D`;
     duration += 'T';
     if (hours) duration += `${hours}H`;
     if (minutes) duration += `${minutes}M`;
-    if (seconds || (!hours && !minutes)) duration += `${seconds}S`;
+
+    if (!hours && !minutes) duration += '1M';
 
     return { duration, isValid: true };
   }

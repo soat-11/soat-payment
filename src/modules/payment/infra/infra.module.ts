@@ -73,7 +73,6 @@ import { PixDetailMapper } from './persistence/mapper/pix-detail.mapper';
       },
       inject: [HttpClient, AbstractLoggerService],
     },
-    // PaymentPaidConsumer,
   ],
   exports: [
     PaymentRepository,

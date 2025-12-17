@@ -17,6 +17,32 @@ const config: Config.InitialOptions = {
     '^src/(.*)$': '<rootDir>/src/$1',
     '^test/(.*)$': '<rootDir>/test/$1',
   },
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/infra/consumers/**',
+    '!src/core/infra/http/transformers/**',
+    '!src/**/*.test.ts',
+    '!src/**/__tests__/**',
+    '!src/main.ts',
+    '!src/**/*.module.ts',
+    '!src/**/index.ts',
+    '!src/**/*.dto.ts',
+    '!src/**/*.interface.ts',
+    '!src/**/*.type.ts',
+    '!src/**/*.enum.ts',
+    '!src/core/infra/instrumentation/**',
+    '!src/**/controllers/**',
+    '!src/**/filters/**',
+
+    '!src/**/docs/**',
+
+    '!src/**/*.decorator.ts',
+    '!test/**',
+    '!src/**/application/strategies/payment-processing.strategy.ts',
+    '!src/**/application/use-cases/*/*.use-case.ts',
+  ],
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'text-summary', 'lcov', 'html'],
 };
 
 export default config;
