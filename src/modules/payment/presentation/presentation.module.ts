@@ -4,6 +4,12 @@ import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { Module } from '@nestjs/common';
 
 import { PaymentApplicationModule } from '@payment/application/application.module';
+import {
+  CancelPaymentStrategy,
+  MarkAsPaidStrategy,
+  PaymentProcessingStrategy,
+  RefundPaymentStrategy,
+} from '@payment/application/strategies';
 import { CancelPaymentUseCaseImpl } from '@payment/application/use-cases/cancel-payment/cancel-payment-impl.use-case';
 import { CancelPaymentUseCase } from '@payment/application/use-cases/cancel-payment/cancel-payment.use-case';
 import { CreatePaymentUseCase } from '@payment/application/use-cases/create-payment/create-payment.use-case';
@@ -11,6 +17,7 @@ import { PaymentProcessorUseCaseImpl } from '@payment/application/use-cases/paym
 import { PaymentProcessorUseCase } from '@payment/application/use-cases/payment-processor/payment-processor.use-case';
 import { RefundPaymentUseCaseImpl } from '@payment/application/use-cases/refund-payment/refund-payment-impl.use-case';
 import { RefundPaymentUseCase } from '@payment/application/use-cases/refund-payment/refund-payment.use-case';
+import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import { MarkAsPaidGateway } from '@payment/domain/gateways/mark-as-paid';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 import { MarkAsPaidGatewayImpl } from '@payment/infra/acl/payments-gateway/mercado-pago/gateways/mark-as-paid.gateway';
@@ -83,12 +90,17 @@ import { PaymentDocsController } from '@payment/presentation/controllers/payment
         cancelPaymentUseCase: CancelPaymentUseCase,
         refundPaymentUseCase: RefundPaymentUseCase,
       ) => {
-        return new PaymentProcessorUseCaseImpl(
-          markAsPaidGateway,
-          cancelPaymentUseCase,
-          refundPaymentUseCase,
-          logger,
-        );
+        const markAsPaidStrategy = new MarkAsPaidStrategy(markAsPaidGateway);
+        const cancelStrategy = new CancelPaymentStrategy(cancelPaymentUseCase);
+        const refundStrategy = new RefundPaymentStrategy(refundPaymentUseCase);
+
+        const strategies = new Map<PaymentStatus, PaymentProcessingStrategy>([
+          [PaymentStatus.PAID, markAsPaidStrategy],
+          [PaymentStatus.CANCELED, cancelStrategy],
+          [PaymentStatus.REFUNDED, refundStrategy],
+        ]);
+
+        return new PaymentProcessorUseCaseImpl(strategies, logger);
       },
       inject: [
         AbstractLoggerService,

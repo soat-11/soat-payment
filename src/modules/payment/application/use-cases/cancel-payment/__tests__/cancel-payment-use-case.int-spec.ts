@@ -1,7 +1,9 @@
 import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
+import { SystemDateDomainService } from '@core/domain/service/system-date.service';
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { PinoLoggerService } from '@core/infra/logger/pino-logger';
 import { CancelPaymentUseCaseImpl } from '@payment/application/use-cases/cancel-payment/cancel-payment-impl.use-case';
+import { CancelPaymentUseCase } from '@payment/application/use-cases/cancel-payment/cancel-payment.use-case';
 import { PaymentEntity } from '@payment/domain/entities/payment.entity';
 import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
 import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
@@ -20,13 +22,13 @@ import { PixDetailMapper } from '@payment/infra/persistence/mapper/pix-detail.ma
 import { PaymentMongoDBRepositoryImpl } from '@payment/infra/persistence/repositories/payment-mongodb.repository';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { DataSource } from 'typeorm';
-import { CancelPaymentUseCase } from '@payment/application/use-cases/cancel-payment/cancel-payment.use-case';
 
 describe('CancelPaymentUseCase - Integration Test', () => {
   let mongoServer: MongoMemoryServer;
   let dataSource: DataSource;
   let useCase: CancelPaymentUseCase;
   let paymentRepository: PaymentRepository;
+  let systemDate: SystemDateDomainService;
 
   beforeEach(async () => {
     mongoServer = await MongoMemoryServer.create();
@@ -57,9 +59,11 @@ describe('CancelPaymentUseCase - Integration Test', () => {
     );
 
     detailFactory.registerMapper(new PixDetailMapper(), pixDetailRepository);
+    systemDate = new SystemDateImpl();
     useCase = new CancelPaymentUseCaseImpl(
       paymentRepository,
       new PinoLoggerService(),
+      systemDate,
     );
   });
 
@@ -95,7 +99,8 @@ describe('CancelPaymentUseCase - Integration Test', () => {
       expect(payments?.canceledAt).toBeNull();
 
       const result = await useCase.execute({
-        paymentId: mockedPayment.id,
+        paymentReference: mockedPayment.paymentProvider?.value
+          .externalPaymentId as string,
       });
 
       expect(result.isSuccess).toBe(true);
@@ -113,7 +118,7 @@ describe('CancelPaymentUseCase - Integration Test', () => {
   describe('Error', () => {
     it('should return error if the payment is not found', async () => {
       const result = await useCase.execute({
-        paymentId: UniqueEntityID.create(),
+        paymentReference: UniqueEntityID.create().value,
       });
 
       expect(result.isFailure).toBe(true);
@@ -130,7 +135,7 @@ describe('CancelPaymentUseCase - Integration Test', () => {
         type: PaymentType.PIX,
       })
         .addPaymentProvider({
-          externalPaymentId: 'external-id-123',
+          externalPaymentId: 'external-id-456',
           provider: PaymentProviders.MERCADO_PAGO,
         })
         .addPaymentDetail(
@@ -141,16 +146,20 @@ describe('CancelPaymentUseCase - Integration Test', () => {
       await paymentRepository.save(mockedPayment);
 
       const firstResult = await useCase.execute({
-        paymentId: mockedPayment.id,
+        paymentReference: mockedPayment.paymentProvider?.value
+          .externalPaymentId as string,
       });
       expect(firstResult.isSuccess).toBe(true);
 
       const secondResult = await useCase.execute({
-        paymentId: mockedPayment.id,
+        paymentReference: mockedPayment.paymentProvider?.value
+          .externalPaymentId as string,
       });
 
       expect(secondResult.isFailure).toBe(true);
-      expect(secondResult.error).toBeInstanceOf(PaymentAlreadyCanceledException);
+      expect(secondResult.error).toBeInstanceOf(
+        PaymentAlreadyCanceledException,
+      );
     });
   });
 });

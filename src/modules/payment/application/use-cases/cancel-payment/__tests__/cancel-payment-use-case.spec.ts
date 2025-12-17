@@ -1,4 +1,5 @@
 import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
+import { SystemDateDomainService } from '@core/domain/service/system-date.service';
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { CancelPaymentUseCaseImpl } from '@payment/application/use-cases/cancel-payment/cancel-payment-impl.use-case';
 import { PaymentEntity } from '@payment/domain/entities/payment.entity';
@@ -16,6 +17,7 @@ describe('CancelPaymentUseCase - Unit Test', () => {
   let useCase: CancelPaymentUseCaseImpl;
   let paymentRepository: FakePaymentRepository;
   let logger: FakeLogger;
+  let systemDate: SystemDateDomainService;
 
   const createPayment = () => {
     const now = SystemDateImpl.nowUTC();
@@ -46,13 +48,21 @@ describe('CancelPaymentUseCase - Unit Test', () => {
       sessionId: UniqueEntityID.create().value,
       type: PaymentType.PIX,
       status,
+    }).addPaymentProvider({
+      externalPaymentId: 'external-id-123',
+      provider: PaymentProviders.MERCADO_PAGO,
     });
   };
 
   beforeEach(() => {
     paymentRepository = new FakePaymentRepository();
+    systemDate = new SystemDateImpl();
     logger = new FakeLogger();
-    useCase = new CancelPaymentUseCaseImpl(paymentRepository, logger);
+    useCase = new CancelPaymentUseCaseImpl(
+      paymentRepository,
+      logger,
+      systemDate,
+    );
   });
 
   describe('Success', () => {
@@ -60,7 +70,10 @@ describe('CancelPaymentUseCase - Unit Test', () => {
       const payment = createPayment();
       await paymentRepository.save(payment);
 
-      const result = await useCase.execute({ paymentId: payment.id });
+      const result = await useCase.execute({
+        paymentReference: payment.paymentProvider?.value
+          .externalPaymentId as string,
+      });
 
       expect(result.isSuccess).toBe(true);
       expect(result.value.canceledAt).toBeInstanceOf(Date);
@@ -73,7 +86,10 @@ describe('CancelPaymentUseCase - Unit Test', () => {
       const payment = createPaymentWithStatus(PaymentStatus.PAID);
       await paymentRepository.save(payment);
 
-      const result = await useCase.execute({ paymentId: payment.id });
+      const result = await useCase.execute({
+        paymentReference: payment.paymentProvider?.value
+          .externalPaymentId as string,
+      });
 
       expect(result.isSuccess).toBe(true);
       expect(payment.status.value).toBe(PaymentStatus.CANCELED);
@@ -84,7 +100,10 @@ describe('CancelPaymentUseCase - Unit Test', () => {
       const payment = createPaymentWithStatus(PaymentStatus.REFUNDED);
       await paymentRepository.save(payment);
 
-      const result = await useCase.execute({ paymentId: payment.id });
+      const result = await useCase.execute({
+        paymentReference: payment.paymentProvider?.value
+          .externalPaymentId as string,
+      });
 
       expect(result.isSuccess).toBe(true);
       expect(payment.status.value).toBe(PaymentStatus.CANCELED);
@@ -95,16 +114,24 @@ describe('CancelPaymentUseCase - Unit Test', () => {
       const payment = createPayment();
       await paymentRepository.save(payment);
 
-      const result = await useCase.execute({ paymentId: payment.id });
+      const result = await useCase.execute({
+        paymentReference: payment.paymentProvider?.value
+          .externalPaymentId as string,
+      });
 
       expect(result.isSuccess).toBe(true);
       expect(logger.logs).toContainEqual({
         message: 'Cancelando pagamento',
-        context: { paymentId: payment.id },
+        context: {
+          paymentId: payment.paymentProvider?.value.externalPaymentId as string,
+        },
       });
       expect(logger.logs).toContainEqual({
         message: 'Pagamento cancelado',
-        context: { paymentId: payment.id },
+        context: {
+          paymentReference: payment.paymentProvider?.value
+            .externalPaymentId as string,
+        },
       });
     });
   });
@@ -113,7 +140,9 @@ describe('CancelPaymentUseCase - Unit Test', () => {
     it('should return PaymentNotFoundException when payment does not exist', async () => {
       const nonExistentId = UniqueEntityID.create();
 
-      const result = await useCase.execute({ paymentId: nonExistentId });
+      const result = await useCase.execute({
+        paymentReference: nonExistentId.value,
+      });
 
       expect(result.isFailure).toBe(true);
       expect(result.error).toBeInstanceOf(PaymentNotFoundException);
@@ -123,12 +152,14 @@ describe('CancelPaymentUseCase - Unit Test', () => {
     it('should log when payment is not found', async () => {
       const nonExistentId = UniqueEntityID.create();
 
-      const result = await useCase.execute({ paymentId: nonExistentId });
+      const result = await useCase.execute({
+        paymentReference: nonExistentId.value,
+      });
 
       expect(result.isFailure).toBe(true);
       expect(logger.logs).toContainEqual({
         message: 'Pagamento não encontrado',
-        context: { paymentId: nonExistentId },
+        context: { paymentId: nonExistentId.value },
       });
     });
 
@@ -136,7 +167,10 @@ describe('CancelPaymentUseCase - Unit Test', () => {
       const payment = createPaymentWithStatus(PaymentStatus.CANCELED);
       await paymentRepository.save(payment);
 
-      const result = await useCase.execute({ paymentId: payment.id });
+      const result = await useCase.execute({
+        paymentReference: payment.paymentProvider?.value
+          .externalPaymentId as string,
+      });
 
       expect(result.isFailure).toBe(true);
       expect(result.error).toBeInstanceOf(PaymentAlreadyCanceledException);

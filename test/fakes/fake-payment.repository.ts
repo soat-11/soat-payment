@@ -23,6 +23,19 @@ export class FakePaymentRepository implements PaymentRepository {
     this.storage.set(payment.id.value, payment);
   }
 
+  async findByExternalPaymentId(
+    externalPaymentId: string,
+  ): Promise<PaymentEntity | null> {
+    for (const payment of this.storage.values()) {
+      if (
+        payment.paymentProvider?.value.externalPaymentId === externalPaymentId
+      ) {
+        return payment;
+      }
+    }
+    return null;
+  }
+
   async findByIdempotencyKey(
     idempotencyKey: IdempotencyKeyVO,
   ): Promise<PaymentEntity | null> {
@@ -40,4 +53,3 @@ export class FakePaymentRepository implements PaymentRepository {
     this.updatedPayment = null;
   }
 }
-

@@ -11,7 +11,6 @@ import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 import { PaymentProvider } from '@payment/domain/value-objects/payment-provider.vo';
 import { PixDetailVO } from '@payment/domain/value-objects/pix-detail.vo';
-import { ProcessPaymentDTOSchemaRequest } from '@payment/infra/acl/payments-gateway/mercado-pago/dtos/process-payment.dto';
 import { MarkAsPaidGatewayImpl } from '@payment/infra/acl/payments-gateway/mercado-pago/gateways/mark-as-paid.gateway';
 
 describe('MarkAsPaidGatewayImpl', () => {
@@ -46,20 +45,6 @@ describe('MarkAsPaidGatewayImpl', () => {
       });
   };
 
-  const mercadoPagoRequest: ProcessPaymentDTOSchemaRequest = {
-    action: 'payment.created',
-    data: {
-      id: '123456789',
-    },
-    api_version: '1.0',
-    application_id: faker.string.uuid(),
-    date_created: SystemDateImpl.nowUTC().toISOString(),
-    id: '123456789',
-    live_mode: true,
-    type: 'payment',
-    user_id: faker.number.int(),
-  };
-
   beforeEach(() => {
     repository = {
       findByIdempotencyKey: jest.fn(),
@@ -89,45 +74,29 @@ describe('MarkAsPaidGatewayImpl', () => {
         provider,
       });
 
-      jest.spyOn(repository, 'findByExternalPaymentId').mockResolvedValue(result);
+      jest
+        .spyOn(repository, 'findByExternalPaymentId')
+        .mockResolvedValue(result);
 
       const eventsSpy = jest.spyOn(dispatcher, 'dispatch');
 
-      const response = await useCase.markAsPaid(
-        externalPaymentId,
-        mercadoPagoRequest,
-      );
+      const response = await useCase.markAsPaid(externalPaymentId);
 
       expect(response.isSuccess).toBeTruthy();
-      expect(repository.findByExternalPaymentId).toHaveBeenCalledWith(externalPaymentId);
+      expect(repository.findByExternalPaymentId).toHaveBeenCalledWith(
+        externalPaymentId,
+      );
       expect(eventsSpy).toHaveBeenCalled();
     });
   });
 
   describe('Failure', () => {
-    it('Should not process payment when action is wrong', async () => {
-      const externalPaymentId = faker.string.uuid();
-      const idempotencyKey = faker.string.uuid();
-      const provider = PaymentProvider.create({
-        externalPaymentId: externalPaymentId,
-        provider: PaymentProviders.MERCADO_PAGO,
-      });
-
-      const result: PaymentEntity = paymentEntityFactory({
-        externalReference: idempotencyKey,
-        provider,
-      });
-
-      jest.spyOn(repository, 'findByExternalPaymentId').mockResolvedValue(result);
-
-      const response = await useCase.markAsPaid(externalPaymentId, {
-        ...mercadoPagoRequest,
-        action: 'payment.te',
-      });
+    it('Should not process payment when paymentReference is empty', async () => {
+      const response = await useCase.markAsPaid('');
 
       expect(response.isFailure).toBeTruthy();
       expect(response.error).toStrictEqual(
-        new DomainBusinessException('Invalid action'),
+        new DomainBusinessException('Invalid payment reference'),
       );
     });
 
@@ -136,7 +105,7 @@ describe('MarkAsPaidGatewayImpl', () => {
 
       jest.spyOn(repository, 'findByExternalPaymentId').mockResolvedValue(null);
 
-      const response = await useCase.markAsPaid(externalPaymentId, mercadoPagoRequest);
+      const response = await useCase.markAsPaid(externalPaymentId);
 
       expect(response.isFailure).toBeTruthy();
       expect(response.error).toStrictEqual(
