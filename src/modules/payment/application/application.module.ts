@@ -9,23 +9,20 @@ import {
 } from '../domain/factories/payment.factory';
 
 import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
+import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
 import { DomainEventDispatcherImpl } from '@core/events/domain-event-dispatcher-impl';
+import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { CreatePaymentUseCase } from '@payment/application/use-cases/create-payment/create-payment.use-case';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
-import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
-import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 
-
-import { PaymentInfraModule } from '@payment/infra/infra.module';
+import { CreateQRCodeImage } from '@payment/application/use-cases/create-qrcode/create-qrcode.use-case';
+import { CartGateway } from '@payment/domain/gateways/cart.gateway';
+import { CreatePaymentGateway } from '@payment/domain/gateways/create-payment.gateway';
 import {
   PaymentAmountCalculator,
   PaymentAmountCalculatorImpl,
 } from '@payment/domain/service/payment-amount-calculator.service';
-import { CartGateway } from '@payment/domain/gateways/cart.gateway';
-import { CreateQRCodeImage } from '@payment/application/use-cases/create-qrcode/create-qrcode.use-case';
-import { CreatePaymentGateway } from '@payment/domain/gateways/create-payment.gateway';
-
-
+import { PaymentInfraModule } from '@payment/infra/infra.module';
 
 @Module({
   imports: [PaymentInfraModule],
@@ -33,7 +30,6 @@ import { CreatePaymentGateway } from '@payment/domain/gateways/create-payment.ga
     {
       provide: 'SystemDateDomainService',
       useFactory: () => {
-        // Sem data fixa = now() sempre retorna a data atual UTC
         return new SystemDateImpl();
       },
     },
