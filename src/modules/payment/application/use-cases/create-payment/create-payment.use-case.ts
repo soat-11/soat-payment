@@ -1,12 +1,22 @@
+import { DomainException } from '@core/domain/exceptions/domain.exception';
+import { Result } from '@core/domain/result';
+
 export type CreatePaymentUseCaseInput = {
-  readonly amount: number;
-  readonly qrCode: string;
+  readonly sessionId: string;
+  readonly idempotencyKey: string;
 };
 
-export type CreatePaymentUseCaseOutput = void;
+export type CreatePaymentUseCaseOutput = {
+  readonly image: string;
+  readonly paymentId: string;
+};
+
+export type CreatePaymentUseCaseError = DomainException;
 
 export interface CreatePaymentUseCase {
   execute(
     input: CreatePaymentUseCaseInput,
-  ): Promise<CreatePaymentUseCaseOutput>;
+  ): Promise<Result<CreatePaymentUseCaseOutput, CreatePaymentUseCaseError>>;
 }
+
+export const CreatePaymentUseCase = Symbol('CreatePaymentUseCase');

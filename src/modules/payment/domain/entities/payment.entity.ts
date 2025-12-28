@@ -1,42 +1,78 @@
 import { AggregateRoot } from '@core/domain/aggregate-root';
-import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
-import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
-import { PaymentType } from '@payment/domain/enum/payment-type.enum';
-import { PaymentStatusVO } from '@payment/domain/value-objects/payment-status.vo';
-import { PaymentDetailEntity } from './payment-detail.entity';
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
-import { PixDetail } from '../value-objects/pix-detail.vo';
-import { PaymentTypeVO } from '../value-objects/payment-type.vo';
-import { PaymentAmountVO } from '../value-objects/payment-amount.vo';
-import { PaymentCreatedEvent } from '../events/payment-created.event';
-import { PaymentPaidEvent } from '../events/payment-paid.event';
+import { Result } from '@core/domain/result';
+import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
+import { PaymentCreatedEvent } from '@modules/payment/domain/events/payment-created.event';
+import { PaymentPaidEvent } from '@modules/payment/domain/events/payment-paid.event';
+import { PaymentAmountVO } from '@modules/payment/domain/value-objects/payment-amount.vo';
 import {
   PaymentProvider,
   PaymentProviderProps,
-} from '../value-objects/payment-provider.vo';
+} from '@modules/payment/domain/value-objects/payment-provider.vo';
+import { PaymentTypeVO } from '@modules/payment/domain/value-objects/payment-type.vo';
+import { PixDetailVO } from '@modules/payment/domain/value-objects/pix-detail.vo';
+import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
+import { PaymentType } from '@payment/domain/enum/payment-type.enum';
+import {
+  PaymentAlreadyCanceledException,
+  PaymentAlreadyPaidException,
+  PaymentAlreadyRefundedException,
+  PaymentDetailInvalidException,
+  PaymentExpiredException,
+  PaymentProviderNotProvidedException,
+} from '@payment/domain/exceptions/payment.exception';
+import { IdempotencyKeyVO } from '@payment/domain/value-objects/idempotency-key.vo';
+import {
+  AnyPaymentDetail,
+  isPixDetail,
+} from '@payment/domain/value-objects/payment-detail.vo';
+import { PaymentStatusVO } from '@payment/domain/value-objects/payment-status.vo';
+import { SessionIdVO } from '@payment/domain/value-objects/session-id.vo';
+
 
 export type PaymentProps = {
   amount: number;
   type: PaymentType;
   status: PaymentStatus;
+  idempotencyKey: string;
+  sessionId: string;
 };
 
 export class PaymentEntity extends AggregateRoot<PaymentEntity> {
-  public paymentDetail?: PaymentDetailEntity;
+  private _detail?: AnyPaymentDetail;
   public status: PaymentStatusVO;
   public paymentProvider?: PaymentProvider;
+  public idempotencyKey: IdempotencyKeyVO;
+  public sessionId: SessionIdVO;
   public expiresAt: Date;
-
+  public canceledAt: Date | null = null;
+  public refundedAt: Date | null = null;
   private constructor(
     readonly id: UniqueEntityID,
     public amount: PaymentAmountVO,
     public type: PaymentTypeVO,
     expiresAt: Date,
+    idempotencyKey: IdempotencyKeyVO,
+    sessionId: SessionIdVO,
   ) {
     super(id);
     this.status = PaymentStatusVO.create(PaymentStatus.PENDING);
     this.expiresAt = expiresAt;
+    this.idempotencyKey = idempotencyKey;
+    this.sessionId = sessionId;
     // Object.freeze(this);
+  }
+
+  get detail(): AnyPaymentDetail | undefined {
+    return this._detail;
+  }
+
+  get pixDetail(): PixDetailVO | undefined {
+    return this._detail && isPixDetail(this._detail) ? this._detail : undefined;
+  }
+
+  get isPix(): boolean {
+    return this.type.value === PaymentType.PIX;
   }
 
   static create(
@@ -50,6 +86,8 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
       amount,
       type,
       props.expiresAt,
+      IdempotencyKeyVO.create(props.idempotencyKey),
+      SessionIdVO.create(props.sessionId),
     );
     payment.addDomainEvent(new PaymentCreatedEvent(payment));
 
@@ -62,23 +100,27 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
   ): PaymentEntity {
     const type = PaymentTypeVO.create(props.type);
     const amount = PaymentAmountVO.create(props.amount);
-    const payment = new PaymentEntity(id, amount, type, props.expiresAt);
+    const payment = new PaymentEntity(
+      id,
+      amount,
+      type,
+      props.expiresAt,
+      IdempotencyKeyVO.create(props.idempotencyKey),
+      SessionIdVO.create(props.sessionId),
+    );
     payment.status = PaymentStatusVO.create(props.status);
     return payment;
   }
 
-  addPaymentDetail(detail: PixDetail): this {
-    // Strategy pattern vai ser implementado futuramente para suportar outros tipos de pagamento
-    if (this.type.value !== PaymentType.PIX) {
-      throw new DomainBusinessException(
-        'Tipo de detalhe de pagamento inválido',
+  addPaymentDetail(detail: AnyPaymentDetail): this {
+    if (this.type.value !== detail.paymentType) {
+      throw new PaymentDetailInvalidException(
+        this.type.value,
+        detail.paymentType,
       );
     }
 
-    this.paymentDetail = PaymentDetailEntity.createPixDetail(this.id, {
-      qrCode: detail.value.qrCode,
-    });
-
+    this._detail = detail;
     return this;
   }
 
@@ -87,22 +129,41 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
     return this;
   }
 
-  paid(currentDate: Date): void {
+  paid(currentDate: Date): Result<void, DomainBusinessException> {
     if (this.status.value === PaymentStatus.PAID) {
-      throw new DomainBusinessException('Pagamento já está como PAGO');
+      return Result.fail(new PaymentAlreadyPaidException());
     }
 
     if (this.paymentProvider == null) {
-      throw new DomainBusinessException('Provedor de pagamento não informado');
+      return Result.fail(new PaymentProviderNotProvidedException());
     }
 
     if (currentDate > this.expiresAt) {
-      throw new DomainBusinessException(
-        'Não é possível pagar um pagamento expirado',
-      );
+      return Result.fail(new PaymentExpiredException());
     }
 
     this.status = PaymentStatusVO.create(PaymentStatus.PAID);
     this.addDomainEvent(new PaymentPaidEvent(this));
+    return Result.ok();
+  }
+
+  cancel(currentDate: Date): Result<void, DomainBusinessException> {
+    if (this.status.value === PaymentStatus.CANCELED) {
+      return Result.fail(new PaymentAlreadyCanceledException());
+    }
+
+    this.status = PaymentStatusVO.create(PaymentStatus.CANCELED);
+    this.canceledAt = currentDate;
+    return Result.ok();
+  }
+
+  refund(currentDate: Date): Result<void, DomainBusinessException> {
+    if (this.status.value === PaymentStatus.REFUNDED) {
+      return Result.fail(new PaymentAlreadyRefundedException());
+    }
+
+    this.status = PaymentStatusVO.create(PaymentStatus.REFUNDED);
+    this.refundedAt = currentDate;
+    return Result.ok();
   }
 }

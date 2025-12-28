@@ -1,5 +1,6 @@
 import { context, trace } from '@opentelemetry/api';
-import pino, { Logger as PinoBaseLogger, LoggerOptions } from 'pino';
+import pino, { LoggerOptions, Logger as PinoBaseLogger } from 'pino';
+
 import {
   AbstractLoggerService,
   BaseLogMeta,
@@ -14,8 +15,11 @@ export class PinoLoggerService extends AbstractLoggerService<pino.Level> {
   constructor(
     config: Config = { suppressConsole: process.env.NODE_ENV === 'test' },
     loggerInstance?: PinoBaseLogger,
+    context?: string,
   ) {
     super({ suppressConsole: config?.suppressConsole || false });
+    this._context = context;
+
     const level = process.env.LOG_LEVEL || 'info';
     const options: LoggerOptions = {
       level,
@@ -26,11 +30,17 @@ export class PinoLoggerService extends AbstractLoggerService<pino.Level> {
   }
 
   private handleTransport(): Pick<LoggerOptions, 'transport'> {
-    if (process.env.NODE_ENV === 'development') {
+    const isDev = process.env.NODE_ENV === 'development';
+
+    if (isDev) {
       return {
         transport: {
           target: 'pino-pretty',
-          options: { colorize: true, translateTime: true },
+          options: {
+            colorize: true,
+            translateTime: true,
+            ignore: 'pid,hostname',
+          },
         },
       };
     }
@@ -38,26 +48,15 @@ export class PinoLoggerService extends AbstractLoggerService<pino.Level> {
     return {
       transport: undefined,
     };
-
-    // return {
-    //   transport: {
-    //     target: 'pino-loki',
-    //     options: {
-    //       batching: true,
-    //       interval: 5,
-    //       host: 'http://localhost:3100',
-    //     },
-    //   },
-    // };
   }
 
-  fatal(message: string, ...optionalParams: any[]) {
+  fatal(message: string, ...optionalParams: unknown[]) {
     const { extra, context, trace } = this.parseParams(optionalParams);
     this.handleLog('error', message, extra, context, trace);
   }
 
   setContext(context: string): void {
-    this.context = context;
+    this._context = context;
   }
 
   setLogLevels(levels: string[]): void {
@@ -99,22 +98,10 @@ export class PinoLoggerService extends AbstractLoggerService<pino.Level> {
     };
   }
 
-  protected _handle(
-    level: LogLevel,
-    message: string,
-    extra: LogExtra,
-    context?: string,
-    trace?: string,
-  ): void {
-    // eslint-disable-next-line no-restricted-syntax
-    const teste = this.getDefaultFields(trace ? new Error(trace) : undefined);
+  protected _handle(level: LogLevel, message: string, extra: LogExtra): void {
     const traceId = this.getTraceIdFromContext();
     const base: BaseLogMeta & { traceId?: string } = {
-      defaultContext: {
-        originClass: teste.defaultContext?.originClass ?? 'unknown',
-        originMethod: teste.defaultContext?.originMethod ?? 'unknown',
-      },
-      context,
+      context: this.context,
       extra,
       traceId: traceId,
     };

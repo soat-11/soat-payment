@@ -1,0 +1,83 @@
+services:
+  localstack:
+    image: localstack/localstack:3.8.1
+    ports:
+      - '4566:4566'
+      - '4510-4559:4510-4559'
+    environment:
+      - SERVICES=sqs
+      - DEBUG=0
+      - LOCALSTACK_HOST=localhost.localstack.cloud
+      - EXTRA_CORS_ALLOWED_ORIGINS=https://app.localstack.cloud
+      - DISABLE_CORS_CHECKS=1
+      - SQS_DISABLE_CLOUDWATCH_METRICS=1
+    networks:
+      - payment-network
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:4566/_localstack/health']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    profiles:
+      - dev
+      - observability
+
+  localstack-init:
+    image: amazon/aws-cli:latest
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        echo "Aguardando LocalStack..."
+        sleep 5
+
+        echo "=== Criando DLQs (Dead Letter Queues) ==="
+        echo "Criando DLQ: create-payment-dlq"
+        aws --endpoint-url=http://localstack:4566 sqs create-queue --queue-name create-payment-dlq
+
+        echo "Criando DLQ: mercado-pago-process-payment-dlq"
+        aws --endpoint-url=http://localstack:4566 sqs create-queue --queue-name mercado-pago-process-payment-dlq
+
+        echo "Criando DLQ: cancel-payment-dlq"
+        aws --endpoint-url=http://localstack:4566 sqs create-queue --queue-name cancel-payment-dlq
+
+        echo "=== Criando filas principais com DLQ vinculada ==="
+        echo "Criando fila SQS: create-payment-queue"
+        aws --endpoint-url=http://localstack:4566 sqs create-queue \
+          --queue-name create-payment-queue \
+          --attributes '{
+            "RedrivePolicy": "{\"deadLetterTargetArn\":\"arn:aws:sqs:us-east-1:000000000000:create-payment-dlq\",\"maxReceiveCount\":\"3\"}",
+            "VisibilityTimeout": "60"
+          }'
+
+        echo "Criando fila SQS: mercado-pago-process-payment-queue"
+        aws --endpoint-url=http://localstack:4566 sqs create-queue \
+          --queue-name mercado-pago-process-payment-queue \
+          --attributes '{
+            "RedrivePolicy": "{\"deadLetterTargetArn\":\"arn:aws:sqs:us-east-1:000000000000:mercado-pago-process-payment-dlq\",\"maxReceiveCount\":\"3\"}",
+            "VisibilityTimeout": "60"
+          }'
+
+        echo "Criando fila SQS: cancel-payment-queue"
+        aws --endpoint-url=http://localstack:4566 sqs create-queue \
+          --queue-name cancel-payment-queue \
+          --attributes '{
+            "RedrivePolicy": "{\"deadLetterTargetArn\":\"arn:aws:sqs:us-east-1:000000000000:cancel-payment-dlq\",\"maxReceiveCount\":\"3\"}",
+            "VisibilityTimeout": "60"
+          }'
+
+        echo "=== Filas criadas ==="
+        aws --endpoint-url=http://localstack:4566 sqs list-queues
+    depends_on:
+      localstack:
+        condition: service_healthy
+    networks:
+      - payment-network
+    profiles:
+      - dev
+      - observability

@@ -1,3 +1,5 @@
+import { toDataURL } from 'qrcode';
+
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
 import { Result } from '@core/domain/result';
 import {
@@ -5,7 +7,6 @@ import {
   CreateQRCodeImageInput,
   CreateQRCodeImageOutput,
 } from '@payment/application/use-cases/create-qrcode/create-qrcode.use-case';
-import { toDataURL } from 'qrcode';
 
 export class CreateQRCodeImageUseCaseImpl implements CreateQRCodeImage {
   async execute(

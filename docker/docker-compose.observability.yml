@@ -1,0 +1,107 @@
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.96.0
+    container_name: otel-collector
+    command: ['--config=/etc/otel-collector-config.yml']
+    volumes:
+      - ./configs/otel-collector-config.yml:/etc/otel-collector-config.yml:ro
+    ports:
+      - '4317:4317' # OTLP gRPC
+      - '4318:4318' # OTLP HTTP
+      - '8888:8888' # Prometheus metrics (collector internal)
+      - '8889:8889' # Prometheus exporter
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:13133/']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    profiles:
+      - observability
+    networks:
+      - payment-network
+
+  # Jaeger - Distributed Tracing
+  jaeger:
+    image: jaegertracing/all-in-one:1.54
+    container_name: jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - SPAN_STORAGE_TYPE=memory # Usa memória em vez de badger (mais simples, sem problemas de permissão)
+    ports:
+      - '16686:16686' # Jaeger UI
+      - '14250:14250' # gRPC
+      - '6831:6831/udp' # Jaeger agent
+    restart: unless-stopped
+    profiles:
+      - observability
+    networks:
+      - payment-network
+
+  # Prometheus - Metrics Collection
+  prometheus:
+    image: prom/prometheus:v2.49.1
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-remote-write-receiver'
+      - '--enable-feature=otlp-write-receiver'
+      - '--enable-feature=exemplar-storage'
+    volumes:
+      - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - '9090:9090'
+    restart: unless-stopped
+    profiles:
+      - observability
+    networks:
+      - payment-network
+  # Loki - Log Aggregation
+  loki:
+    image: grafana/loki:2.9.4
+    container_name: loki
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./configs/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    ports:
+      - '3100:3100'
+    restart: unless-stopped
+    profiles:
+      - observability
+    networks:
+      - payment-network
+
+  grafana:
+    image: grafana/grafana:10.3.3
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - grafana-data:/var/lib/grafana
+
+      - ../src/core/infra/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+
+      - ../src/core/infra/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboard-provider.yml:ro
+
+      - ../src/core/infra/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - '3001:3000'
+    depends_on:
+      - prometheus
+      - loki
+      - jaeger
+    restart: unless-stopped
+    profiles:
+      - observability
+    networks:
+      - payment-network
