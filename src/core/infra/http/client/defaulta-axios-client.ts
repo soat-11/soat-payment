@@ -10,6 +10,34 @@ import {
 export class DefaultAxiosClient implements GetMethod, PostMethod {
   constructor(private readonly client: AxiosInstance) {}
 
+  private handleError<TReturn>(
+    error: unknown,
+  ): DefaultHttpClientResponse<TReturn> {
+    if (isAxiosError(error)) {
+      return {
+        headers: error.response?.headers as Record<string, string>,
+        status: error.response?.status ?? 500,
+        data: error.response?.data,
+      };
+    }
+
+    if (error instanceof Error) {
+      return {
+        headers: {},
+        status: 500,
+        data: { message: error.message } as TReturn,
+      };
+    }
+
+    return {
+      headers: {},
+      status: 500,
+      data: {
+        message: 'Ocorreu um erro inesperado, entre em contato com o suporte.',
+      } as TReturn,
+    };
+  }
+
   async post<TParams extends object, TReturn extends object>(
     url: string,
     data: TParams,
@@ -24,30 +52,7 @@ export class DefaultAxiosClient implements GetMethod, PostMethod {
         data: response.data,
       };
     } catch (error: unknown) {
-      if (isAxiosError(error)) {
-        return {
-          headers: error.response?.headers as Record<string, string>,
-          status: error.response?.status ?? 500,
-          data: error.response?.data,
-        };
-      }
-
-      if (error instanceof Error) {
-        return {
-          headers: {},
-          status: 500,
-          data: { message: error.message },
-        };
-      }
-
-      return {
-        headers: {},
-        status: 500,
-        data: {
-          message:
-            'Ocorreu um erro inesperado, entre em contato com o suporte.',
-        },
-      };
+      return this.handleError<TReturn>(error);
     }
   }
 
@@ -67,30 +72,7 @@ export class DefaultAxiosClient implements GetMethod, PostMethod {
         data: response.data,
       };
     } catch (error: unknown) {
-      if (isAxiosError(error)) {
-        return {
-          headers: error.response?.headers as Record<string, string>,
-          status: error.response?.status ?? 500,
-          data: error.response?.data,
-        };
-      }
-
-      if (error instanceof Error) {
-        return {
-          headers: {},
-          status: 500,
-          data: { message: error.message },
-        };
-      }
-
-      return {
-        headers: {},
-        status: 500,
-        data: {
-          message:
-            'Ocorreu um erro inesperado, entre em contato com o suporte.',
-        },
-      };
+      return this.handleError<TReturn>(error);
     }
   }
 }
