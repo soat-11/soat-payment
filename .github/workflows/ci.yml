@@ -58,9 +58,6 @@ jobs:
           name: coverage-report
           path: coverage/
 
-      - name: Generate Sonar coverage exclusions
-        run: node scripts/generate-sonar-coverage.js
-
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6
         env:
