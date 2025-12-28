@@ -3,8 +3,8 @@ import { AbstractMapper } from '@core/domain/mapper/abstract.mapper';
 import { Result } from '@core/domain/result';
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { PaymentMongoDBEntity } from '@modules/payment/infra/persistence/entities/payment-mongodb.entity';
+import { AnyPaymentDetailORM } from '@modules/payment/infra/persistence/payment-detail-orm.types';
 import { PaymentEntity } from '@payment/domain/entities/payment.entity';
-import { AnyPaymentDetail } from '@payment/domain/value-objects/payment-detail.vo';
 
 import { PaymentDetailMapperFactory } from './payment-detail-mapper.factory';
 
@@ -87,7 +87,7 @@ export class PaymentMapper extends AbstractMapper<
     }
   }
 
-  toDetailORM(payment: PaymentEntity): Result<AnyPaymentDetail | null> {
+  toDetailORM(payment: PaymentEntity): Result<AnyPaymentDetailORM | null> {
     if (!payment.detail) {
       return Result.ok(null);
     }
@@ -101,6 +101,6 @@ export class PaymentMapper extends AbstractMapper<
       return Result.fail(result.error);
     }
 
-    return Result.ok(result.value as AnyPaymentDetail);
+    return Result.ok(result.value);
   }
 }

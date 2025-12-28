@@ -1,8 +1,7 @@
-import { DeepPartial, MongoRepository } from 'typeorm';
+import { MongoRepository } from 'typeorm';
 
 import { DomainPersistenceException } from '@core/domain/exceptions/domain.exception';
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
-import { DefaultMongoDBEntity } from '@core/infra/database/mongodb/default-mongodb.entity';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { PaymentMongoDBEntity } from '@modules/payment/infra/persistence/entities/payment-mongodb.entity';
 import { PaymentDetailMapperFactory } from '@modules/payment/infra/persistence/mapper/payment-detail-mapper.factory';
@@ -75,9 +74,7 @@ export class PaymentMongoDBRepositoryImpl implements PaymentRepository {
         type: payment.detail.paymentType,
       });
 
-      await detailRepository.save(
-        detailOrmResult.value as DeepPartial<DefaultMongoDBEntity>,
-      );
+      await detailRepository.save(detailOrmResult.value);
       this.logger.log('Payment detail saved', {
         paymentId: payment.id.value,
       });

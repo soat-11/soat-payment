@@ -3,6 +3,7 @@ import { MongoRepository } from 'typeorm';
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
 import { Result } from '@core/domain/result';
 import { DefaultMongoDBEntity } from '@core/infra/database/mongodb/default-mongodb.entity';
+import { AnyPaymentDetailORM } from '@modules/payment/infra/persistence/payment-detail-orm.types';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 import { AnyPaymentDetail } from '@payment/domain/value-objects/payment-detail.vo';
 
@@ -55,13 +56,19 @@ export class PaymentDetailMapperFactory {
     return Result.ok(mapper);
   }
 
-  toORM(detail: AnyPaymentDetail, paymentId: string): Result<unknown> {
+  toORM(
+    detail: AnyPaymentDetail,
+    paymentId: string,
+  ): Result<AnyPaymentDetailORM> {
     const mapperResult = this.getMapper(detail.paymentType);
     if (mapperResult.isFailure) {
       return Result.fail(mapperResult.error);
     }
 
-    return mapperResult.value.toORM(detail, paymentId);
+    return mapperResult.value.toORM(
+      detail,
+      paymentId,
+    ) as Result<AnyPaymentDetailORM>;
   }
 
   toDomain(orm: unknown, type: PaymentType): Result<AnyPaymentDetail> {
