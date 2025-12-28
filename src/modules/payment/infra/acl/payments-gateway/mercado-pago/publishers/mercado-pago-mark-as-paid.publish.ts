@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { SqsPublish } from '@core/infra/sqs/sqs-publish';
-
-import { MercadoPagoProcessPaymentQueueMessage } from '@/modules/payment/infra/acl/payments-gateway/mercado-pago/dtos/mercado-pago-mark-as-paid-queue.dto';
+import { MercadoPagoProcessPaymentQueueMessage } from '@modules/payment/infra/acl/payments-gateway/mercado-pago/dtos/mercado-pago-mark-as-paid-queue.dto';
 
 const MERCADO_PAGO_PROCESS_PAYMENT_QUEUE_URL_ENV =
   'AWS_SQS_MERCADO_PAGO_PROCESS_PAYMENT_QUEUE_URL';

@@ -2,6 +2,15 @@ import { AggregateRoot } from '@core/domain/aggregate-root';
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
 import { Result } from '@core/domain/result';
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
+import { PaymentCreatedEvent } from '@modules/payment/domain/events/payment-created.event';
+import { PaymentPaidEvent } from '@modules/payment/domain/events/payment-paid.event';
+import { PaymentAmountVO } from '@modules/payment/domain/value-objects/payment-amount.vo';
+import {
+  PaymentProvider,
+  PaymentProviderProps,
+} from '@modules/payment/domain/value-objects/payment-provider.vo';
+import { PaymentTypeVO } from '@modules/payment/domain/value-objects/payment-type.vo';
+import { PixDetailVO } from '@modules/payment/domain/value-objects/pix-detail.vo';
 import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 import {
@@ -20,15 +29,6 @@ import {
 import { PaymentStatusVO } from '@payment/domain/value-objects/payment-status.vo';
 import { SessionIdVO } from '@payment/domain/value-objects/session-id.vo';
 
-import { PaymentCreatedEvent } from '@/modules/payment/domain/events/payment-created.event';
-import { PaymentPaidEvent } from '@/modules/payment/domain/events/payment-paid.event';
-import { PaymentAmountVO } from '@/modules/payment/domain/value-objects/payment-amount.vo';
-import {
-  PaymentProvider,
-  PaymentProviderProps,
-} from '@/modules/payment/domain/value-objects/payment-provider.vo';
-import { PaymentTypeVO } from '@/modules/payment/domain/value-objects/payment-type.vo';
-import { PixDetailVO } from '@/modules/payment/domain/value-objects/pix-detail.vo';
 
 export type PaymentProps = {
   amount: number;

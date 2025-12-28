@@ -1,11 +1,11 @@
 import { Column, Entity } from 'typeorm';
 
 import { DefaultMongoDBEntity } from '@core/infra/database/mongodb/default-mongodb.entity';
+import { UtcDateColumn } from '@modules/payment/infra/persistence/datasource/utc-date-column.decorator';
 import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
 import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 
-import { UtcDateColumn } from '@/modules/payment/infra/persistence/datasource/utc-date-column.decorator';
 
 @Entity('payments')
 export class PaymentMongoDBEntity extends DefaultMongoDBEntity {

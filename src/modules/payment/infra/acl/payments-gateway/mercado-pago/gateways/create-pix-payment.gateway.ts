@@ -10,18 +10,18 @@ import {
 } from '@core/infra/http/client/http-client';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import {
+  CreateQRCodeMercadoPagoRequest,
+  CreateQRCodeMercadoPagoRequestSchema,
+  CreateQRCodeMercadoPagoResponse,
+  CreateQRCodeMercadoPagoResponseSchema,
+} from '@modules/payment/infra/acl/payments-gateway/mercado-pago/dtos/mercadopago-qrcode.dto';
+import {
   AnyCreatePaymentType,
   CreateAnyPaymentResponse,
   CreatePaymentGateway,
   isPixCreatePaymentType,
 } from '@payment/domain/gateways/create-payment.gateway';
 
-import {
-  CreateQRCodeMercadoPagoRequest,
-  CreateQRCodeMercadoPagoRequestSchema,
-  CreateQRCodeMercadoPagoResponse,
-  CreateQRCodeMercadoPagoResponseSchema,
-} from '@/modules/payment/infra/acl/payments-gateway/mercado-pago/dtos/mercadopago-qrcode.dto';
 
 export class CreatePixPaymentGatewayImpl implements CreatePaymentGateway {
   private readonly URL = `${process.env.MERCADO_PAGO_API_URL}/v1/orders`;

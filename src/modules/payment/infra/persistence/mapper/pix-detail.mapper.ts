@@ -1,13 +1,11 @@
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
 import { Result } from '@core/domain/result';
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
+import { PixDetailMongoDBEntity } from '@modules/payment/infra/persistence/entities/pix-detail-mongodb.entity';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 import { PixDetailVO } from '@payment/domain/value-objects/pix-detail.vo';
 
 import { PaymentDetailMapper } from './payment-detail.mapper.interface';
-
-import { PixDetailMongoDBEntity } from '@/modules/payment/infra/persistence/entities/pix-detail-mongodb.entity';
-
 
 
 export class PixDetailMapper

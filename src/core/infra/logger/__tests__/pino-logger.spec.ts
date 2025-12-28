@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { CoreModule } from '@/core/core.module';
-import { AbstractLoggerService } from '@/core/infra/logger/abstract-logger';
-import { PinoLoggerService } from '@/core/infra/logger/pino-logger';
+import { CoreModule } from '@core/core.module';
+import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
+import { PinoLoggerService } from '@core/infra/logger/pino-logger';
 
 @Injectable()
 class TestService {

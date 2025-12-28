@@ -3,6 +3,7 @@ import { faker } from '@faker-js/faker';
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
 import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
+import { PaymentEntity } from '@modules/payment/domain/entities/payment.entity';
 import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
 import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
@@ -10,8 +11,6 @@ import { PaymentCreatedEvent } from '@payment/domain/events/payment-created.even
 import { PaymentPaidEvent } from '@payment/domain/events/payment-paid.event';
 import { PaymentAlreadyCanceledException } from '@payment/domain/exceptions/payment.exception';
 import { PixDetailVO } from '@payment/domain/value-objects/pix-detail.vo';
-
-import { PaymentEntity } from '@/modules/payment/domain/entities/payment.entity';
 
 describe('PaymentEntity', () => {
   const createPayment = (amount: number) => {

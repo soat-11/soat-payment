@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 
-
-
 import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
 import { DomainEventDispatcherImpl } from '@core/events/domain-event-dispatcher-impl';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
+import {
+  PaymentFactory,
+  PaymentFactoryImpl,
+} from '@modules/payment/domain/factories/payment.factory';
 import { CreatePaymentUseCase } from '@payment/application/use-cases/create-payment/create-payment.use-case';
 import { CreateQRCodeImage } from '@payment/application/use-cases/create-qrcode/create-qrcode.use-case';
 import { CartGateway } from '@payment/domain/gateways/cart.gateway';
@@ -17,14 +19,9 @@ import {
 } from '@payment/domain/service/payment-amount-calculator.service';
 import { PaymentInfraModule } from '@payment/infra/infra.module';
 
-
 import { CreatePaymentUseCaseImpl } from './use-cases/create-payment/create-payment-impl.use-case';
 import { CreateQRCodeImageUseCaseImpl } from './use-cases/create-qrcode/create-qrcode-impl.use-case';
 
-import {
-  PaymentFactory,
-  PaymentFactoryImpl,
-} from '@/modules/payment/domain/factories/payment.factory';
 
 @Module({
   imports: [PaymentInfraModule],

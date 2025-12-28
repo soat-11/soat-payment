@@ -1,6 +1,5 @@
 import { DomainExceptionGeneric } from '@core/domain/exceptions/domain.exception';
-
-import { executeAllOrFail } from '@/core/utils/promise-utils';
+import { executeAllOrFail } from '@core/utils/promise-utils';
 
 describe('PromiseUtils', () => {
   describe('executeAllOrFail', () => {

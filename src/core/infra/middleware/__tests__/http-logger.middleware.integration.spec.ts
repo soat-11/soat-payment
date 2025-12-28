@@ -10,8 +10,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
-
-import { HttpLoggerMiddleware } from '@/core/infra/middleware/http-logger.middleware';
+import { HttpLoggerMiddleware } from '@core/infra/middleware/http-logger.middleware';
 
 
 @Controller('test')

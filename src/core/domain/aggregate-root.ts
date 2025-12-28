@@ -1,7 +1,6 @@
+import { DomainEvent } from '@core/events/domain-event';
+
 import { DefaultEntity } from './default-entity';
-
-import { DomainEvent } from '@/core/events/domain-event';
-
 
 export abstract class AggregateRoot<
   T extends DefaultEntity,
