@@ -1,19 +1,4 @@
-import { createRequire } from 'module';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
-
 import type { Config } from '@jest/types';
-
-// @ts-expect-error - import.meta is valid in ESM, Jest runs this as ESM
-const __dirname = dirname(fileURLToPath(import.meta.url));
-// @ts-expect-error - import.meta is valid in ESM
-const _require = createRequire(import.meta.url);
-const coverageConfig = _require('../config/coverage.config.json');
-
-const collectCoverageFrom = [
-  ...coverageConfig.include,
-  ...coverageConfig.exclude.map((pattern: string) => `!${pattern}`),
-];
 
 const config: Config.InitialOptions = {
   preset: 'ts-jest',
@@ -32,9 +17,66 @@ const config: Config.InitialOptions = {
     '^src/(.*)$': '<rootDir>/src/$1',
     '^test/(.*)$': '<rootDir>/test/$1',
   },
-  collectCoverageFrom,
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/*.test.ts',
+    '!src/**/__tests__/**',
+    '!src/main.ts',
+    '!src/**/*.module.ts',
+    '!src/**/index.ts',
+    '!src/**/*.dto.ts',
+    '!src/**/*.interface.ts',
+    '!src/**/*.type.ts',
+    '!src/**/*.enum.ts',
+    '!src/**/*.decorator.ts',
+    '!test/**',
+
+    // Interfaces e Symbols de domínio
+    '!src/**/application/strategies/payment-processing.strategy.ts',
+    '!src/**/application/use-cases/*/*.use-case.ts',
+    '!src/**/domain/gateways/*.ts',
+    '!src/**/domain/repositories/*.ts',
+    '!src/**/domain/factories/*.ts',
+
+    // Infraestrutura core (abstrações, HTTP, SQS, database)
+    '!src/core/domain/mapper/**',
+    '!src/core/infra/http/**',
+    '!src/core/infra/sqs/**',
+    '!src/core/infra/database/**',
+    '!src/core/infra/instrumentation/**',
+    '!src/core/infra/middleware/**',
+
+    // Controllers, consumers, filters, docs
+    '!src/**/controllers/**',
+    '!src/**/filters/**',
+    '!src/**/docs/**',
+
+    // Persistência e ACL signatures
+    '!src/**/infra/persistence/**',
+    '!src/**/infra/gateways/**',
+    '!src/**/infra/consumers/**',
+    '!src/**/signature/payment-signature.ts',
+  ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'text-summary', 'lcov', 'html'],
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+  },
+  reporters: [
+    'default',
+    [
+      'jest-junit',
+      {
+        outputDirectory: 'coverage',
+        outputName: 'junit.xml',
+      },
+    ],
+  ],
 };
 
 export default config;
