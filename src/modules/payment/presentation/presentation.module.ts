@@ -24,7 +24,7 @@ import { RefundPaymentUseCaseImpl } from '@payment/application/use-cases/refund-
 import { RefundPaymentUseCase } from '@payment/application/use-cases/refund-payment/refund-payment.use-case';
 import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import { CancelPaymentGateway } from '@payment/domain/gateways/cancel-payment.gateway';
-import { MarkAsPaidGateway } from '@payment/domain/gateways/mark-as-paid';
+import { MarkAsPaidGateway } from '@payment/domain/gateways/mark-as-paid.gateway';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 import { MarkAsPaidGatewayImpl } from '@payment/infra/acl/payments-gateway/mercado-pago/gateways/mark-as-paid.gateway';
 import { MercadoPagoCancelPaymentGatewayImpl } from '@payment/infra/acl/payments-gateway/mercado-pago/gateways/mercado-pago-cancel-payment.gateway';

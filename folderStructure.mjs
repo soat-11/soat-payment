@@ -1,56 +1,77 @@
+// @ts-check
 import { createFolderStructure } from 'eslint-plugin-project-structure';
+
+// Builder para pastas finais com testes unitários
+const folderWithTests = (filePattern) => ({
+  children: [
+    { name: '__tests__', ruleId: 'tests_folder' },
+    { name: filePattern },
+  ],
+});
 
 export const folderStructureConfig = createFolderStructure({
   structure: [
     { name: 'src', ruleId: 'src_folder' },
-    {
-      name: '__tests__',
-      ruleId: 'test_folder',
-      children: [
-        { name: '{kebab-case}.spec.ts' },
-        { name: '{kebab-case}.int-spec.ts' },
-        { name: '{kebab-case}.e2e-spec.ts' },
-      ],
-    },
-    {
-      name: 'test',
-      ruleId: 'test_folder',
-      children: [
-        { name: '{kebab-case}.spec.ts' },
-        { name: '{kebab-case}.unit-spec.ts' },
-        { name: '{kebab-case}.e2e-spec.ts' },
-        { name: 'jest-e2e.json' },
-        { name: 'setup.ts' },
-        { name: 'jest.config.ts' },
-        { name: 'factories', children: [{ name: '*' }] },
-      ],
-    },
+    { name: 'test', ruleId: 'root_test_folder' },
   ],
 
   rules: {
-    nested_folder: {
+    // Pasta de testes (usada em todo lugar)
+    tests_folder: {
       children: [
-        { name: '{kebab-case}', ruleId: 'nested_folder' },
-        { name: '{kebab-case}.ts' },
-        { name: '{kebab-case}.{kebab-case}.ts' },
-      ],
-    },
-    nested_test_folder: {
-      children: [
-        { name: 'fakes', children: [{ name: '*.fake.ts' }] },
-        { name: '{kebab-case}', ruleId: 'nested_test_folder' },
         { name: '{kebab-case}.spec.ts' },
+        { name: '{kebab-case}.{kebab-case}.spec.ts' },
+        { name: '{kebab-case}.{kebab-case}.{kebab-case}.spec.ts' },
         { name: '{kebab-case}.int-spec.ts' },
         { name: '{kebab-case}.e2e-spec.ts' },
-        ,
+        { name: '{kebab-case}.integration.spec.ts' },
       ],
     },
-    test_folder: {
-      name: '__tests__',
-      ruleId: 'nested_test_folder',
+
+    // Pasta test/ na raiz
+    root_test_folder: {
+      children: [
+        { name: '{kebab-case}.spec.ts' },
+        { name: '{kebab-case}.e2e-spec.ts' },
+        { name: 'app.e2e-spec.ts' },
+        { name: 'jest-e2e.json' },
+        { name: 'setup.ts' },
+        { name: 'jest.config.ts' },
+        { name: 'arbitraries', ruleId: 'test_helpers_folder' },
+        { name: 'dsl', ruleId: 'test_helpers_folder' },
+        { name: 'fakes', ruleId: 'test_fakes_folder' },
+      ],
     },
+
+    // Pasta de helpers de teste
+    test_helpers_folder: {
+      children: [
+        { name: '{kebab-case}.ts' },
+        { name: '{kebab-case}.{kebab-case}.ts' },
+        { name: 'index.ts' },
+      ],
+    },
+
+    // Pasta de fakes
+    test_fakes_folder: {
+      children: [
+        { name: 'fake-{kebab-case}.ts' },
+        { name: 'fake-{kebab-case}.{kebab-case}.ts' },
+        { name: 'index.ts' },
+      ],
+    },
+
+    // Pasta genérica com arquivos .ts
+    generic_ts_folder: {
+      children: [
+        { name: '{kebab-case}.ts' },
+        { name: '{kebab-case}.{kebab-case}.ts' },
+        { name: 'index.ts' },
+      ],
+    },
+
+    // Estrutura principal src/
     src_folder: {
-      name: 'src',
       enforceExistence: ['main.ts', 'app.module.ts', 'modules', 'core'],
       children: [
         { name: 'core', ruleId: 'core_folder' },
@@ -59,344 +80,422 @@ export const folderStructureConfig = createFolderStructure({
         { name: 'app.module.ts' },
       ],
     },
-    utils_folder: {
-      name: 'utils',
-      children: [{ name: '*.ts' }, { ruleId: 'test_folder' }],
-    },
+
+    // ========================
+    // CORE
+    // ========================
     core_folder: {
-      name: 'core',
       enforceExistence: ['domain', 'core.module.ts'],
       children: [
         { name: 'domain', ruleId: 'core_domain_folder' },
         { name: 'events', ruleId: 'core_events_folder' },
         { name: 'infra', ruleId: 'core_infra_folder' },
-        { name: 'utils', ruleId: 'utils_folder' },
+        { name: 'utils', ruleId: 'core_utils_folder' },
         { name: 'core.module.ts' },
-        { ruleId: 'test_folder' },
       ],
     },
 
     core_domain_folder: {
-      name: 'domain',
-      enforceExistence: [
-        'aggregate-root.ts',
-        'default-entity.ts',
-        'result.ts',
-        'value-objects',
-        'exceptions',
-        'mapper',
-      ],
+      enforceExistence: ['aggregate-root.ts', 'default-entity.ts', 'result.ts'],
       children: [
-        {
-          name: 'exceptions',
-          ruleId: 'core_domain_exceptions_folder',
-          enforceExistence: ['domain.exception.ts'],
-        },
         { name: 'aggregate-root.ts' },
-        { name: 'result.ts' },
-        { name: 'value-objects', ruleId: 'core_domain_value_objects_folder' },
-        { name: 'mapper', ruleId: 'core_mapper_folder' },
         { name: 'default-entity.ts' },
-        {
-          name: 'service',
-          children: [{ name: '*.service.ts' }, { ruleId: 'test_folder' }],
-        },
-        { ruleId: 'test_folder' },
+        { name: 'result.ts' },
+        { name: 'unit-of-work.ts' },
+        { name: 'exceptions', ruleId: 'exceptions_folder' },
+        { name: 'value-objects', ruleId: 'value_objects_folder' },
+        { name: 'mapper', ruleId: 'mapper_folder' },
+        { name: 'service', ruleId: 'service_folder' },
+        { name: '__tests__', ruleId: 'tests_folder' },
       ],
     },
 
     core_events_folder: {
-      name: 'domain-events',
-      children: [{ name: '*.event.ts' }, { ruleId: 'test_folder' }],
-    },
-
-    core_domain_exceptions_folder: {
-      name: '*',
-
-      children: [{ name: '*.exception.ts' }, { ruleId: 'test_folder' }],
-    },
-
-    core_domain_value_objects_folder: {
-      name: '*',
-      children: [{ name: '*.vo.ts' }, { ruleId: 'test_folder' }],
-    },
-
-    core_mapper_folder: {
-      name: 'mapper',
-      children: [{ name: '*.mapper.ts' }, { ruleId: 'test_folder' }],
-    },
-
-    core_events_folder: {
-      name: 'events',
-      children: [{ name: '*.ts' }, { ruleId: 'test_folder' }],
+      children: [
+        { name: '{kebab-case}.ts' },
+        { name: '{kebab-case}.spec.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
     },
 
     core_infra_folder: {
-      name: '*',
       children: [
-        { name: 'instrumentation', ruleId: 'core_instrumentation_folder' },
-        {
-          name: 'database',
-          children: [
-            {
-              name: '*',
-              children: [
-                { name: '*.ts' },
-                {
-                  ruleId: 'test_folder',
-                },
-              ],
-            },
-          ],
-        },
-        {
-          name: 'logger',
-          children: [
-            { name: '*' },
-            {
-              ruleId: 'test_folder',
-            },
-          ],
-        },
-        {
-          name: 'http',
-          children: [
-            { name: '*.ts' },
-            {
-              name: 'dtos',
-              children: [{ name: '*.dto.ts' }, { ruleId: 'test_folder' }],
-            },
-            {
-              name: 'client',
-              children: [{ name: '*.ts' }, { ruleId: 'test_folder' }],
-            },
-            {
-              name: 'transformers',
-              children: [
-                { name: '*.transformer.ts' },
-                { ruleId: 'test_folder' },
-              ],
-            },
-            { ruleId: 'test_folder' },
-          ],
-        },
-        { ruleId: 'test_folder' },
+        { name: 'database', ruleId: 'core_database_folder' },
+        { name: 'filters', ruleId: 'filters_folder' },
+        { name: 'grafana', ruleId: 'grafana_folder' },
+        { name: 'http', ruleId: 'core_http_folder' },
+        { name: 'instrumentation', ruleId: 'instrumentation_folder' },
+        { name: 'logger', ruleId: 'logger_folder' },
+        { name: 'middleware', ruleId: 'middleware_folder' },
+        { name: 'sqs', ruleId: 'sqs_folder' },
+        { name: 'persistence', ruleId: 'generic_ts_with_tests_folder' },
+        { name: 'typeorm', ruleId: 'generic_ts_with_tests_folder' },
       ],
     },
 
-    core_logger_folder: {
-      ruleId: 'test_folder',
-      name: '*',
+    core_database_folder: {
+      children: [
+        { name: 'mongodb', ruleId: 'generic_ts_with_tests_folder' },
+        { name: 'persistence', ruleId: 'generic_ts_with_tests_folder' },
+        { name: 'typeorm', ruleId: 'generic_ts_with_tests_folder' },
+        { name: '{kebab-case}.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
     },
 
-    core_instrumentation_folder: {
-      name: 'instrumentation',
-      children: [{ name: '*.ts' }, { ruleId: 'test_folder' }],
+    core_http_folder: {
+      children: [
+        { name: '{kebab-case}.ts' },
+        { name: '{kebab-case}-{kebab-case}.mapper.ts' },
+        { name: 'dtos', ruleId: 'dtos_folder' },
+        { name: 'client', ruleId: 'generic_ts_with_tests_folder' },
+        { name: 'transformers', ruleId: 'generic_ts_with_tests_folder' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
     },
 
+    core_utils_folder: {
+      children: [
+        { name: '{kebab-case}.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    // ========================
+    // MODULES
+    // ========================
     modules_folder: {
-      name: 'modules',
-      children: [
-        { name: '{kebab-case}', ruleId: 'module_folder' },
-        { ruleId: 'test_folder' },
-      ],
+      children: [{ name: 'payment', ruleId: 'module_folder' }],
     },
 
     module_folder: {
-      name: '*',
       enforceExistence: ['domain', 'application', 'infra'],
       children: [
         { name: 'domain', ruleId: 'module_domain_folder' },
         { name: 'application', ruleId: 'module_application_folder' },
         { name: 'infra', ruleId: 'module_infra_folder' },
         { name: 'presentation', ruleId: 'module_presentation_folder' },
-        { name: '*.module.ts' },
-        { ruleId: 'test_folder' },
+        { name: '{kebab-case}.module.ts' },
       ],
     },
-    module_application_folder: {
-      name: '*',
-      children: [
-        { name: 'application.module.ts' },
-        {
-          name: 'use-cases',
-          children: [
-            {
-              name: '*',
 
-              children: [
-                {
-                  name: '*.use-case.ts',
-                },
-                {
-                  name: '*-impl.use-case.ts',
-                },
-                { ruleId: 'test_folder' },
-              ],
-            },
-          ],
-        },
-        {
-          name: 'services',
-          children: [
-            { name: '{kebab-case}.service.ts' },
-            { ruleId: 'test_folder' },
-          ],
-        },
-        { ruleId: 'test_folder' },
-      ],
-    },
-    module_presentation_folder: {
-      name: '*',
-      children: [
-        {
-          name: 'controllers',
-          children: [
-            { name: '{kebab-case}.controller.ts' },
-            { ruleId: 'test_folder' },
-          ],
-        },
-        {
-          name: 'dto',
-          children: [
-            {
-              name: 'request',
-              children: [{ name: '*.dto.ts' }, { ruleId: 'test_folder' }],
-            },
-            {
-              name: 'response',
-              children: [{ name: '*.dto.ts' }, { ruleId: 'test_folder' }],
-            },
-          ],
-        },
-        {
-          name: 'docs',
-          children: [
-            {
-              name: '{kebab-case}',
-              children: [{ name: '*.doc.ts' }, { ruleId: 'test_folder' }],
-            },
-          ],
-        },
-        {
-          name: 'filters',
-          children: [{ name: '*.filter.ts' }, { ruleId: 'test_folder' }],
-        },
-        { name: 'presentation.module.ts' },
-        { ruleId: 'test_folder' },
-      ],
-    },
     module_domain_folder: {
-      name: '*',
       children: [
-        { name: 'entities', ruleId: 'module_entities_folder' },
-        { name: 'value-objects', ruleId: 'module_value_objects_folder' },
-        { name: 'exceptions', ruleId: 'module_exceptions_folder' },
-        { name: 'enum', children: [{ name: '*.enum.ts' }] },
-        { name: 'domain-events', ruleId: 'core_events_folder' },
-        { name: 'gateways', ruleId: 'module_gateways_folder' },
-        {
-          name: 'service',
-          children: [{ name: '*.service.ts' }, { ruleId: 'test_folder' }],
-        },
-        {
-          name: 'events',
-          children: [{ name: '*.event.ts' }, { ruleId: 'test_folder' }],
-        },
-        {
-          name: 'repositories',
-          children: [
-            { name: '{kebab-case}.repository.ts' },
-            { ruleId: 'test_folder' },
-          ],
-        },
-        {
-          name: 'factories',
-          children: [{ name: '*.factory.ts' }, { ruleId: 'test_folder' }],
-        },
-        { ruleId: 'test_folder' },
+        { name: 'entities', ruleId: 'entities_folder' },
+        { name: 'value-objects', ruleId: 'value_objects_folder' },
+        { name: 'exceptions', ruleId: 'exceptions_folder' },
+        { name: 'enum', ruleId: 'enum_folder' },
+        { name: 'events', ruleId: 'events_folder' },
+        { name: 'gateways', ruleId: 'gateways_folder' },
+        { name: 'service', ruleId: 'service_folder' },
+        { name: 'repositories', ruleId: 'repositories_folder' },
+        { name: 'factories', ruleId: 'factories_folder' },
+        { name: '__tests__', ruleId: 'tests_folder' },
       ],
     },
-    module_gateways_folder: {
-      name: 'gateways',
-      children: [{ name: '*.gateway.ts' }, { ruleId: 'test_folder' }],
+
+    module_application_folder: {
+      children: [
+        { name: 'use-cases', ruleId: 'use_cases_folder' },
+        { name: 'services', ruleId: 'service_folder' },
+        { name: 'strategies', ruleId: 'strategies_folder' },
+        { name: 'application.module.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
     },
+
     module_infra_folder: {
-      name: '*',
       enforceExistence: ['infra.module.ts'],
       children: [
-        {
-          name: 'logger',
-          children: [{ name: '*.ts' }, { ruleId: 'test_folder' }],
-        },
-        { name: 'persistence', ruleId: 'module_persistence_folder' },
+        { name: 'persistence', ruleId: 'persistence_folder' },
+        { name: 'acl', ruleId: 'acl_folder' },
+        { name: 'gateways', ruleId: 'gateways_impl_folder' },
+        { name: 'consumers', ruleId: 'consumers_folder' },
         { name: 'infra.module.ts' },
-        { name: 'acl', ruleId: 'module_acl_folder' },
-        { ruleId: 'test_folder' },
+        { name: '__tests__', ruleId: 'tests_folder' },
       ],
     },
-    module_acl_folder: {
-      name: '{kebab-case}',
-      children: [{ name: '*.ts' }, { ruleId: 'module_acl_folder' }],
-    },
-    module_persistence_folder: {
-      name: '*',
-      enforceExistence: ['repositories', 'entities', 'datasource'],
+
+    module_presentation_folder: {
       children: [
-        {
-          name: 'repositories',
-          children: [
-            { name: '{kebab-case}-impl.repository.ts' },
-            {
-              name: '{kebab-case}.*.ts',
-            },
-            { ruleId: 'test_folder' },
-          ],
-        },
-        {
-          name: 'datasource',
-          children: [{ name: '*' }, { ruleId: 'test_folder' }],
-        },
-        {
-          name: 'entities',
-          children: [
-            { name: '{kebab-case}.entity.ts' },
-            { ruleId: 'test_folder' },
-          ],
-        },
-        {
-          name: 'mapper',
-          ruleId: 'module_mapper_folder',
-        },
-        {
-          name: '*',
-        },
-        { ruleId: 'test_folder' },
+        { name: 'controllers', ruleId: 'controllers_folder' },
+        { name: 'consumers', ruleId: 'consumers_folder' },
+        { name: 'dto', ruleId: 'presentation_dto_folder' },
+        { name: 'docs', ruleId: 'docs_folder' },
+        { name: 'filters', ruleId: 'filters_folder' },
+        { name: 'presentation.module.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
       ],
     },
 
-    module_entities_folder: {
-      name: '*',
-      children: [{ name: '*.entity.ts' }, { ruleId: 'test_folder' }],
-    },
-
-    module_value_objects_folder: {
-      name: 'value-objects',
-      children: [{ name: '*.vo.ts' }, { ruleId: 'test_folder' }],
-    },
-
-    module_exceptions_folder: {
-      name: 'exceptions',
-      children: [{ name: '*.exception.ts' }, { ruleId: 'test_folder' }],
-    },
-
-    module_mapper_folder: {
-      name: 'mapper',
+    // ========================
+    // PASTAS REUTILIZÁVEIS
+    // ========================
+    generic_ts_with_tests_folder: {
       children: [
-        { name: '*.mapper.ts' },
-        { name: '*.mapper.factory.ts' },
-        { ruleId: 'test_folder' },
+        { name: '{kebab-case}.ts' },
+        { name: '{kebab-case}.{kebab-case}.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
       ],
+    },
+
+    entities_folder: {
+      children: [
+        { name: '{kebab-case}.entity.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    value_objects_folder: {
+      children: [
+        { name: '{kebab-case}.vo.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    exceptions_folder: {
+      children: [
+        { name: '{kebab-case}.exception.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    enum_folder: {
+      children: [{ name: '{kebab-case}.enum.ts' }],
+    },
+
+    events_folder: {
+      children: [
+        { name: '{kebab-case}.event.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    gateways_folder: {
+      children: [
+        { name: '{kebab-case}.gateway.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    gateways_impl_folder: {
+      children: [
+        { name: '{kebab-case}.gateway.ts' },
+        { name: 'http-{kebab-case}.gateway.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    service_folder: {
+      children: [
+        { name: '{kebab-case}.service.ts' },
+        { name: '{kebab-case}-{kebab-case}.service.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    repositories_folder: {
+      children: [
+        { name: '{kebab-case}.repository.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    factories_folder: {
+      children: [
+        { name: '{kebab-case}.factory.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    use_cases_folder: {
+      children: [{ name: '{kebab-case}', ruleId: 'use_case_folder' }],
+    },
+
+    use_case_folder: {
+      children: [
+        { name: '{kebab-case}.use-case.ts' },
+        { name: '{kebab-case}-impl.use-case.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    strategies_folder: {
+      children: [
+        { name: '{kebab-case}.strategy.ts' },
+        { name: '{kebab-case}.ts' },
+        { name: 'index.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    persistence_folder: {
+      children: [
+        { name: 'repositories', ruleId: 'persistence_repositories_folder' },
+        { name: 'entities', ruleId: 'persistence_entities_folder' },
+        { name: 'datasource', ruleId: 'datasource_folder' },
+        { name: 'mapper', ruleId: 'mapper_folder' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    persistence_repositories_folder: {
+      children: [
+        { name: '{kebab-case}.repository.ts' },
+        { name: '{kebab-case}-impl.repository.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    persistence_entities_folder: {
+      children: [
+        { name: '{kebab-case}.entity.ts' },
+        { name: '{kebab-case}-{kebab-case}.entity.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    datasource_folder: {
+      children: [
+        { name: '{kebab-case}.datasource.ts' },
+        { name: '{kebab-case}.{kebab-case}.ts' },
+        { name: '{kebab-case}.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    mapper_folder: {
+      children: [
+        { name: '{kebab-case}.mapper.ts' },
+        { name: '{kebab-case}.mapper.factory.ts' },
+        { name: '{kebab-case}.mapper.interface.ts' },
+        { name: '{kebab-case}.factory.ts' },
+        { name: '{kebab-case}.interface.ts' },
+        { name: 'abstract.mapper.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    acl_folder: {
+      children: [{ name: '{kebab-case}', ruleId: 'acl_gateway_folder' }],
+    },
+
+    acl_gateway_folder: {
+      children: [
+        { name: '{kebab-case}', ruleId: 'acl_provider_folder' },
+        { name: '{kebab-case}.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    acl_provider_folder: {
+      children: [
+        { name: '{kebab-case}', ruleId: 'acl_subprovider_folder' },
+        { name: '{kebab-case}.ts' },
+        { name: '{kebab-case}-{kebab-case}.gateway.ts' },
+        { name: '{kebab-case}-{kebab-case}-{kebab-case}.gateway.ts' },
+        { name: 'dtos', ruleId: 'dtos_folder' },
+        { name: 'signature', ruleId: 'signature_folder' },
+        { name: 'publishers', ruleId: 'publishers_folder' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    acl_subprovider_folder: {
+      children: [
+        { name: '{kebab-case}.ts' },
+        { name: '{kebab-case}.gateway.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    signature_folder: {
+      children: [
+        { name: '{kebab-case}.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    publishers_folder: {
+      children: [
+        { name: '{kebab-case}.publish.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    consumers_folder: {
+      children: [
+        { name: '{kebab-case}.ts' },
+        { name: 'sqs-{kebab-case}.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    controllers_folder: {
+      children: [
+        { name: '{kebab-case}.controller.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    presentation_dto_folder: {
+      children: [
+        { name: 'request', ruleId: 'dtos_folder' },
+        { name: 'response', ruleId: 'dtos_folder' },
+      ],
+    },
+
+    dtos_folder: {
+      children: [
+        { name: '{kebab-case}.dto.ts' },
+        { name: 'index.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    docs_folder: {
+      children: [{ name: '{kebab-case}', ruleId: 'doc_folder' }],
+    },
+
+    doc_folder: {
+      children: [{ name: '{kebab-case}.doc.ts' }],
+    },
+
+    filters_folder: {
+      children: [
+        { name: '{kebab-case}.filter.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    instrumentation_folder: {
+      children: [{ name: '{kebab-case}.ts' }, { name: 'index.ts' }],
+    },
+
+    logger_folder: {
+      children: [
+        { name: '{kebab-case}.ts' },
+        { name: '{kebab-case}.{kebab-case}.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    middleware_folder: {
+      children: [
+        { name: '{kebab-case}.middleware.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    sqs_folder: {
+      children: [
+        { name: '{kebab-case}.ts' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+
+    grafana_folder: {
+      children: [{ name: '{kebab-case}.yml' }, { name: '{kebab-case}.json' }],
     },
   },
 });

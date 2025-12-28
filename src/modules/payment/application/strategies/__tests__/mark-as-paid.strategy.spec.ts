@@ -1,7 +1,7 @@
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
 import { Result } from '@core/domain/result';
 import { MarkAsPaidStrategy } from '@payment/application/strategies/mark-as-paid.strategy';
-import { MarkAsPaidGateway } from '@payment/domain/gateways/mark-as-paid';
+import { MarkAsPaidGateway } from '@payment/domain/gateways/mark-as-paid.gateway';
 
 describe('MarkAsPaidStrategy - Unit Test', () => {
   let strategy: MarkAsPaidStrategy;

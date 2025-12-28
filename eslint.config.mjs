@@ -5,8 +5,8 @@ import noRelativeImportPaths from 'eslint-plugin-no-relative-import-paths';
 import projectStructure from 'eslint-plugin-project-structure';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
-
 import customRules from './eslint-rules/filenames.mjs';
+import { folderStructureConfig } from './folderStructure.mjs';
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
@@ -32,8 +32,6 @@ export default [
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        project: './tsconfig.json',
-        tsconfigRootDir: import.meta.dirname,
         sourceType: 'module',
       },
       globals: {
@@ -85,7 +83,9 @@ export default [
         { allowSameFolder: true, rootDir: 'src', prefix: '@' },
       ],
 
-      // 'project-structure/folder-structure': ['error', folderStructureConfig],
+      'import/no-unresolved': 'error',
+
+      'project-structure/folder-structure': ['error', folderStructureConfig],
 
       'custom-rules/kebab-case-filenames': 'error',
 

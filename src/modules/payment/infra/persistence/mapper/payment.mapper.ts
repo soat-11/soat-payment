@@ -8,7 +8,6 @@ import { AnyPaymentDetail } from '@payment/domain/value-objects/payment-detail.v
 
 import { PaymentDetailMapperFactory } from './payment-detail-mapper.factory';
 
-
 export class PaymentMapper extends AbstractMapper<
   PaymentMongoDBEntity,
   PaymentEntity
@@ -93,9 +92,15 @@ export class PaymentMapper extends AbstractMapper<
       return Result.ok(null);
     }
 
-    return this.paymentDetailMapperFactory.toORM(
+    const result = this.paymentDetailMapperFactory.toORM(
       payment.detail,
       payment.id.value,
     );
+
+    if (result.isFailure) {
+      return Result.fail(result.error);
+    }
+
+    return Result.ok(result.value as AnyPaymentDetail);
   }
 }

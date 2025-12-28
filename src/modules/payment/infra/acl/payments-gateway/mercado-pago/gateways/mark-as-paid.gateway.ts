@@ -3,7 +3,7 @@ import { Result } from '@core/domain/result';
 import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
-import { MarkAsPaidGateway } from '@payment/domain/gateways/mark-as-paid';
+import { MarkAsPaidGateway } from '@payment/domain/gateways/mark-as-paid.gateway';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 
 export class MarkAsPaidGatewayImpl implements MarkAsPaidGateway {
