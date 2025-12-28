@@ -1,8 +1,10 @@
 export { AbstractDSL } from './abstract.dsl';
-export { createDSL, DSL, DSLRepositories } from './dsl.factory';
-export {
+export { createDSL } from './dsl.factory';
+export type { DSL, DSLRepositories } from './dsl.factory';
+export { PaymentDSL } from './payment.dsl';
+export type {
   CreatePixPaymentInput,
-  PaymentDSL,
   SimulateWebhookInput,
 } from './payment.dsl';
-export { workflows, Workflows } from './workflows';
+export { workflows } from './workflows';
+export type { Workflows } from './workflows';
