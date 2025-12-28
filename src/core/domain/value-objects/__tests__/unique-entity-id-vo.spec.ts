@@ -1,5 +1,6 @@
-import { UniqueEntityID } from '../unique-entity-id.vo';
 import { faker } from '@faker-js/faker';
+
+import { UniqueEntityID } from '@/core/domain/value-objects/unique-entity-id.vo';
 
 describe('unique-entity-id', () => {
   it('Should compare the same value', () => {

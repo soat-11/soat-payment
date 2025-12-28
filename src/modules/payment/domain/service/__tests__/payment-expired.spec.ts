@@ -1,5 +1,6 @@
-import { PaymentExpiredImpl } from '../payment-expired.service';
 import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
+
+import { PaymentExpiredImpl } from '@/modules/payment/domain/service/payment-expired.service';
 
 describe('PaymentExpiredImpl', () => {
   it('should return true if payment is expired', () => {

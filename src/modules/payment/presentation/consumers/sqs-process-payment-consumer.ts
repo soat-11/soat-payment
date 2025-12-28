@@ -1,7 +1,8 @@
+import { Inject, Injectable } from '@nestjs/common';
+
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { SqsConsumer } from '@core/infra/sqs/sqs-consumer';
-import { Inject, Injectable } from '@nestjs/common';
 import { PaymentProcessorUseCase } from '@payment/application/use-cases/payment-processor/payment-processor.use-case';
 import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import type { MercadoPagoProcessPaymentQueueMessage } from '@payment/infra/acl/payments-gateway/mercado-pago/dtos/mercado-pago-mark-as-paid-queue.dto';

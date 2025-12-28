@@ -1,4 +1,3 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import {
   Controller,
   Get,
@@ -6,10 +5,14 @@ import {
   Module,
   NestModule,
 } from '@nestjs/common';
-import request from 'supertest';
-import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
-import { HttpLoggerMiddleware } from '../http-logger.middleware';
 import { INestApplication } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import request from 'supertest';
+
+import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
+
+import { HttpLoggerMiddleware } from '@/core/infra/middleware/http-logger.middleware';
+
 
 @Controller('test')
 class TestController {

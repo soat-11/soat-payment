@@ -1,10 +1,11 @@
+import { AxiosInstance, isAxiosError } from 'axios';
+
 import {
   DefaultHttpClientResponse,
   GetMethod,
   GetParams,
   PostMethod,
 } from '@core/infra/http/client/http-client';
-import { AxiosInstance, isAxiosError } from 'axios';
 
 export class DefaultAxiosClient implements GetMethod, PostMethod {
   constructor(private readonly client: AxiosInstance) {}
@@ -22,7 +23,7 @@ export class DefaultAxiosClient implements GetMethod, PostMethod {
         status: response.status,
         data: response.data,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (isAxiosError(error)) {
         return {
           headers: error.response?.headers as Record<string, string>,
@@ -31,12 +32,19 @@ export class DefaultAxiosClient implements GetMethod, PostMethod {
         };
       }
 
+      if (error instanceof Error) {
+        return {
+          headers: {},
+          status: 500,
+          data: { message: error.message },
+        };
+      }
+
       return {
-        headers: error.response.headers,
-        status: error.response.status,
+        headers: {},
+        status: 500,
         data: {
           message:
-            error.response.data.message ??
             'Ocorreu um erro inesperado, entre em contato com o suporte.',
         },
       };
@@ -58,11 +66,30 @@ export class DefaultAxiosClient implements GetMethod, PostMethod {
         status: response.status,
         data: response.data,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      if (isAxiosError(error)) {
+        return {
+          headers: error.response?.headers as Record<string, string>,
+          status: error.response?.status ?? 500,
+          data: error.response?.data,
+        };
+      }
+
+      if (error instanceof Error) {
+        return {
+          headers: {},
+          status: 500,
+          data: { message: error.message },
+        };
+      }
+
       return {
-        headers: error.response.headers,
-        status: error.response.status,
-        data: { message: error.response.data.message },
+        headers: {},
+        status: 500,
+        data: {
+          message:
+            'Ocorreu um erro inesperado, entre em contato com o suporte.',
+        },
       };
     }
   }

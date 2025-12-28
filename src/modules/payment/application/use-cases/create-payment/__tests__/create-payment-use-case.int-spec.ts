@@ -1,38 +1,35 @@
+import { faker } from '@faker-js/faker';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { DataSource, MongoRepository } from 'typeorm';
 
-import { CreatePaymentUseCaseImpl } from '@payment/application/use-cases/create-payment/create-payment-impl.use-case';
-
-import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
-import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
-import { PaymentType } from '@payment/domain/enum/payment-type.enum';
-import { PaymentMapper } from '@payment/infra/persistence/mapper/payment.mapper';
-
+import { Result } from '@core/domain/result';
 import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
+import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
 import { DomainEventDispatcherImpl } from '@core/events/domain-event-dispatcher-impl';
 import { PinoLoggerService } from '@core/infra/logger/pino-logger';
+import { CreatePaymentUseCaseImpl } from '@payment/application/use-cases/create-payment/create-payment-impl.use-case';
 import {
   CreatePaymentUseCase,
   CreatePaymentUseCaseInput,
 } from '@payment/application/use-cases/create-payment/create-payment.use-case';
 import { CreateQRCodeImageUseCaseImpl } from '@payment/application/use-cases/create-qrcode/create-qrcode-impl.use-case';
 import { CreateQRCodeImage } from '@payment/application/use-cases/create-qrcode/create-qrcode.use-case';
-import { PaymentFactoryImpl } from '@payment/domain/factories/payment.factory';
-import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
-import { PaymentMongoDBEntity } from '@payment/infra/persistence/entities/payment-mongodb.entity';
-import { PaymentMongoDBRepositoryImpl } from '@payment/infra/persistence/repositories/payment-mongodb.repository';
-
-import { Result } from '@core/domain/result';
-import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
-import { faker } from '@faker-js/faker';
+import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
+import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
+import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 import { PaymentCreatedEvent } from '@payment/domain/events/payment-created.event';
 import { PaymentAlreadyExistsException } from '@payment/domain/exceptions/payment.exception';
+import { PaymentFactoryImpl } from '@payment/domain/factories/payment.factory';
 import { CartGateway } from '@payment/domain/gateways/cart.gateway';
 import { CreatePaymentGateway } from '@payment/domain/gateways/create-payment.gateway';
+import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 import { PaymentAmountCalculatorImpl } from '@payment/domain/service/payment-amount-calculator.service';
+import { PaymentMongoDBEntity } from '@payment/infra/persistence/entities/payment-mongodb.entity';
 import { PixDetailMongoDBEntity } from '@payment/infra/persistence/entities/pix-detail-mongodb.entity';
 import { PaymentDetailMapperFactory } from '@payment/infra/persistence/mapper/payment-detail-mapper.factory';
+import { PaymentMapper } from '@payment/infra/persistence/mapper/payment.mapper';
 import { PixDetailMapper } from '@payment/infra/persistence/mapper/pix-detail.mapper';
+import { PaymentMongoDBRepositoryImpl } from '@payment/infra/persistence/repositories/payment-mongodb.repository';
 
 describe('CreatePaymentUseCase - Integration Test', () => {
   let mongoServer: MongoMemoryServer;
@@ -96,7 +93,7 @@ describe('CreatePaymentUseCase - Integration Test', () => {
     paymentAmountCalculator = new PaymentAmountCalculatorImpl();
     domainEventDispatcher = new DomainEventDispatcherImpl();
     cartGateway = {
-      async getCart(sessionId: string) {
+      async getCart(_sessionId: string) {
         return Promise.resolve({
           items: [
             {
@@ -115,7 +112,7 @@ describe('CreatePaymentUseCase - Integration Test', () => {
     };
 
     createPaymentGateway = {
-      async createPayment(payment) {
+      async createPayment(_payment) {
         return Promise.resolve(
           Result.ok({
             qrCode: 'qrCode-teste',
@@ -126,7 +123,9 @@ describe('CreatePaymentUseCase - Integration Test', () => {
     };
 
     useCase = new CreatePaymentUseCaseImpl({
-      paymentFactory: new PaymentFactoryImpl(new SystemDateImpl(SystemDateImpl.nowUTC())),
+      paymentFactory: new PaymentFactoryImpl(
+        new SystemDateImpl(SystemDateImpl.nowUTC()),
+      ),
       eventDispatcher: domainEventDispatcher,
       logger: new PinoLoggerService(),
       paymentRepository,

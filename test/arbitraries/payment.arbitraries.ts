@@ -1,8 +1,9 @@
+import fc from 'fast-check';
+
 import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
 import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
-import fc from 'fast-check';
 
 export const paymentTypeArb = fc.constantFrom(...Object.values(PaymentType));
 

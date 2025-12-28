@@ -1,10 +1,11 @@
 import { ValueObject } from '@core/domain/value-objects/value-object.vo';
-import { PaymentProviders } from '../enum/payment-provider.enum';
-
 import {
   PaymentExternalPaymentIdRequiredException,
   PaymentProviderInvalidException,
 } from '@payment/domain/exceptions/payment.exception';
+
+import { PaymentProviders } from '@/modules/payment/domain/enum/payment-provider.enum';
+
 
 export type PaymentProviderProps = {
   provider: PaymentProviders;

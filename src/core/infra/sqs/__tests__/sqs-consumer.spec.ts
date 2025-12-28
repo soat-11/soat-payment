@@ -1,12 +1,13 @@
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
-import { FakeLogger } from '@test/fakes/fake-logger';
 import { mockClient } from 'aws-sdk-client-mock';
+
 import {
   DlqMessageContext,
   SqsConsumer,
   SqsConsumerOptions,
   SQSRawMessage,
-} from '../sqs-consumer';
+} from '@core/infra/sqs/sqs-consumer';
+import { FakeLogger } from '@test/fakes/fake-logger';
 
 type TestPayload = {
   id: string;
@@ -66,14 +67,17 @@ class TestSqsConsumer extends SqsConsumer<TestPayload> {
   }
 
   public callIsValidMessage(message: unknown): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (this as any).isValidMessage(message);
   }
 
   public callParseMessagePayload(message: SQSRawMessage): TestPayload | null {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (this as any).parseMessagePayload(message);
   }
 
   public callProcessMessage(message: unknown): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (this as any).processMessage(message);
   }
 }
@@ -108,7 +112,12 @@ describe('SqsConsumer', () => {
         if (consumer.getIsRunning()) {
           consumer.callStop();
         }
-      } catch {}
+      } catch (error) {
+        logger.error('Error stopping consumer', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+        });
+      }
     });
     activeConsumers = [];
     process.env = originalEnv;
@@ -203,7 +212,10 @@ describe('SqsConsumer', () => {
       describe('Success Cases', () => {
         it('should call start when queue URL is configured', async () => {
           const consumer = createConsumer('TEST_QUEUE_URL');
-          const startSpy = jest.spyOn(consumer as any, 'start');
+          const startSpy = jest.spyOn(
+            consumer as unknown as { start: () => void },
+            'start',
+          );
 
           await consumer.onModuleInit();
 
@@ -214,7 +226,10 @@ describe('SqsConsumer', () => {
       describe('Edge Cases', () => {
         it('should not call start when queue URL is empty', async () => {
           const consumer = createConsumer('NON_EXISTENT_QUEUE');
-          const startSpy = jest.spyOn(consumer as any, 'start');
+          const startSpy = jest.spyOn(
+            consumer as unknown as { start: () => void },
+            'start',
+          );
 
           await consumer.onModuleInit();
 
@@ -227,7 +242,10 @@ describe('SqsConsumer', () => {
       describe('Success Cases', () => {
         it('should call stop on destroy', () => {
           const consumer = createConsumer('TEST_QUEUE_URL');
-          const stopSpy = jest.spyOn(consumer as any, 'stop');
+          const stopSpy = jest.spyOn(
+            consumer as unknown as { stop: () => void },
+            'stop',
+          );
 
           consumer.onModuleDestroy();
 

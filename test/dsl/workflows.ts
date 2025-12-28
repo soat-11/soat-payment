@@ -1,5 +1,7 @@
-import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import { v4 as uuidv4 } from 'uuid';
+
+import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
+
 import { DSL } from './dsl.factory';
 
 export const workflows = (dsl: DSL) =>

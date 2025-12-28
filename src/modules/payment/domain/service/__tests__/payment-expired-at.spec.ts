@@ -1,5 +1,6 @@
 import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
-import { PaymentExpiredAtDomainServiceImpl } from '../payment-expired-at.service';
+
+import { PaymentExpiredAtDomainServiceImpl } from '@/modules/payment/domain/service/payment-expired-at.service';
 
 describe('PaymentExpiredAtDomainServiceImpl', () => {
   it('should return a date 10 minutes from now', () => {

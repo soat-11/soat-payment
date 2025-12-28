@@ -1,12 +1,8 @@
+import { ObjectId } from 'mongodb';
+import { Column, ObjectIdColumn } from 'typeorm';
+
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { UtcDateColumn } from '@payment/infra/persistence/datasource/utc-date-column.decorator';
-import { ObjectId } from 'mongodb';
-import {
-  Column,
-  CreateDateColumn,
-  ObjectIdColumn,
-  UpdateDateColumn,
-} from 'typeorm';
 
 export abstract class DefaultMongoDBEntity {
   @ObjectIdColumn()

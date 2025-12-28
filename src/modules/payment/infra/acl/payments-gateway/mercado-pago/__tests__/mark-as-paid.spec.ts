@@ -1,10 +1,11 @@
+import { faker } from '@faker-js/faker';
+
 import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
 import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
 import { DomainEventDispatcherImpl } from '@core/events/domain-event-dispatcher-impl';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { PinoLoggerService } from '@core/infra/logger/pino-logger';
-import { faker } from '@faker-js/faker';
 import { PaymentEntity } from '@payment/domain/entities/payment.entity';
 import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';

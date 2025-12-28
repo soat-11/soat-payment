@@ -1,12 +1,13 @@
+import { Global, Module, Scope } from '@nestjs/common';
+import { INQUIRER } from '@nestjs/core';
+import axios from 'axios';
+
 import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { SystemDateDomainService } from '@core/domain/service/system-date.service';
 import { DefaultAxiosClient } from '@core/infra/http/client/defaulta-axios-client';
 import { HttpClient } from '@core/infra/http/client/http-client';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { PinoLoggerService } from '@core/infra/logger/pino-logger';
-import { Global, Module, Scope } from '@nestjs/common';
-import { INQUIRER } from '@nestjs/core';
-import axios from 'axios';
 
 @Global()
 @Module({

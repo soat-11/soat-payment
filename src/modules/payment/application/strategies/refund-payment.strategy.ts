@@ -1,5 +1,6 @@
 import { Result } from '@core/domain/result';
 import { RefundPaymentUseCase } from '@payment/application/use-cases/refund-payment/refund-payment.use-case';
+
 import { PaymentProcessingStrategy } from './payment-processing.strategy';
 
 export class RefundPaymentStrategy implements PaymentProcessingStrategy {

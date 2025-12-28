@@ -1,6 +1,7 @@
+import { Inject, Injectable } from '@nestjs/common';
+
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { SqsConsumer } from '@core/infra/sqs/sqs-consumer';
-import { Inject, Injectable } from '@nestjs/common';
 import { CancelPaymentGateway } from '@payment/domain/gateways/cancel-payment.gateway';
 
 export type CancelPaymentConsumerPayload = {

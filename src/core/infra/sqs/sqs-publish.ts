@@ -1,6 +1,7 @@
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
-import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { Injectable } from '@nestjs/common';
+
+import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 
 export interface PublishMessage<T extends Record<string, unknown>> {
   publish(input: T): Promise<void>;

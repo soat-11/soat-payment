@@ -1,10 +1,12 @@
-import { GlobalExceptionFilter } from '@core/infra/filters/global-exception.filter';
-import { InstrumentationService } from '@core/infra/instrumentation';
-import { PinoLoggerService } from '@core/infra/logger/pino-logger';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
+
+import { GlobalExceptionFilter } from '@core/infra/filters/global-exception.filter';
+import { InstrumentationService } from '@core/infra/instrumentation';
+import { PinoLoggerService } from '@core/infra/logger/pino-logger';
+
 import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -51,19 +53,14 @@ async function bootstrap() {
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
 
-  console.log(`🚀 Application is running on: http://localhost:${port}`);
-  console.log(
-    `📚 Swagger docs available at: http://localhost:${port}/api/docs`,
-  );
-
   process.on('SIGTERM', async () => {
-    console.log('SIGTERM signal received: closing HTTP server');
+    Logger.log('SIGTERM signal received: closing HTTP server');
     await InstrumentationService.shutdown();
     await app.close();
   });
 
   process.on('SIGINT', async () => {
-    console.log(' SIGINT signal received: closing HTTP server');
+    Logger.log('SIGINT signal received: closing HTTP server');
     await InstrumentationService.shutdown();
     await app.close();
   });

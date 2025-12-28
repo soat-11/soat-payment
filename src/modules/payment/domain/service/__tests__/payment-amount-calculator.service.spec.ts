@@ -1,5 +1,6 @@
-import { PaymentAmountCalculatorImpl } from '../payment-amount-calculator.service';
 import { GetCartDetailsOutput } from '@payment/domain/gateways/cart.gateway';
+
+import { PaymentAmountCalculatorImpl } from '@/modules/payment/domain/service/payment-amount-calculator.service';
 
 describe('PaymentAmountCalculator', () => {
   let calculator: PaymentAmountCalculatorImpl;

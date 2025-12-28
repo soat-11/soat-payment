@@ -1,5 +1,6 @@
 import pino from 'pino';
-import { PinoLoggerService } from '../pino-logger';
+
+import { PinoLoggerService } from '@/core/infra/logger/pino-logger';
 
 describe('PinoLoggerService - Unit Test', () => {
   let logger: PinoLoggerService;

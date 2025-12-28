@@ -1,5 +1,6 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
+
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 
 @Injectable()

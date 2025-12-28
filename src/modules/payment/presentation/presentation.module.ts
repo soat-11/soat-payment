@@ -1,3 +1,5 @@
+import { Module } from '@nestjs/common';
+
 import { SystemDateDomainService } from '@core/domain/service/system-date.service';
 import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
 import {
@@ -6,8 +8,6 @@ import {
   PostMethod,
 } from '@core/infra/http/client/http-client';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
-import { Module } from '@nestjs/common';
-
 import { PaymentApplicationModule } from '@payment/application/application.module';
 import {
   CancelPaymentStrategy,

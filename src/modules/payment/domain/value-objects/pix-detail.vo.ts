@@ -1,6 +1,9 @@
-import { PaymentDetailVO } from './payment-detail.vo';
-import { PaymentType } from '../enum/payment-type.enum';
 import { PixDetailInvalidException } from '@payment/domain/exceptions/payment.exception';
+
+import { PaymentDetailVO } from './payment-detail.vo';
+
+import { PaymentType } from '@/modules/payment/domain/enum/payment-type.enum';
+
 
 export type PixDetailProps = {
   qrCode: string;

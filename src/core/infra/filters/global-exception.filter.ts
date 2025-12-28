@@ -6,6 +6,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
+
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 
 @Catch()

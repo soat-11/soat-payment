@@ -1,5 +1,6 @@
 import { createHmac } from 'crypto';
-import { HMACMercadoPagoSignature } from '../mercado-pago-signature';
+
+import { HMACMercadoPagoSignature } from '@/modules/payment/infra/acl/payments-gateway/mercado-pago/signature/mercado-pago-signature';
 
 describe('HMACMercadoPagoSignature', () => {
   const TEST_SECRET = 'c9684d90b39a4cd3845ea6a0d87a06c1';

@@ -1,7 +1,9 @@
 import { INestApplication } from '@nestjs/common';
+import { DataSource, MongoRepository } from 'typeorm';
+
 import { PaymentMongoDBEntity } from '@payment/infra/persistence/entities/payment-mongodb.entity';
 import { PixDetailMongoDBEntity } from '@payment/infra/persistence/entities/pix-detail-mongodb.entity';
-import { DataSource, MongoRepository } from 'typeorm';
+
 import { PaymentDSL } from './payment.dsl';
 
 export interface DSLRepositories {

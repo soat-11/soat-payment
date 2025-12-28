@@ -1,5 +1,6 @@
-import { SessionIdVO } from '../session-id.vo';
 import { SessionIdInvalidException } from '@payment/domain/exceptions/payment.exception';
+
+import { SessionIdVO } from '@/modules/payment/domain/value-objects/session-id.vo';
 
 describe('SessionIdVO', () => {
   describe('create', () => {

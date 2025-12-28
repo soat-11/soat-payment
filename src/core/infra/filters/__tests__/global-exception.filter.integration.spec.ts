@@ -1,4 +1,3 @@
-import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import {
   Controller,
   Get,
@@ -10,7 +9,10 @@ import {
 import { HttpAdapterHost } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
-import { GlobalExceptionFilter } from '../global-exception.filter';
+
+import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
+
+import { GlobalExceptionFilter } from '@/core/infra/filters/global-exception.filter';
 
 @Controller('test')
 class TestController {

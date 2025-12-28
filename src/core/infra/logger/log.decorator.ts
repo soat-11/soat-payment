@@ -6,7 +6,7 @@ export interface LoggerContainer {
 
 export function Log(): MethodDecorator {
   return (
-    _target: Object,
+    _target: object,
     propertyKey: string | symbol,
     descriptor: PropertyDescriptor,
   ) => {

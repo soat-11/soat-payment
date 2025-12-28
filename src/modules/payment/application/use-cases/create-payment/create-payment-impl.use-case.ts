@@ -1,19 +1,16 @@
+import { DomainExceptionGeneric } from '@core/domain/exceptions/domain.exception';
 import { Result } from '@core/domain/result';
 import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
-
 import {
   CreatePaymentUseCase,
   CreatePaymentUseCaseError,
   type CreatePaymentUseCaseInput,
   type CreatePaymentUseCaseOutput,
 } from '@payment/application/use-cases/create-payment/create-payment.use-case';
-
+import { CreateQRCodeImage } from '@payment/application/use-cases/create-qrcode/create-qrcode.use-case';
 import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
-
-import { DomainExceptionGeneric } from '@core/domain/exceptions/domain.exception';
-import { CreateQRCodeImage } from '@payment/application/use-cases/create-qrcode/create-qrcode.use-case';
 import { PaymentAlreadyExistsException } from '@payment/domain/exceptions/payment.exception';
 import { PaymentFactory } from '@payment/domain/factories/payment.factory';
 import { CartGateway } from '@payment/domain/gateways/cart.gateway';

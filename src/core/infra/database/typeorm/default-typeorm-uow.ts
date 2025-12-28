@@ -1,8 +1,9 @@
+import { DataSource, QueryRunner } from 'typeorm';
+
 import { DomainPersistenceException } from '@core/domain/exceptions/domain.exception';
 import { UnitOfWork } from '@core/infra/database/persistence/unit-of-work';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 
-import { DataSource, QueryRunner } from 'typeorm';
 export abstract class DefaultTypeormUnitOfWork implements UnitOfWork {
   private queryRunner: QueryRunner;
 

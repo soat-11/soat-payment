@@ -30,7 +30,7 @@ export type PostMethod = {
 export type GetParams<T> = {
   queryParams?: T;
   headers?: Record<string, string>;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 export type GetMethod = {

@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { NodeSDK } from '@opentelemetry/sdk-node';
@@ -45,21 +46,25 @@ export class InstrumentationService {
         this.initialize();
       }
       await this.sdk.start();
-      console.log('OpenTelemetry started → Logs/Traces/Metrics enabled');
+      Logger.log('OpenTelemetry started → Logs/Traces/Metrics enabled');
     } catch (error) {
-      console.warn('OpenTelemetry failed to start - Logs only in console');
+      Logger.warn(
+        'OpenTelemetry failed to start - Logs only in console',
+        error,
+      );
+      Logger.error(error);
     }
   }
 
   static async shutdown() {
     if (this.sdk) {
       await this.sdk.shutdown();
-      console.log('OpenTelemetry SDK shutdown');
+      Logger.log('OpenTelemetry SDK shutdown');
     }
   }
 }
 
 InstrumentationService.initialize();
 InstrumentationService.start().catch((error) => {
-  console.error('Failed to start OpenTelemetry:', error);
+  Logger.error('Failed to start OpenTelemetry:', error);
 });

@@ -1,3 +1,6 @@
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import { DataSource } from 'typeorm';
+
 import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { SystemDateDomainService } from '@core/domain/service/system-date.service';
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
@@ -20,8 +23,6 @@ import { PaymentDetailMapperFactory } from '@payment/infra/persistence/mapper/pa
 import { PaymentMapper } from '@payment/infra/persistence/mapper/payment.mapper';
 import { PixDetailMapper } from '@payment/infra/persistence/mapper/pix-detail.mapper';
 import { PaymentMongoDBRepositoryImpl } from '@payment/infra/persistence/repositories/payment-mongodb.repository';
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import { DataSource } from 'typeorm';
 
 describe('CancelPaymentUseCase - Integration Test', () => {
   let mongoServer: MongoMemoryServer;

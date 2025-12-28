@@ -1,9 +1,10 @@
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
+import { mockClient } from 'aws-sdk-client-mock';
+
 import { MercadoPagoProcessPaymentQueueMessage } from '@payment/infra/acl/payments-gateway/mercado-pago/dtos/mercado-pago-mark-as-paid-queue.dto';
 import { MercadoPagoOrderAction } from '@payment/infra/acl/payments-gateway/mercado-pago/dtos/process-payment.dto';
 import { SqsMercadoPagoProcessPaymentPublish } from '@payment/infra/acl/payments-gateway/mercado-pago/publishers/mercado-pago-mark-as-paid.publish';
 import { FakeLogger } from '@test/fakes';
-import { mockClient } from 'aws-sdk-client-mock';
 import 'aws-sdk-client-mock-jest';
 
 const sqsMock = mockClient(SQSClient);

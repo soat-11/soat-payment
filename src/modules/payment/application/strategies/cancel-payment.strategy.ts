@@ -1,5 +1,6 @@
 import { Result } from '@core/domain/result';
 import { CancelPaymentUseCase } from '@payment/application/use-cases/cancel-payment/cancel-payment.use-case';
+
 import { PaymentProcessingStrategy } from './payment-processing.strategy';
 
 export class CancelPaymentStrategy implements PaymentProcessingStrategy {

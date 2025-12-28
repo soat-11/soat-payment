@@ -15,17 +15,14 @@ export class FakeLogger extends AbstractLoggerService {
   warnings: LogEntry[] = [];
 
   log(message: string, context?: object): void {
-    console.log('log', message, context);
     this.logs.push({ message, context });
   }
 
   error(message: string, context?: object): void {
-    console.log('error', message, context);
     this.errors.push({ message, context });
   }
 
   warn(message: string, context?: object): void {
-    console.log('warn', message, context);
     this.warnings.push({ message, context });
   }
 

@@ -11,7 +11,7 @@ export class FakeCartGateway implements CartGateway {
     ],
   };
 
-  async getCart(sessionId: string): Promise<GetCartDetailsOutput> {
+  async getCart(_sessionId: string): Promise<GetCartDetailsOutput> {
     return this.cartResponse;
   }
 

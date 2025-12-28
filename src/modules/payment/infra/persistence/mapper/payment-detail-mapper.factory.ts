@@ -1,11 +1,12 @@
+import { MongoRepository } from 'typeorm';
+
+import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
+import { Result } from '@core/domain/result';
+import { DefaultMongoDBEntity } from '@core/infra/database/mongodb/default-mongodb.entity';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 import { AnyPaymentDetail } from '@payment/domain/value-objects/payment-detail.vo';
-import { PaymentDetailMapper } from './payment-detail.mapper.interface';
-import { Result } from '@core/domain/result';
-import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
-import { MongoRepository } from 'typeorm';
-import { DefaultMongoDBEntity } from '@core/infra/database/mongodb/default-mongodb.entity';
 
+import { PaymentDetailMapper } from './payment-detail.mapper.interface';
 
 export class PaymentDetailMapperFactory {
   private mappers = new Map<
@@ -54,7 +55,7 @@ export class PaymentDetailMapperFactory {
     return Result.ok(mapper);
   }
 
-  toORM(detail: AnyPaymentDetail, paymentId: string): Result<any> {
+  toORM(detail: AnyPaymentDetail, paymentId: string): Result<unknown> {
     const mapperResult = this.getMapper(detail.paymentType);
     if (mapperResult.isFailure) {
       return Result.fail(mapperResult.error);
@@ -63,7 +64,7 @@ export class PaymentDetailMapperFactory {
     return mapperResult.value.toORM(detail, paymentId);
   }
 
-  toDomain(orm: any, type: PaymentType): Result<AnyPaymentDetail> {
+  toDomain(orm: unknown, type: PaymentType): Result<AnyPaymentDetail> {
     const mapperResult = this.getMapper(type);
     if (mapperResult.isFailure) {
       return Result.fail(mapperResult.error);

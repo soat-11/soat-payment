@@ -1,5 +1,7 @@
-import { CreatePaymentConsumer } from '@payment/presentation/consumers/sqs-create-payment-consumer';
 import { v4 as uuidv4 } from 'uuid';
+
+import { CreatePaymentConsumer } from '@payment/presentation/consumers/sqs-create-payment-consumer';
+
 import { AbstractDSL } from './abstract.dsl';
 
 export interface CreatePixPaymentInput {

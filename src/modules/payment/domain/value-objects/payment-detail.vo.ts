@@ -2,7 +2,7 @@ import { ValueObject } from '@core/domain/value-objects/value-object.vo';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 import { PixDetailVO } from '@payment/domain/value-objects/pix-detail.vo';
 
-export abstract class PaymentDetailVO<T = any> extends ValueObject<T> {
+export abstract class PaymentDetailVO<T = unknown> extends ValueObject<T> {
   abstract get paymentType(): PaymentType;
 
   abstract toSummary(): string;

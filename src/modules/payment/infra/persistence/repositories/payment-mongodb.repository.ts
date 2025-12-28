@@ -1,13 +1,15 @@
+import { MongoRepository } from 'typeorm';
+
 import { DomainPersistenceException } from '@core/domain/exceptions/domain.exception';
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { PaymentEntity } from '@payment/domain/entities/payment.entity';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 import { IdempotencyKeyVO } from '@payment/domain/value-objects/idempotency-key.vo';
-import { MongoRepository } from 'typeorm';
-import { PaymentMongoDBEntity } from '../entities/payment-mongodb.entity';
-import { PaymentDetailMapperFactory } from '../mapper/payment-detail-mapper.factory';
-import { PaymentMapper } from '../mapper/payment.mapper';
+
+import { PaymentMongoDBEntity } from '@/modules/payment/infra/persistence/entities/payment-mongodb.entity';
+import { PaymentDetailMapperFactory } from '@/modules/payment/infra/persistence/mapper/payment-detail-mapper.factory';
+import { PaymentMapper } from '@/modules/payment/infra/persistence/mapper/payment.mapper';
 
 export class PaymentMongoDBRepositoryImpl implements PaymentRepository {
   constructor(

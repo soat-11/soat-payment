@@ -1,4 +1,3 @@
-import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import {
   BadRequestException,
   Body,
@@ -17,6 +16,8 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+
+import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { ProcessPaymentDTOSchemaRequest } from '@payment/infra/acl/payments-gateway/mercado-pago/dtos/process-payment.dto';
 import { SqsMercadoPagoProcessPaymentPublish } from '@payment/infra/acl/payments-gateway/mercado-pago/publishers/mercado-pago-mark-as-paid.publish';
 import {

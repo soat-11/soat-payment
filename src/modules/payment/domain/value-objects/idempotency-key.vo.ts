@@ -1,6 +1,7 @@
+import { validate as uuidValidate } from 'uuid';
+
 import { ValueObject } from '@core/domain/value-objects/value-object.vo';
 import { IdempotencyKeyInvalidException } from '@payment/domain/exceptions/payment.exception';
-import { validate as uuidValidate } from 'uuid';
 
 export class IdempotencyKeyVO extends ValueObject<string> {
   protected validate(input: string): void {

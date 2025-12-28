@@ -1,6 +1,7 @@
+import { Injectable } from '@nestjs/common';
+
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { SqsConsumer } from '@core/infra/sqs/sqs-consumer';
-import { Injectable } from '@nestjs/common';
 import { CreatePaymentUseCase } from '@payment/application/use-cases/create-payment/create-payment.use-case';
 import { CreatePaymentDto } from '@payment/presentation/dto/request/create-payment.dto';
 

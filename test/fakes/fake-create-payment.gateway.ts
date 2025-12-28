@@ -12,7 +12,7 @@ export class FakeCreatePaymentGateway implements CreatePaymentGateway {
   });
 
   async createPayment(
-    payment: AnyCreatePaymentType,
+    _payment: AnyCreatePaymentType,
   ): Promise<Result<CreateAnyPaymentResponse>> {
     return this.response;
   }

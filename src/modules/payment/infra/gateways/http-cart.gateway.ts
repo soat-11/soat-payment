@@ -4,7 +4,7 @@ import {
 } from '@payment/domain/gateways/cart.gateway';
 
 export class HttpCartGateway implements CartGateway {
-  async getCart(sessionId: string): Promise<GetCartDetailsOutput> {
+  async getCart(_sessionId: string): Promise<GetCartDetailsOutput> {
     return {
       items: [
         {

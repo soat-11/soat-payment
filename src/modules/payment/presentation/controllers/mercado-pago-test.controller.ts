@@ -1,4 +1,3 @@
-import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import {
   Body,
   Controller,
@@ -15,13 +14,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import {
-  MercadoPagoOrderAction,
-  MercadoPagoOrderStatus,
-  MercadoPagoOrderType,
-  MercadoPagoStatusDetail,
-} from '@payment/infra/acl/payments-gateway/mercado-pago/dtos/process-payment.dto';
-import { SqsMercadoPagoProcessPaymentPublish } from '@payment/infra/acl/payments-gateway/mercado-pago/publishers/mercado-pago-mark-as-paid.publish';
-import {
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -29,6 +21,15 @@ import {
   IsString,
 } from 'class-validator';
 import { v4 as uuidv4 } from 'uuid';
+
+import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
+import {
+  MercadoPagoOrderAction,
+  MercadoPagoOrderStatus,
+  MercadoPagoOrderType,
+  MercadoPagoStatusDetail,
+} from '@payment/infra/acl/payments-gateway/mercado-pago/dtos/process-payment.dto';
+import { SqsMercadoPagoProcessPaymentPublish } from '@payment/infra/acl/payments-gateway/mercado-pago/publishers/mercado-pago-mark-as-paid.publish';
 
 class SimulateWebhookRequestDto {
   @ApiProperty({

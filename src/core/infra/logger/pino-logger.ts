@@ -1,5 +1,6 @@
 import { context, trace } from '@opentelemetry/api';
-import pino, { Logger as PinoBaseLogger, LoggerOptions } from 'pino';
+import pino, { LoggerOptions, Logger as PinoBaseLogger } from 'pino';
+
 import {
   AbstractLoggerService,
   BaseLogMeta,
@@ -49,7 +50,7 @@ export class PinoLoggerService extends AbstractLoggerService<pino.Level> {
     };
   }
 
-  fatal(message: string, ...optionalParams: any[]) {
+  fatal(message: string, ...optionalParams: unknown[]) {
     const { extra, context, trace } = this.parseParams(optionalParams);
     this.handleLog('error', message, extra, context, trace);
   }
@@ -97,12 +98,7 @@ export class PinoLoggerService extends AbstractLoggerService<pino.Level> {
     };
   }
 
-  protected _handle(
-    level: LogLevel,
-    message: string,
-    extra: LogExtra,
-  ): void {
-
+  protected _handle(level: LogLevel, message: string, extra: LogExtra): void {
     const traceId = this.getTraceIdFromContext();
     const base: BaseLogMeta & { traceId?: string } = {
       context: this.context,

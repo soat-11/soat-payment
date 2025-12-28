@@ -1,5 +1,6 @@
 import { Result } from '@core/domain/result';
-import { DefaultEntity } from '../default-entity';
+
+import { DefaultEntity } from '@/core/domain/default-entity';
 
 export class MapperException extends Error {
   constructor(message: string) {

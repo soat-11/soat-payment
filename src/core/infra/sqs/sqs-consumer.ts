@@ -4,9 +4,10 @@ import {
   SendMessageCommand,
   SQSClient,
 } from '@aws-sdk/client-sqs';
-import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Consumer } from 'sqs-consumer';
+
+import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 
 export type SQSRawMessage = {
   Body: string;

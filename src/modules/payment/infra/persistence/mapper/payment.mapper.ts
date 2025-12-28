@@ -4,8 +4,11 @@ import { Result } from '@core/domain/result';
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { PaymentEntity } from '@payment/domain/entities/payment.entity';
 import { AnyPaymentDetail } from '@payment/domain/value-objects/payment-detail.vo';
-import { PaymentMongoDBEntity } from '../entities/payment-mongodb.entity';
+
 import { PaymentDetailMapperFactory } from './payment-detail-mapper.factory';
+
+import { PaymentMongoDBEntity } from '@/modules/payment/infra/persistence/entities/payment-mongodb.entity';
+
 
 export class PaymentMapper extends AbstractMapper<
   PaymentMongoDBEntity,
