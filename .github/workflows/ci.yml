@@ -1,0 +1,119 @@
+name: Validate Code
+
+on:
+  pull_request:
+    branches:
+      - '*'
+  push:
+    branches:
+      - '*'
+
+jobs:
+  validate-code:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Validate Code
+        run: yarn lint
+
+  test:
+    name: Test application
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run tests and coverage
+        run: yarn test:cov
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage
+          retention-hours: 1
+
+  sonarqube:
+    name: SonarQube analysis
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage
+
+      - name: Run SonarQube analysis
+        uses: sonarsource/sonarcloud-github-action@v3
+        with:
+          organization: soat-11
+          projectKey: soat-11_soat-payment
+          token: ${{ secrets.SONAR_TOKEN }}
+          node-version: '24'
+
+      - name: SonarQube Quality Gate
+        uses: sonarsource/sonarqube-scan-action@v5
+        with:
+          server-id: soat-11
+          server-url: https://sonarcloud.io
+          token: ${{ secrets.SONAR_TOKEN }}
+          quality-gate: true
+          show-only-failures: true
+
+  build:
+    name: Build application
+    runs-on: ubuntu-latest
+    needs: [validate-code, test, sonarqube]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build application
+        run: yarn build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: build
+          retention-hours: 1
