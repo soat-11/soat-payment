@@ -6,6 +6,8 @@
 
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=soat-11_soat-payment&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=soat-11_soat-payment)
 
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=soat-11_soat-payment&metric=coverage)](https://sonarcloud.io/summary/new_code?id=soat-11_soat-payment)
+
 ## Description
 
 API de pagamentos do sistema SOAT implementada com DDD, Clean Architecture e OpenTelemetry para observabilidade completa.
