@@ -36,6 +36,27 @@ jobs:
       - name: Run tests with coverage
         run: yarn test:cov
 
+      - name: Extract test results
+        id: test-results
+        run: |
+          TESTS=$(grep -o 'tests="[0-9]*"' coverage/junit.xml | head -1 | grep -o '[0-9]*')
+          FAILURES=$(grep -o 'failures="[0-9]*"' coverage/junit.xml | head -1 | grep -o '[0-9]*')
+          PASSED=$((TESTS - FAILURES))
+          echo "total=$TESTS" >> $GITHUB_OUTPUT
+          echo "passed=$PASSED" >> $GITHUB_OUTPUT
+          echo "failures=$FAILURES" >> $GITHUB_OUTPUT
+
+      - name: Update tests badge
+        if: github.ref == 'refs/heads/main'
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_TOKEN }}
+          gistID: ${{ vars.BADGE_GIST_ID }}
+          filename: soat-payment-tests.json
+          label: Tests
+          message: '${{ steps.test-results.outputs.passed }} passed'
+          color: ${{ steps.test-results.outputs.failures == '0' && 'brightgreen' || 'red' }}
+
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:

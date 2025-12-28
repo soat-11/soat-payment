@@ -5,7 +5,7 @@
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=soat-11_soat-payment&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=soat-11_soat-payment)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=soat-11_soat-payment&metric=coverage)](https://sonarcloud.io/summary/new_code?id=soat-11_soat-payment)
 [![Coverage %](https://img.shields.io/sonar/coverage/soat-11_soat-payment?server=https%3A%2F%2Fsonarcloud.io&label=Coverage%20%25)](https://sonarcloud.io/summary/new_code?id=soat-11_soat-payment)
-[![Tests](https://img.shields.io/sonar/tests/soat-11_soat-payment?server=https%3A%2F%2Fsonarcloud.io&label=Tests)](https://sonarcloud.io/summary/new_code?id=soat-11_soat-payment)
+[![Tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/soat-11/9602f1854adbdfe1b00b5e881a123b55/raw/soat-payment-tests.json)](https://github.com/soat-11/soat-payment/actions)
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=soat-11_soat-payment&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=soat-11_soat-payment)
 [![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=soat-11_soat-payment&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=soat-11_soat-payment)
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=soat-11_soat-payment&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=soat-11_soat-payment)
