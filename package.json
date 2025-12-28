@@ -26,6 +26,7 @@
     "test:mutation": "stryker run",
     "test:mutation:domain": "stryker run --mutate 'src/modules/payment/domain/**/*.ts'",
     "test:mutation:report": "stryker run && open reports/mutation/html/index.html",
+    "sonar:sync": "node scripts/generate-sonar-coverage.js",
     "docker:dev": "cd docker && docker compose --profile dev up -d",
     "docker:dev:otel": "cd docker && docker compose --profile dev --profile observability up -d",
     "docker:replica": "cd docker && docker compose --profile replica up -d",
