@@ -1,13 +1,13 @@
-export class Result<T> {
+export class Result<T, E extends Error = Error> {
   public readonly isSuccess: boolean;
   public readonly isFailure: boolean;
   private readonly _value: T | null | void;
-  private readonly _error: Error | null;
+  private readonly _error: E | null;
 
   private constructor(
     isSuccess: boolean,
     value: T | null | void,
-    error: Error | null,
+    error: E | null,
   ) {
     if (isSuccess && error)
       throw new Error('InvalidOperation: ok cannot have error');
@@ -27,17 +27,17 @@ export class Result<T> {
     return this._value as T;
   }
 
-  public get error(): Error {
+  public get error(): E {
     if (this.isSuccess)
       throw new Error('Cannot get error from a success result');
-    return this._error as Error;
+    return this._error as E;
   }
 
-  public static ok<U>(value?: U): Result<U> {
-    return new Result<U>(true, value, null);
+  public static ok<U>(value?: U): Result<U, never> {
+    return new Result<U, never>(true, value, null);
   }
 
-  public static fail<U>(error: Error): Result<U> {
-    return new Result<U>(false, null, error);
+  public static fail<U, F extends Error>(error: F): Result<U, F> {
+    return new Result<U, F>(false, null, error);
   }
 }

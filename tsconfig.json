@@ -17,7 +17,8 @@
     "paths": {
       "@core/*": ["./src/core/*"],
       "@payment/*": ["./src/modules/payment/*"],
-      "@modules/*": ["./src/modules/*"]
+      "@modules/*": ["./src/modules/*"],
+      "@test/*": ["./test/*"]
     },
     "incremental": true,
     "skipLibCheck": true,

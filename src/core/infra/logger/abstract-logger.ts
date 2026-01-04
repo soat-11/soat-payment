@@ -21,16 +21,12 @@ export type LoggerParams = {
 export type LogLevel = 'info' | 'error' | 'warn' | 'debug' | 'trace';
 
 export type BaseLogMeta = {
-  defaultContext: {
-    originClass: string;
-    originMethod: string;
-  };
   context?: string;
   [key: string]: unknown;
 };
 
 export abstract class AbstractLoggerService<TLogLevel = string> {
-  protected context?: string;
+  protected _context?: string;
 
   constructor(protected readonly config?: Config) {}
 
@@ -42,6 +38,10 @@ export abstract class AbstractLoggerService<TLogLevel = string> {
 
   abstract setContext(context: string): void;
   abstract getLogLevel(): Record<LogLevel, TLogLevel>;
+
+  get context(): string | undefined {
+    return this._context;
+  }
 
   abstract getTraceIdFromContext(): string | undefined;
 
@@ -72,23 +72,6 @@ export abstract class AbstractLoggerService<TLogLevel = string> {
     this.error(message, ...(trace ? [{ trace }] : []));
   }
 
-  protected getCallerContext(exception?: unknown): LogContext {
-    const stack =
-      // eslint-disable-next-line no-restricted-syntax
-      exception instanceof Error ? exception.stack : new Error().stack;
-
-    const caller = stack?.split('\n')[6]?.trim()?.split(' ').at(1) ?? 'unknown';
-
-    const callerClass = caller?.split('.').at(0) ?? 'unknown';
-
-    const callerMethod = caller?.split('.').slice(1).join('.') ?? 'unknown';
-    return { originClass: callerClass, originMethod: callerMethod };
-  }
-
-  protected getDefaultFields(exception?: unknown): LogExtra {
-    const { originClass, originMethod } = this.getCallerContext(exception);
-    return { defaultContext: { originClass, originMethod } };
-  }
 
   protected parseParams(params: unknown[]): {
     extra: LogExtra;

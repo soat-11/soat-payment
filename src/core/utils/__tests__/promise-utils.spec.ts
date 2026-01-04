@@ -1,5 +1,5 @@
 import { DomainExceptionGeneric } from '@core/domain/exceptions/domain.exception';
-import { executeAllOrFail } from '../promise-utils';
+import { executeAllOrFail } from '@core/utils/promise-utils';
 
 describe('PromiseUtils', () => {
   describe('executeAllOrFail', () => {
@@ -34,7 +34,6 @@ describe('PromiseUtils', () => {
         executeAllOrFail([slowPromise, fastFailingPromise]),
       ).rejects.toThrow('Fast failure');
 
-      // Ensure slow promise completed before rejection was thrown
       expect(completionOrder).toEqual(['fast-fail', 'slow']);
     });
 

@@ -18,11 +18,15 @@ export class DomainEventDispatcherImpl implements DomainEventDispatcher {
     this.handlers.set(eventName, handlers);
   }
 
-  dispatch<T extends DefaultEntity>(event: DomainEvent<T>): void {
+  async dispatch<T extends DefaultEntity>(
+    event: DomainEvent<T>,
+  ): Promise<void> {
     const handlers = this.handlers.get(event.eventName);
     if (!handlers) return;
 
-    handlers.forEach((handler) => handler(event));
+    for (const handler of handlers) {
+      await handler(event);
+    }
   }
 
   getHandler<T extends DefaultEntity>(

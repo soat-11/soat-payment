@@ -1,6 +1,10 @@
 import { ValueObject } from '@core/domain/value-objects/value-object.vo';
-import { PaymentProviders } from '../enum/payment-provider.enum';
-import { DomainBusinessException } from '@core/domain/exceptions/domain.exception';
+import { PaymentProviders } from '@modules/payment/domain/enum/payment-provider.enum';
+import {
+  PaymentExternalPaymentIdRequiredException,
+  PaymentProviderInvalidException,
+} from '@payment/domain/exceptions/payment.exception';
+
 
 export type PaymentProviderProps = {
   provider: PaymentProviders;
@@ -12,22 +16,20 @@ export class PaymentProvider extends ValueObject<PaymentProviderProps> {
     super(props);
   }
 
+  static create(props: PaymentProviderProps): PaymentProvider {
+    return new PaymentProvider(props);
+  }
+
   protected validate(input: PaymentProviderProps): void {
     const validProviders = Object.values(PaymentProviders);
     if (!validProviders.includes(input.provider)) {
-      throw new DomainBusinessException(
-        `Provedor de pagamento inválido: ${input.provider}`,
-      );
+      throw new PaymentProviderInvalidException(input.provider);
     }
 
     if (!input.externalPaymentId || input.externalPaymentId.trim() === '') {
-      throw new DomainBusinessException(
-        'ID externo do pagamento é obrigatório',
+      throw new PaymentExternalPaymentIdRequiredException(
+        input.externalPaymentId,
       );
     }
-  }
-
-  static create(props: PaymentProviderProps): PaymentProvider {
-    return new PaymentProvider(props);
   }
 }

@@ -1,0 +1,22 @@
+include:
+  - ./docker/docker-compose.database.yml
+  - ./docker/docker-compose.aws.yml
+  - ./docker/docker-compose.app.yml
+  - ./docker/docker-compose.observability.yml
+
+networks:
+  payment-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
+    driver: local
+  mongo2-data:
+    driver: local
+
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  loki-data:
+    driver: local
