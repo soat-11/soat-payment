@@ -140,5 +140,4 @@ jobs:
       - name: Update deployment
         run: |
           kubectl set image deployment/payment-deployment \
-            payment=${{ needs.build-and-deploy.outputs.image }} \
-            -n production
+            payment=${{ needs.build-and-deploy.outputs.image }}
