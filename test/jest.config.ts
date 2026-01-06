@@ -1,6 +1,12 @@
 import type { Config } from '@jest/types';
 
-import coverageConfig from '../config/coverage.config.json';
+interface CoverageConfig {
+  include: string[];
+  exclude: string[];
+}
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const coverageConfig: CoverageConfig = require('../config/coverage.config.json');
 
 const collectCoverageFrom = [
   ...coverageConfig.include,
