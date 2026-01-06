@@ -1,3 +1,6 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
 import type { Config } from '@jest/types';
 
 interface CoverageConfig {
@@ -5,8 +8,10 @@ interface CoverageConfig {
   exclude: string[];
 }
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const coverageConfig: CoverageConfig = require('../config/coverage.config.json');
+const coverageConfigPath = join(__dirname, '../config/coverage.config.json');
+const coverageConfig: CoverageConfig = JSON.parse(
+  readFileSync(coverageConfigPath, 'utf-8'),
+);
 
 const collectCoverageFrom = [
   ...coverageConfig.include,
