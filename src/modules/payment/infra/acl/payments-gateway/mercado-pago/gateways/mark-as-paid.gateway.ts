@@ -3,16 +3,17 @@ import { Result } from '@core/domain/result';
 import { SystemDateImpl } from '@core/domain/service/system-date-impl.service';
 import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
+import { SqsPublish } from '@core/infra/sqs/sqs-publish';
 import { MarkAsPaidGateway } from '@payment/domain/gateways/mark-as-paid.gateway';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
-import { CreateOrderPublish } from '@payment/infra/publishers/create-order.publish';
+import { CreateOrderMessage } from '@payment/infra/acl/payments-gateway/mercado-pago/dtos/create-order.dto';
 
 export class MarkAsPaidGatewayImpl implements MarkAsPaidGateway {
   constructor(
     private readonly repository: PaymentRepository,
     private readonly logger: AbstractLoggerService,
     private readonly dispatcher: DomainEventDispatcher,
-    private readonly publishMercadoPagoProcessPayment: CreateOrderPublish,
+    private readonly publishMercadoPagoProcessPayment: SqsPublish<CreateOrderMessage>,
   ) {}
 
   async markAsPaid(paymentReference: string): Promise<Result<void>> {

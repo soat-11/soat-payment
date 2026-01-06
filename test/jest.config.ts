@@ -1,14 +1,7 @@
-import { createRequire } from 'module';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
-
 import type { Config } from '@jest/types';
 
-// @ts-expect-error - import.meta is valid in ESM, Jest runs this as ESM
-const __dirname = dirname(fileURLToPath(import.meta.url));
-// @ts-expect-error - import.meta is valid in ESM
-const _require = createRequire(import.meta.url);
-const coverageConfig = _require('../config/coverage.config.json');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const coverageConfig = require('../config/coverage.config.json');
 
 const collectCoverageFrom = [
   ...coverageConfig.include,
