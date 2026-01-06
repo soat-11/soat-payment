@@ -8,7 +8,8 @@ interface CoverageConfig {
   exclude: string[];
 }
 
-const coverageConfigPath = join(__dirname, '../config/coverage.config.json');
+// Use process.cwd() as Jest is always run from the project root
+const coverageConfigPath = join(process.cwd(), 'config/coverage.config.json');
 const coverageConfig: CoverageConfig = JSON.parse(
   readFileSync(coverageConfigPath, 'utf-8'),
 );
