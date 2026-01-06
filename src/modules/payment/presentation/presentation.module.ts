@@ -18,6 +18,10 @@ import {
 import { CancelPaymentUseCaseImpl } from '@payment/application/use-cases/cancel-payment/cancel-payment-impl.use-case';
 import { CancelPaymentUseCase } from '@payment/application/use-cases/cancel-payment/cancel-payment.use-case';
 import { CreatePaymentUseCase } from '@payment/application/use-cases/create-payment/create-payment.use-case';
+import { GetQRCodeByIdempotencyKeyUseCaseImpl } from '@payment/application/use-cases/get-qrcode-by-idempotency-key/get-qrcode-by-idempotency-key-impl.use-case';
+import { GetQRCodeByIdempotencyKeyUseCase } from '@payment/application/use-cases/get-qrcode-by-idempotency-key/get-qrcode-by-idempotency-key.use-case';
+import { GetQRCodeByPaymentIdUseCaseImpl } from '@payment/application/use-cases/get-qrcode-by-payment-id/get-qrcode-by-payment-id-impl.use-case';
+import { GetQRCodeByPaymentIdUseCase } from '@payment/application/use-cases/get-qrcode-by-payment-id/get-qrcode-by-payment-id.use-case';
 import { PaymentProcessorUseCaseImpl } from '@payment/application/use-cases/payment-processor/payment-processor-impl.use-case';
 import { PaymentProcessorUseCase } from '@payment/application/use-cases/payment-processor/payment-processor.use-case';
 import { RefundPaymentUseCaseImpl } from '@payment/application/use-cases/refund-payment/refund-payment-impl.use-case';
@@ -37,11 +41,13 @@ import { MercadoPagoProcessPaymentConsumer } from '@payment/presentation/consume
 import { MercadoPagoTestController } from '@payment/presentation/controllers/mercado-pago-test.controller';
 import { MercadoPagoWebhookController } from '@payment/presentation/controllers/mercado-pago-webhook.controller';
 import { PaymentDocsController } from '@payment/presentation/controllers/payment-docs.controller';
+import { PaymentController } from '@payment/presentation/controllers/payment.controller';
 
 @Module({
   imports: [PaymentApplicationModule],
   controllers: [
     PaymentDocsController,
+    PaymentController,
     MercadoPagoWebhookController,
     MercadoPagoTestController,
   ],
@@ -172,6 +178,29 @@ import { PaymentDocsController } from '@payment/presentation/controllers/payment
         return new CancelPaymentConsumer(logger, cancelPaymentGateway);
       },
       inject: [AbstractLoggerService, CancelPaymentGateway],
+    },
+    {
+      provide: GetQRCodeByPaymentIdUseCase,
+      useFactory: (
+        paymentRepository: PaymentRepository,
+        logger: AbstractLoggerService,
+      ) => {
+        return new GetQRCodeByPaymentIdUseCaseImpl(paymentRepository, logger);
+      },
+      inject: [PaymentRepository, AbstractLoggerService],
+    },
+    {
+      provide: GetQRCodeByIdempotencyKeyUseCase,
+      useFactory: (
+        paymentRepository: PaymentRepository,
+        logger: AbstractLoggerService,
+      ) => {
+        return new GetQRCodeByIdempotencyKeyUseCaseImpl(
+          paymentRepository,
+          logger,
+        );
+      },
+      inject: [PaymentRepository, AbstractLoggerService],
     },
   ],
 })

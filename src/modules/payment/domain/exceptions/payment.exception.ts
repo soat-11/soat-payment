@@ -110,3 +110,9 @@ export class PaymentAlreadyRefundedException extends DomainBusinessException {
     super('Pagamento já está reembolsado');
   }
 }
+
+export class QRCodeDataInvalidException extends DomainBusinessException {
+  constructor() {
+    super('Dados do QR Code inválidos');
+  }
+}

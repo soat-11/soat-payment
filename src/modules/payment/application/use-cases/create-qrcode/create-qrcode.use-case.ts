@@ -13,3 +13,5 @@ export interface CreateQRCodeImage {
     input: CreateQRCodeImageInput,
   ): Promise<Result<CreateQRCodeImageOutput>>;
 }
+
+export const CreateQRCodeImage = Symbol('CreateQRCodeImage');
