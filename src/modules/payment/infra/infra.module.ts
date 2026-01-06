@@ -11,9 +11,7 @@ import { MongoModule } from '@payment/infra/persistence/datasource/mongo.module'
 import { PaymentMongoDBEntity } from '@payment/infra/persistence/entities/payment-mongodb.entity';
 import { PixDetailMongoDBEntity } from '@payment/infra/persistence/entities/pix-detail-mongodb.entity';
 import { PaymentMongoDBRepositoryImpl } from '@payment/infra/persistence/repositories/payment-mongodb.repository';
-
-
-
+import { CreateOrderPublish } from '@payment/infra/publishers/create-order.publish';
 
 import { CreatePixPaymentGatewayImpl } from './acl/payments-gateway/mercado-pago/gateways/create-pix-payment.gateway';
 import { HttpCartGateway } from './gateways/http-cart.gateway';
@@ -76,6 +74,10 @@ import { PixDetailMapper } from './persistence/mapper/pix-detail.mapper';
       },
       inject: [HttpClient, AbstractLoggerService],
     },
+    {
+      provide: CreateOrderPublish,
+      useClass: CreateOrderPublish,
+    },
   ],
   exports: [
     PaymentRepository,
@@ -83,6 +85,7 @@ import { PixDetailMapper } from './persistence/mapper/pix-detail.mapper';
     PaymentDetailMapperFactory,
     CartGateway,
     CreatePaymentGateway,
+    CreateOrderPublish,
   ],
 })
 export class PaymentInfraModule {}

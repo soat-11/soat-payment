@@ -88,6 +88,7 @@ import { CreateQRCodeImageUseCaseImpl } from './use-cases/create-qrcode/create-q
         PaymentFactory,
         'DomainEventDispatcher',
         AbstractLoggerService,
+        CreateQRCodeImage,
         CartGateway,
         PaymentAmountCalculator,
         CreatePaymentGateway,

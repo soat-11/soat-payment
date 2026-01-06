@@ -35,6 +35,7 @@ import { MercadoPagoCancelPaymentGatewayImpl } from '@payment/infra/acl/payments
 import { SqsMercadoPagoProcessPaymentPublish } from '@payment/infra/acl/payments-gateway/mercado-pago/publishers/mercado-pago-mark-as-paid.publish';
 import { HMACMercadoPagoSignature } from '@payment/infra/acl/payments-gateway/mercado-pago/signature/mercado-pago-signature';
 import { PaymentSignature } from '@payment/infra/acl/payments-gateway/mercado-pago/signature/payment-signature';
+import { CreateOrderPublish } from '@payment/infra/publishers/create-order.publish';
 import { CancelPaymentConsumer } from '@payment/presentation/consumers/sqs-cancel-payment-consumer';
 import { CreatePaymentConsumer } from '@payment/presentation/consumers/sqs-create-payment-consumer';
 import { MercadoPagoProcessPaymentConsumer } from '@payment/presentation/consumers/sqs-process-payment-consumer';
@@ -136,13 +137,20 @@ import { PaymentController } from '@payment/presentation/controllers/payment.con
         repository: PaymentRepository,
         logger: AbstractLoggerService,
         dispatcher: DomainEventDispatcher,
+        createOrderPublish: CreateOrderPublish,
       ) => {
-        return new MarkAsPaidGatewayImpl(repository, logger, dispatcher);
+        return new MarkAsPaidGatewayImpl(
+          repository,
+          logger,
+          dispatcher,
+          createOrderPublish,
+        );
       },
       inject: [
         PaymentRepository,
         AbstractLoggerService,
         'DomainEventDispatcher',
+        CreateOrderPublish,
       ],
     },
 

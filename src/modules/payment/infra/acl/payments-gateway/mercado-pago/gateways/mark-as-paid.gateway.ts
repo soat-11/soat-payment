@@ -5,12 +5,14 @@ import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { MarkAsPaidGateway } from '@payment/domain/gateways/mark-as-paid.gateway';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
+import { CreateOrderPublish } from '@payment/infra/publishers/create-order.publish';
 
 export class MarkAsPaidGatewayImpl implements MarkAsPaidGateway {
   constructor(
     private readonly repository: PaymentRepository,
     private readonly logger: AbstractLoggerService,
     private readonly dispatcher: DomainEventDispatcher,
+    private readonly publishMercadoPagoProcessPayment: CreateOrderPublish,
   ) {}
 
   async markAsPaid(paymentReference: string): Promise<Result<void>> {
@@ -51,6 +53,11 @@ export class MarkAsPaidGatewayImpl implements MarkAsPaidGateway {
 
       await this.dispatcher.dispatch(event);
     }
+
+    await this.publishMercadoPagoProcessPayment.publish({
+      sessionId: payment.sessionId.value,
+      idempotencyKey: payment.idempotencyKey.value,
+    });
 
     return Result.ok();
   }
