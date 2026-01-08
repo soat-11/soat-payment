@@ -209,6 +209,7 @@ export const folderStructureConfig = createFolderStructure({
       children: [
         { name: 'persistence', ruleId: 'persistence_folder' },
         { name: 'acl', ruleId: 'acl_folder' },
+        { name: 'publishers', ruleId: 'publishers_folder' },
         { name: 'gateways', ruleId: 'gateways_impl_folder' },
         { name: 'consumers', ruleId: 'consumers_folder' },
         { name: 'infra.module.ts' },

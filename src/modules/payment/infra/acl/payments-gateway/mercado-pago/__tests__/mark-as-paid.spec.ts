@@ -6,19 +6,35 @@ import { DomainEventDispatcher } from '@core/events/domain-event-dispatcher';
 import { DomainEventDispatcherImpl } from '@core/events/domain-event-dispatcher-impl';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { PinoLoggerService } from '@core/infra/logger/pino-logger';
+import { SqsPublish } from '@core/infra/sqs/sqs-publish';
 import { PaymentEntity } from '@payment/domain/entities/payment.entity';
 import { PaymentProviders } from '@payment/domain/enum/payment-provider.enum';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 import { PaymentProvider } from '@payment/domain/value-objects/payment-provider.vo';
 import { PixDetailVO } from '@payment/domain/value-objects/pix-detail.vo';
+import { CreateOrderMessage } from '@payment/infra/acl/payments-gateway/mercado-pago/dtos/create-order.dto';
 import { MarkAsPaidGatewayImpl } from '@payment/infra/acl/payments-gateway/mercado-pago/gateways/mark-as-paid.gateway';
+
+class FakeCreateOrderPublish extends SqsPublish<CreateOrderMessage> {
+  constructor(logger: AbstractLoggerService) {
+    super(logger);
+  }
+
+  protected get queueUrl(): string {
+    return 'http://localhost:4566/queue/create-order';
+  }
+  publish(_: CreateOrderMessage): Promise<void> {
+    return Promise.resolve();
+  }
+}
 
 describe('MarkAsPaidGatewayImpl', () => {
   let useCase: MarkAsPaidGatewayImpl;
   let repository: PaymentRepository;
   let logger: AbstractLoggerService;
   let dispatcher: DomainEventDispatcher;
+  let createOrderPublish: SqsPublish<CreateOrderMessage>;
 
   const paymentEntityFactory = ({
     externalReference,
@@ -57,8 +73,14 @@ describe('MarkAsPaidGatewayImpl', () => {
     logger = new PinoLoggerService({
       suppressConsole: true,
     });
+    createOrderPublish = new FakeCreateOrderPublish(logger);
     dispatcher = new DomainEventDispatcherImpl();
-    useCase = new MarkAsPaidGatewayImpl(repository, logger, dispatcher);
+    useCase = new MarkAsPaidGatewayImpl(
+      repository,
+      logger,
+      dispatcher,
+      createOrderPublish,
+    );
   });
 
   describe('Success', () => {
