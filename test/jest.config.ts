@@ -1,14 +1,18 @@
-import { createRequire } from 'module';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 import type { Config } from '@jest/types';
 
-// @ts-expect-error - import.meta is valid in ESM, Jest runs this as ESM
-const __dirname = dirname(fileURLToPath(import.meta.url));
-// @ts-expect-error - import.meta is valid in ESM
-const _require = createRequire(import.meta.url);
-const coverageConfig = _require('../config/coverage.config.json');
+interface CoverageConfig {
+  include: string[];
+  exclude: string[];
+}
+
+// Use process.cwd() as Jest is always run from the project root
+const coverageConfigPath = join(process.cwd(), 'config/coverage.config.json');
+const coverageConfig: CoverageConfig = JSON.parse(
+  readFileSync(coverageConfigPath, 'utf-8'),
+);
 
 const collectCoverageFrom = [
   ...coverageConfig.include,

@@ -22,7 +22,6 @@ import { PaymentInfraModule } from '@payment/infra/infra.module';
 import { CreatePaymentUseCaseImpl } from './use-cases/create-payment/create-payment-impl.use-case';
 import { CreateQRCodeImageUseCaseImpl } from './use-cases/create-qrcode/create-qrcode-impl.use-case';
 
-
 @Module({
   imports: [PaymentInfraModule],
   providers: [
@@ -46,8 +45,10 @@ import { CreateQRCodeImageUseCaseImpl } from './use-cases/create-qrcode/create-q
       },
     },
     {
-      provide: CreateQRCodeImageUseCaseImpl,
-      useClass: CreateQRCodeImageUseCaseImpl,
+      provide: CreateQRCodeImage,
+      useFactory: () => {
+        return new CreateQRCodeImageUseCaseImpl();
+      },
     },
     {
       provide: PaymentAmountCalculator,
@@ -87,13 +88,18 @@ import { CreateQRCodeImageUseCaseImpl } from './use-cases/create-qrcode/create-q
         PaymentFactory,
         'DomainEventDispatcher',
         AbstractLoggerService,
-        CreateQRCodeImageUseCaseImpl,
+        CreateQRCodeImage,
         CartGateway,
         PaymentAmountCalculator,
         CreatePaymentGateway,
       ],
     },
   ],
-  exports: [CreatePaymentUseCase, 'DomainEventDispatcher', PaymentInfraModule],
+  exports: [
+    CreatePaymentUseCase,
+    'DomainEventDispatcher',
+    PaymentInfraModule,
+    CreateQRCodeImage,
+  ],
 })
 export class PaymentApplicationModule {}

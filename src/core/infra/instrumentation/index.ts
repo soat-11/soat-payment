@@ -4,6 +4,7 @@ import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentation
 import { NodeSDK } from '@opentelemetry/sdk-node';
 
 if (process.env.NODE_ENV !== 'production') {
+  Logger.log('Setting up console logger');
   diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
 }
 
