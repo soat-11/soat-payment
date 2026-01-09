@@ -115,7 +115,9 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
-          tags: ${{ steps.login-ecr.outputs.registry }}/payment:${{ github.sha }}
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/payment:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/payment:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
