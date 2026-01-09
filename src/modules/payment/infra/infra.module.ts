@@ -2,7 +2,11 @@ import { Module } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 
-import { HttpClient, PostMethod } from '@core/infra/http/client/http-client';
+import {
+  GetMethod,
+  HttpClient,
+  PostMethod,
+} from '@core/infra/http/client/http-client';
 import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
 import { CartGateway } from '@payment/domain/gateways/cart.gateway';
 import { CreatePaymentGateway } from '@payment/domain/gateways/create-payment.gateway';
@@ -65,7 +69,10 @@ import { PixDetailMapper } from './persistence/mapper/pix-detail.mapper';
     },
     {
       provide: CartGateway,
-      useClass: HttpCartGateway,
+      useFactory: (httpClient: GetMethod) => {
+        return new HttpCartGateway(httpClient);
+      },
+      inject: [HttpClient],
     },
     {
       provide: CreatePaymentGateway,
