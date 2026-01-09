@@ -283,6 +283,14 @@ export const folderStructureConfig = createFolderStructure({
       children: [
         { name: '{kebab-case}.gateway.ts' },
         { name: 'http-{kebab-case}.gateway.ts' },
+        { name: 'dtos', ruleId: 'dtos_folder' },
+        { name: '__tests__', ruleId: 'tests_folder' },
+      ],
+    },
+    dtos_folder: {
+      children: [
+        { name: '{kebab-case}.dto.ts' },
+        { name: 'index.ts' },
         { name: '__tests__', ruleId: 'tests_folder' },
       ],
     },
