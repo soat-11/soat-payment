@@ -19,7 +19,7 @@ export class HttpCartGateway implements CartGateway {
 
   async getCart(_sessionId: string): Promise<GetCartDetailsOutput> {
     const response = await this.httpClient.get<CartResponseDto>(
-      `${this.BASE_URL}/cart`,
+      `${this.BASE_URL}/v1/cart`,
       {
         headers: {
           'Content-Type': 'application/json',
