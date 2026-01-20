@@ -37,9 +37,10 @@ export class HttpCartGateway implements CartGateway {
       `[IN] Resposta do Cart Service. Status: ${response.status}`,
     );
 
-    const data = response.data;
+    const body = response.data;
+
     this.logger.log(
-      `[IN] Payload recebido HttpCartGateway: ${JSON.stringify(data)}`,
+      `[IN] Payload recebido HttpCartGateway: ${JSON.stringify(body)}`,
     );
 
     if (HttpClientResponseUtils.isErrorResponse(response)) {
@@ -50,13 +51,20 @@ export class HttpCartGateway implements CartGateway {
       throw HttpClientResponseUtils.handleErrorResponse('Carrinho vazio');
     }
 
-    const cartDto = plainToInstance(CartResponseDto, data);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cartPayload = (body as any).data || body;
+
+    const cartDto = plainToInstance(CartResponseDto, cartPayload);
     const errors = validateSync(cartDto);
 
     if (errors.length > 0) {
       const messages = errors
         .map((e) => Object.values(e.constraints ?? {}).join(', '))
         .join('; ');
+
+      this.logger.error(
+        `Falha na validação. Payload usado: ${JSON.stringify(cartPayload)}`,
+      );
       throw new Error(`Resposta inválida do carrinho: ${messages}`);
     }
 
