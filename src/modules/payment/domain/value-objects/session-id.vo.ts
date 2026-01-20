@@ -1,5 +1,3 @@
-import { validate as uuidValidate } from 'uuid';
-
 import { ValueObject } from '@core/domain/value-objects/value-object.vo';
 import { SessionIdInvalidException } from '@payment/domain/exceptions/payment.exception';
 
@@ -9,7 +7,10 @@ export class SessionIdVO extends ValueObject<string> {
       throw new SessionIdInvalidException(input);
     }
 
-    if (!uuidValidate(input)) {
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    if (!uuidRegex.test(input)) {
       throw new SessionIdInvalidException(input);
     }
   }
