@@ -65,6 +65,10 @@ export class CreatePaymentUseCaseImpl implements CreatePaymentUseCase {
       this.deps.logger.log('Creating payment entity');
 
       const cart = await this.deps.gateways.cart.getCart(input.sessionId);
+      this.deps.logger.log(
+        `[IN] Payload Cart CreatePaymentUseCaseImpl: ${JSON.stringify(cart)}`,
+      );
+
       const amount = this.deps.services.amountCalculator.calculate(cart);
 
       const payment = this.deps.paymentFactory.create({

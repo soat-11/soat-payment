@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 
@@ -14,12 +15,16 @@ import { CartResponseDto } from './dtos';
 
 export class HttpCartGateway implements CartGateway {
   private readonly BASE_URL = process.env.CART_API_URL;
+  private readonly logger = new Logger(HttpCartGateway.name);
 
   constructor(private readonly httpClient: GetMethod) {}
 
   async getCart(_sessionId: string): Promise<GetCartDetailsOutput> {
+    this.logger.log(
+      `[OUT] Buscando carrinho. SessionID Solicitado: ${_sessionId} | URL: ${this.BASE_URL}`,
+    );
     const response = await this.httpClient.get<CartResponseDto>(
-      `${this.BASE_URL}/v1/cart`,
+      `${this.BASE_URL}/cart`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -28,7 +33,14 @@ export class HttpCartGateway implements CartGateway {
       },
     );
 
+    this.logger.log(
+      `[IN] Resposta do Cart Service. Status: ${response.status}`,
+    );
+
     const data = response.data;
+    this.logger.log(
+      `[IN] Payload recebido HttpCartGateway: ${JSON.stringify(data)}`,
+    );
 
     if (HttpClientResponseUtils.isErrorResponse(response)) {
       throw HttpClientResponseUtils.handleErrorResponse(response);
