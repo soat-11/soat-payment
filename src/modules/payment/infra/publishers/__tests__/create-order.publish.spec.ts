@@ -1,6 +1,9 @@
-import { AbstractLoggerService } from '@core/infra/logger/abstract-logger'; // Ajuste o import conforme seu projeto
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { Test, TestingModule } from '@nestjs/testing';
-import { CreateOrderPublish } from './create-order.publish';
+
+import { AbstractLoggerService } from '@core/infra/logger/abstract-logger';
+import { CreateOrderPublish } from '@payment/infra/publishers/create-order.publish';
 
 describe('CreateOrderPublish', () => {
   let service: CreateOrderPublish;
