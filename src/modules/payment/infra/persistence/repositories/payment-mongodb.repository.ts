@@ -9,6 +9,7 @@ import { PaymentMapper } from '@modules/payment/infra/persistence/mapper/payment
 import { PaymentEntity } from '@payment/domain/entities/payment.entity';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 import { IdempotencyKeyVO } from '@payment/domain/value-objects/idempotency-key.vo';
+import { SessionIdVO } from '@payment/domain/value-objects/session-id.vo';
 
 export class PaymentMongoDBRepositoryImpl implements PaymentRepository {
   constructor(
@@ -293,6 +294,77 @@ export class PaymentMongoDBRepositoryImpl implements PaymentRepository {
     } catch (error) {
       if (error instanceof Error) {
         this.logger.error('Error finding payment by external payment ID', {
+          message: error.message,
+          trace: error.stack,
+        });
+        throw error;
+      }
+      throw new DomainPersistenceException('Erro ao buscar pagamento');
+    }
+  }
+
+  async findBySessionId(
+    sessionId: SessionIdVO,
+  ): Promise<PaymentEntity | null> {
+    try {
+      const paymentOrm = await this.paymentMongoRepository.findOne({
+        where: { sessionId: sessionId.value },
+      });
+
+      if (!paymentOrm) {
+        this.logger.log('Payment not found by session ID', {
+          sessionId: sessionId.value,
+        });
+        return null;
+      }
+
+      const paymentResult = this.paymentMapper.toDomain(paymentOrm);
+      if (paymentResult.isFailure) {
+        this.logger.error('Error mapping payment to domain', {
+          error: paymentResult.error,
+        });
+        throw paymentResult.error;
+      }
+
+      const payment = paymentResult.value;
+
+      const detailRepositoryResult = this.detailMapperFactory.getRepository(
+        payment.type.value,
+      );
+
+      if (detailRepositoryResult.isSuccess) {
+        const detailRepository = detailRepositoryResult.value;
+
+        this.logger.log('Loading payment detail', {
+          paymentId: payment.id.value,
+          type: payment.type.value,
+        });
+
+        const detailOrm = await detailRepository.findOne({
+          where: { paymentId: payment.id },
+        });
+
+        if (detailOrm) {
+          const detailResult = this.detailMapperFactory.toDomain(
+            detailOrm,
+            payment.type.value,
+          );
+
+          if (detailResult.isFailure) {
+            this.logger.error('Error mapping payment detail to domain', {
+              error: detailResult.error,
+            });
+            throw detailResult.error;
+          }
+
+          payment.addPaymentDetail(detailResult.value);
+        }
+      }
+
+      return payment;
+    } catch (error) {
+      if (error instanceof Error) {
+        this.logger.error('Error finding payment by session ID', {
           message: error.message,
           trace: error.stack,
         });

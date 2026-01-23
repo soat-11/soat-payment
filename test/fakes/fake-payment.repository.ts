@@ -2,6 +2,7 @@ import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { PaymentEntity } from '@payment/domain/entities/payment.entity';
 import { PaymentRepository } from '@payment/domain/repositories/payment.repository';
 import { IdempotencyKeyVO } from '@payment/domain/value-objects/idempotency-key.vo';
+import { SessionIdVO } from '@payment/domain/value-objects/session-id.vo';
 
 export class FakePaymentRepository implements PaymentRepository {
   private storage = new Map<string, PaymentEntity>();
@@ -41,6 +42,15 @@ export class FakePaymentRepository implements PaymentRepository {
   ): Promise<PaymentEntity | null> {
     for (const payment of this.storage.values()) {
       if (payment.idempotencyKey.value === idempotencyKey.value) {
+        return payment;
+      }
+    }
+    return null;
+  }
+
+  async findBySessionId(sessionId: SessionIdVO): Promise<PaymentEntity | null> {
+    for (const payment of this.storage.values()) {
+      if (payment.sessionId.value === sessionId.value) {
         return payment;
       }
     }

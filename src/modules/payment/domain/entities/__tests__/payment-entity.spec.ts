@@ -196,8 +196,8 @@ describe('PaymentEntity', () => {
       });
     });
 
-    describe('Failure', () => {
-      it('should not pay an already paid payment', () => {
+    describe('Idempotency', () => {
+      it('should return success when payment is already paid (idempotent)', () => {
         const payment = createPayment(100);
 
         payment.addPaymentProvider({
@@ -209,10 +209,28 @@ describe('PaymentEntity', () => {
 
         const result = payment.paid(SystemDateImpl.nowUTC());
 
-        expect(result.isFailure).toBe(true);
-        expect(result.error).toBeInstanceOf(DomainBusinessException);
+        expect(result.isSuccess).toBe(true);
+        expect(payment.status.value).toBe(PaymentStatus.PAID);
       });
 
+      it('should not add duplicate PaymentPaidEvent when already paid', () => {
+        const payment = createPayment(100);
+
+        payment.addPaymentProvider({
+          externalPaymentId: 'external-id-123',
+          provider: PaymentProviders.MERCADO_PAGO,
+        });
+
+        payment.paid(SystemDateImpl.nowUTC());
+        const eventsAfterFirstPaid = payment.domainEvents.length;
+
+        payment.paid(SystemDateImpl.nowUTC());
+
+        expect(payment.domainEvents.length).toBe(eventsAfterFirstPaid);
+      });
+    });
+
+    describe('Failure', () => {
       it('should not pay an expired payment', () => {
         const expiresAt = new Date('2024-01-01T12:00:00Z');
         const payment = PaymentEntity.create({
