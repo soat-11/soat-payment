@@ -64,6 +64,7 @@ describe('MarkAsPaidGatewayImpl', () => {
 
   beforeEach(() => {
     repository = {
+      findBySessionId: jest.fn(),
       findByIdempotencyKey: jest.fn(),
       findByExternalPaymentId: jest.fn(),
       update: jest.fn(),
