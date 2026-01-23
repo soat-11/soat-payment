@@ -2,11 +2,8 @@ import eslint from '@eslint/js';
 import eslintConfigPrettier from 'eslint-config-prettier';
 import importPlugin from 'eslint-plugin-import';
 import noRelativeImportPaths from 'eslint-plugin-no-relative-import-paths';
-import projectStructure from 'eslint-plugin-project-structure';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
-import customRules from './eslint-rules/filenames.mjs';
-import { folderStructureConfig } from './folderStructure.mjs';
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
@@ -42,8 +39,6 @@ export default [
     plugins: {
       import: importPlugin,
       'no-relative-import-paths': noRelativeImportPaths,
-      'project-structure': projectStructure,
-      'custom-rules': customRules,
     },
     settings: {
       'import/resolver': {

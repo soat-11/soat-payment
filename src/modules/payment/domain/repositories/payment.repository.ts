@@ -1,6 +1,7 @@
 import { UniqueEntityID } from '@core/domain/value-objects/unique-entity-id.vo';
 import { PaymentEntity } from '@modules/payment/domain/entities/payment.entity';
 import { IdempotencyKeyVO } from '@payment/domain/value-objects/idempotency-key.vo';
+import { SessionIdVO } from '@payment/domain/value-objects/session-id.vo';
 
 
 export interface PaymentRepository {
@@ -12,6 +13,7 @@ export interface PaymentRepository {
   findByExternalPaymentId(
     externalPaymentId: string,
   ): Promise<PaymentEntity | null>;
+  findBySessionId(sessionId: SessionIdVO): Promise<PaymentEntity | null>;
   update(payment: PaymentEntity): Promise<void>;
 }
 

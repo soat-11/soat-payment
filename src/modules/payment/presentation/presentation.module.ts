@@ -18,10 +18,14 @@ import {
 import { CancelPaymentUseCaseImpl } from '@payment/application/use-cases/cancel-payment/cancel-payment-impl.use-case';
 import { CancelPaymentUseCase } from '@payment/application/use-cases/cancel-payment/cancel-payment.use-case';
 import { CreatePaymentUseCase } from '@payment/application/use-cases/create-payment/create-payment.use-case';
+import { GetPaymentDetailsBySessionIdUseCaseImpl } from '@payment/application/use-cases/get-payment-details-by-session-id/get-payment-details-by-session-id-impl.use-case';
+import { GetPaymentDetailsBySessionIdUseCase } from '@payment/application/use-cases/get-payment-details-by-session-id/get-payment-details-by-session-id.use-case';
 import { GetQRCodeByIdempotencyKeyUseCaseImpl } from '@payment/application/use-cases/get-qrcode-by-idempotency-key/get-qrcode-by-idempotency-key-impl.use-case';
 import { GetQRCodeByIdempotencyKeyUseCase } from '@payment/application/use-cases/get-qrcode-by-idempotency-key/get-qrcode-by-idempotency-key.use-case';
 import { GetQRCodeByPaymentIdUseCaseImpl } from '@payment/application/use-cases/get-qrcode-by-payment-id/get-qrcode-by-payment-id-impl.use-case';
 import { GetQRCodeByPaymentIdUseCase } from '@payment/application/use-cases/get-qrcode-by-payment-id/get-qrcode-by-payment-id.use-case';
+import { GetQRCodeBySessionIdUseCaseImpl } from '@payment/application/use-cases/get-qrcode-by-session-id/get-qrcode-by-session-id-impl.use-case';
+import { GetQRCodeBySessionIdUseCase } from '@payment/application/use-cases/get-qrcode-by-session-id/get-qrcode-by-session-id.use-case';
 import { PaymentProcessorUseCaseImpl } from '@payment/application/use-cases/payment-processor/payment-processor-impl.use-case';
 import { PaymentProcessorUseCase } from '@payment/application/use-cases/payment-processor/payment-processor.use-case';
 import { RefundPaymentUseCaseImpl } from '@payment/application/use-cases/refund-payment/refund-payment-impl.use-case';
@@ -204,6 +208,29 @@ import { PaymentController } from '@payment/presentation/controllers/payment.con
         logger: AbstractLoggerService,
       ) => {
         return new GetQRCodeByIdempotencyKeyUseCaseImpl(
+          paymentRepository,
+          logger,
+        );
+      },
+      inject: [PaymentRepository, AbstractLoggerService],
+    },
+    {
+      provide: GetQRCodeBySessionIdUseCase,
+      useFactory: (
+        paymentRepository: PaymentRepository,
+        logger: AbstractLoggerService,
+      ) => {
+        return new GetQRCodeBySessionIdUseCaseImpl(paymentRepository, logger);
+      },
+      inject: [PaymentRepository, AbstractLoggerService],
+    },
+    {
+      provide: GetPaymentDetailsBySessionIdUseCase,
+      useFactory: (
+        paymentRepository: PaymentRepository,
+        logger: AbstractLoggerService,
+      ) => {
+        return new GetPaymentDetailsBySessionIdUseCaseImpl(
           paymentRepository,
           logger,
         );
