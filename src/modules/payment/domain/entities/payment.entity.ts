@@ -15,11 +15,10 @@ import { PaymentStatus } from '@payment/domain/enum/payment-status.enum';
 import { PaymentType } from '@payment/domain/enum/payment-type.enum';
 import {
   PaymentAlreadyCanceledException,
-  PaymentAlreadyPaidException,
   PaymentAlreadyRefundedException,
   PaymentDetailInvalidException,
   PaymentExpiredException,
-  PaymentProviderNotProvidedException,
+  PaymentProviderNotProvidedException
 } from '@payment/domain/exceptions/payment.exception';
 import { IdempotencyKeyVO } from '@payment/domain/value-objects/idempotency-key.vo';
 import {
@@ -131,7 +130,7 @@ export class PaymentEntity extends AggregateRoot<PaymentEntity> {
 
   paid(currentDate: Date): Result<void, DomainBusinessException> {
     if (this.status.value === PaymentStatus.PAID) {
-      return Result.fail(new PaymentAlreadyPaidException());
+      return Result.ok();
     }
 
     if (this.paymentProvider == null) {
