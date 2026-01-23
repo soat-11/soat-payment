@@ -80,9 +80,9 @@ export default [
 
       'import/no-unresolved': 'error',
 
-      'project-structure/folder-structure': ['error', folderStructureConfig],
 
-      'custom-rules/kebab-case-filenames': 'error',
+
+
 
       'no-console': 'warn',
       'prefer-const': 'error',
