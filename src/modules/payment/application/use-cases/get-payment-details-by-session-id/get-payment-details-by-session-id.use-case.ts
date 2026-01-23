@@ -9,6 +9,7 @@ export interface PaymentDetailsOutput {
   amount: number;
   type: PaymentType;
   expiresAt: Date;
+  externalPaymentId: string | null;
 }
 
 export interface GetPaymentDetailsBySessionIdUseCase {

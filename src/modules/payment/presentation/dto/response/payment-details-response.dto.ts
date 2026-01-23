@@ -35,4 +35,11 @@ export class PaymentDetailsResponseDto {
     example: '2024-01-01T00:00:00.000Z',
   })
   expiresAt: Date;
+
+  @ApiProperty({
+    description: 'ID externo do pagamento no provedor (ex: Mercado Pago)',
+    example: '12345678901',
+    nullable: true,
+  })
+  externalPaymentId: string | null;
 }

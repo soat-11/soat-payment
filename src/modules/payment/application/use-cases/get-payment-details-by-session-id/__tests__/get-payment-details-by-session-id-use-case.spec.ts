@@ -60,6 +60,7 @@ describe('GetPaymentDetailsBySessionIdUseCase - Unit Test', () => {
         amount: 100,
         type: PaymentType.PIX,
         expiresAt: payment.expiresAt,
+        externalPaymentId: 'external-id-123',
       });
     });
 
@@ -112,6 +113,39 @@ describe('GetPaymentDetailsBySessionIdUseCase - Unit Test', () => {
 
       expect(result.isSuccess).toBe(true);
       expect(result.value.status).toBe(PaymentStatus.PENDING);
+    });
+
+    it('should return externalPaymentId from payment provider', async () => {
+      const sessionId = UniqueEntityID.create().value;
+      const payment = createPayment(sessionId);
+      await paymentRepository.save(payment);
+
+      const result = await useCase.execute(SessionIdVO.create(sessionId));
+
+      expect(result.isSuccess).toBe(true);
+      expect(result.value.externalPaymentId).toBe('external-id-123');
+    });
+
+    it('should return null externalPaymentId when payment has no provider', async () => {
+      const sessionId = UniqueEntityID.create().value;
+      const now = SystemDateImpl.nowUTC();
+      const paymentWithoutProvider = PaymentEntity.create({
+        amount: 100,
+        expiresAt: new Date(now.getTime() + 1000 * 60 * 10),
+        idempotencyKey: UniqueEntityID.create().value,
+        sessionId: sessionId,
+        type: PaymentType.PIX,
+      }).addPaymentDetail(
+        PixDetailVO.create({
+          qrCode: 'qr-code-123',
+        }),
+      );
+      await paymentRepository.save(paymentWithoutProvider);
+
+      const result = await useCase.execute(SessionIdVO.create(sessionId));
+
+      expect(result.isSuccess).toBe(true);
+      expect(result.value.externalPaymentId).toBeNull();
     });
   });
 

@@ -43,6 +43,7 @@ export class GetPaymentDetailsBySessionIdUseCaseImpl
       amount: payment.amount.value,
       type: payment.type.value,
       expiresAt: payment.expiresAt,
+      externalPaymentId: payment.paymentProvider?.value.externalPaymentId ?? null,
     });
   }
 }
