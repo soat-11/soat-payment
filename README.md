@@ -123,7 +123,7 @@ OTEL Collector
 Todos visualizados de forma unificada no **Grafana** com correlação automática entre traces e logs.
 
 ## Run tests
-
+![coverage](image.png)
 ```bash
 # unit tests
 $ yarn run test
